@@ -60,6 +60,7 @@ typedef float dataType;
 const string typeName("float");
 
 // Common parameters
+const unsigned int nrSeconds = 1;
 const unsigned int nrBeams = 1;
 const unsigned int nrStations = 64;
 const unsigned int paddingCL = 32;
@@ -115,6 +116,7 @@ int main(int argc, char *argv[]) {
 
 	// Setup of the observation
 	observation.setPadding(paddingCL);
+	observation.setNrSeconds(nrSeconds);
 	observation.setNrBeams(nrStations);
 	observation.setNrStations(nrBeams);
 	observation.setMinFreq(minFreq);
