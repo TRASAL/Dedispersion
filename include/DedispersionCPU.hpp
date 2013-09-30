@@ -47,7 +47,7 @@ template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel,
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		#pragma omp parallel for
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-			dedispersedSample = static_cast< T >(0);
+			T dedispersedSample = static_cast< T >(0);
 
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 				unsigned int shift = shifts[(dm * observation.getNrChannels()) + channel];
