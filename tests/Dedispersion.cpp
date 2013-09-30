@@ -135,13 +135,13 @@ int main(int argc, char *argv[]) {
 	vector< vector< cl::CommandQueue > > *clQueues = new vector< vector < cl::CommandQueue > >();
 
 	initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
-	shiftsCL = getShifts(observation);
+	clShifts = getShifts(observation);
 	shifts = getShiftsCPU(observationCPU);
 
-	if ( ((observation.getNrSamplesPerSecond() + (*shiftsCL)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) % paddingCL) != 0 ) {
-		nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + (*shiftsCL)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) + (paddingCL - ((observation.getNrSamplesPerSecond() + (*shiftsCL)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) % paddingCL));
+	if ( ((observation.getNrSamplesPerSecond() + (*clShifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) % paddingCL) != 0 ) {
+		nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + (*clShifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) + (paddingCL - ((observation.getNrSamplesPerSecond() + (*clShifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) % paddingCL));
 	} else {
-		nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + (*shiftsCL)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
+		nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + (*clShifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
 	}
 	secondsToBuffer = static_cast< unsigned int >(ceil(static_cast< float >(nrSamplesPerChannel) / observation.getNrSamplesPerPaddedSecond()));
 		
@@ -158,10 +158,10 @@ int main(int argc, char *argv[]) {
 	}
 			
 	try {
-		shiftsCL->setCLContext(clContext);
-		shiftsCL->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		shiftsCL->allocateDeviceData();
-		shiftsCL->copyHostToDevice();
+		clShifts->setCLContext(clContext);
+		clShifts->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		clShifts->allocateDeviceData();
+		clShifts->copyHostToDevice();
 
 		dispersedData->setCLContext(clContext);
 		dispersedData->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
 		clDedisperse.setNrDMsPerThread(nrDMsPerThread);
 		clDedisperse.setNrSamplesPerDispersedChannel(secondsToBuffer * observation.getNrSamplesPerPaddedSecond());
 		clDedisperse.setObservation(&observation);
-		clDedisperse.setShifts(shiftsCL);
+		clDedisperse.setShifts(clShifts);
 		clDedisperse.generateCode();
 
 		cout << clDedisperse.getCode() << endl;
