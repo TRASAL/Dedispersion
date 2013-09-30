@@ -42,6 +42,7 @@ using std::numeric_limits;
 #include <CLData.hpp>
 #include <utils.hpp>
 #include <Shifts.hpp>
+#include <ShiftsCPU.hpp>
 #include <Dedispersion.hpp>
 #include <DedispersionCPU.hpp>
 using isa::utils::ArgumentList;
@@ -51,6 +52,7 @@ using isa::OpenCL::initializeOpenCL;
 using isa::OpenCL::CLData;
 using isa::utils::same;
 using TDM::getShifts;
+using TDM::getShiftsCPU;
 using TDM::Dedispersion;
 using TDM::dedispersion;
 
@@ -90,9 +92,10 @@ int main(int argc, char *argv[]) {
 	long long unsigned int wrongOnes = 0;
 	Observation< dataType > observation("DedispersionTest", typeName);
 	Observation< dataType > observationCPU("DedispersionTest", typeName);
-	CLData< unsigned int > * shifts = 0;
+	CLData< unsigned int > * clShifts = 0;
+	unsigned int * shifts = 0;
 	CLData< dataType > * dispersedData = new CLData< dataType >("DispersedData", true);
-	CLData< dataType > * dedispersedData = new CLData< dataType >("DedispersedData", true);
+	dataType * dedispersedData = 0;
 	CLData< dataType > * clDedispersedData = new CLData< dataType >("clDedispersedData", true);
 
 	try {
@@ -132,18 +135,19 @@ int main(int argc, char *argv[]) {
 	vector< vector< cl::CommandQueue > > *clQueues = new vector< vector < cl::CommandQueue > >();
 
 	initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
-	shifts = getShifts(observation);
+	shiftsCL = getShifts(observation);
+	shifts = getShiftsCPU(observationCPU);
 
-	if ( ((observation.getNrSamplesPerSecond() + (*shifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) % paddingCL) != 0 ) {
-		nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + (*shifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) + (paddingCL - ((observation.getNrSamplesPerSecond() + (*shifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) % paddingCL));
+	if ( ((observation.getNrSamplesPerSecond() + (*shiftsCL)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) % paddingCL) != 0 ) {
+		nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + (*shiftsCL)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) + (paddingCL - ((observation.getNrSamplesPerSecond() + (*shiftsCL)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]) % paddingCL));
 	} else {
-		nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + (*shifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
+		nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + (*shiftsCL)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
 	}
 	secondsToBuffer = static_cast< unsigned int >(ceil(static_cast< float >(nrSamplesPerChannel) / observation.getNrSamplesPerPaddedSecond()));
 		
 	// Allocate memory
 	dispersedData->allocateHostData(secondsToBuffer * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
-	dedispersedData->allocateHostData(observationCPU.getNrDMs() * observationCPU.getNrSamplesPerPaddedSecond());
+	dedispersedData = new dataType [observationCPU.getNrDMs() * observationCPU.getNrSamplesPerPaddedSecond()];
 	clDedispersedData->allocateHostData(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
 
 	srand(time(NULL));
@@ -154,10 +158,10 @@ int main(int argc, char *argv[]) {
 	}
 			
 	try {
-		shifts->setCLContext(clContext);
-		shifts->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
-		shifts->allocateDeviceData();
-		shifts->copyHostToDevice();
+		shiftsCL->setCLContext(clContext);
+		shiftsCL->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
+		shiftsCL->allocateDeviceData();
+		shiftsCL->copyHostToDevice();
 
 		dispersedData->setCLContext(clContext);
 		dispersedData->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
@@ -183,7 +187,7 @@ int main(int argc, char *argv[]) {
 		clDedisperse.setNrDMsPerThread(nrDMsPerThread);
 		clDedisperse.setNrSamplesPerDispersedChannel(secondsToBuffer * observation.getNrSamplesPerPaddedSecond());
 		clDedisperse.setObservation(&observation);
-		clDedisperse.setShifts(shifts);
+		clDedisperse.setShifts(shiftsCL);
 		clDedisperse.generateCode();
 
 		cout << clDedisperse.getCode() << endl;
@@ -196,7 +200,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	dedispersion(secondsToBuffer * observationCPU.getNrSamplesPerPaddedSecond(), observationCPU, dispersedData->getHostData(), dedispersedData->getHostData(), shifts->getHostData());
+	dedispersion(secondsToBuffer * observationCPU.getNrSamplesPerPaddedSecond(), observationCPU, dispersedData->getHostData(), dedispersedData, shifts);
 
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
