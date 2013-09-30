@@ -39,7 +39,7 @@ using std::numeric_limits;
 #include <Observation.hpp>
 #include <ReadData.hpp>
 #include <InitializeOpenCL.hpp>
-#include <GPUData.hpp>
+#include <CLData.hpp>
 #include <utils.hpp>
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
@@ -48,7 +48,7 @@ using isa::utils::ArgumentList;
 using AstroData::Observation;
 using AstroData::readLOFAR;
 using isa::OpenCL::initializeOpenCL;
-using isa::OpenCL::GPUData;
+using isa::OpenCL::CLData;
 using isa::utils::same;
 using TDM::getShifts;
 using TDM::Dedispersion;
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 	dedispersedData->allocateHostData(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
 	clDedispersedData->allocateHostData(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
 
-	srand(time(NULL)));
+	srand(time(NULL));
 	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 		for ( unsigned int sample = 0; sample < (secondsToBuffer * observation.getNrSamplesPerSecond()); sample++ ) {
 			dispersedData->setHostDataItem((channel * (secondsToBuffer * observation.getNrSamplesPerPaddedSecond())) + sample, static_cast< dataType >(rand() % 10));
