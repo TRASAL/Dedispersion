@@ -32,8 +32,8 @@ using std::ceil;
 using AstroData::Observation;
 
 
-#ifndef DEDISPERSION_CPU_HPP
-#define DEDISPERSION_CPU_HPP
+#ifndef DEDISPERSION_AVX_HPP
+#define DEDISPERSION_AVX_HPP
 
 namespace TDM {
 
@@ -46,20 +46,21 @@ template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel,
 	#pragma omp parallel for
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		#pragma omp parallel for
-		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-			dedispersedSample = static_cast< T >(0);
+		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample += 8 ) {
+			__m256 dedispersedSample = _mm256_setzero_ps();
 
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 				unsigned int shift = shifts[(dm * observation.getNrChannels()) + channel];
-
-				dedispersedSample += input[(channel * nrSamplesPerChannel) + (sample + shift)];
+				__m256 dispersedSample = _mm256_loadu_ps(&(input[(channel * nrSamplesPerChannel) + (sample + shift)]));
+				
+				dedispersedSample = _mm256_add_ps(dedispersedSample, dispersedSample);
 			}
 
-			output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] = dedispersedSample;
+			_mm256_store_ps(&(output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample]), dedispersedSample);
 		}
 	}
 }
 
 } // TDM
 
-#endif // DEDISPERSION_CPU_HPP
+#endif // DEDISPERSION_AVX_HPP
