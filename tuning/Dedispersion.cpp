@@ -205,6 +205,10 @@ int main(int argc, char * argv[]) {
 							clDedisperse.setShifts(shifts);
 							clDedisperse.generateCode();
 
+							// Warm-up
+							clDedisperse(dispersedData, dedispersedData);
+							clDedisperse.getTimer().reset();
+
 							for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
 								clDedisperse(dispersedData, dedispersedData);
 
