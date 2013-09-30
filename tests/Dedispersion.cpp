@@ -60,7 +60,8 @@ const string typeName("float");
 // Common parameters
 const unsigned int nrBeams = 1;
 const unsigned int nrStations = 64;
-const unsigned int padding = 32;
+const unsigned int paddingCL = 32;
+const unsigned int paddingCPU = 8;
 // LOFAR
 /*const float minFreq = 138.965f;
 const float channelBandwidth = 0.195f;
@@ -88,6 +89,7 @@ int main(int argc, char *argv[]) {
 	unsigned int secondsToBuffer = 0;
 	long long unsigned int wrongOnes = 0;
 	Observation< dataType > observation("DedispersionTest", typeName);
+	Observation< dataType > observationCPU("DedispersionTest", typeName);
 	CLData< unsigned int > * shifts = 0;
 	CLData< dataType > * dispersedData = new CLData< dataType >("DispersedData", true);
 	CLData< dataType > * dedispersedData = new CLData< dataType >("DedispersedData", true);
@@ -109,7 +111,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	// Setup of the observation
-	observation.setPadding(padding);
+	observation.setPadding(paddingCL);
 	observation.setNrBeams(nrStations);
 	observation.setNrStations(nrBeams);
 	observation.setMinFreq(minFreq);
@@ -120,6 +122,8 @@ int main(int argc, char *argv[]) {
 	observation.setNrDMs(nrDMs);
 	observation.setFirstDM(firstDM);
 	observation.setDMStep(DMStep);
+	observationCPU = observation;
+	observationCPU.setPadding(paddingCPU);
 	
 	// Test
 	cl::Context *clContext = new cl::Context();
@@ -139,7 +143,7 @@ int main(int argc, char *argv[]) {
 		
 	// Allocate memory
 	dispersedData->allocateHostData(secondsToBuffer * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
-	dedispersedData->allocateHostData(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+	dedispersedData->allocateHostData(observationCPU.getNrDMs() * observationCPU.getNrSamplesPerPaddedSecond());
 	clDedispersedData->allocateHostData(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
 
 	srand(time(NULL));
@@ -192,14 +196,14 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	dedispersion(observation.getNrSamplesPerPaddedSecond() * secondsToBuffer, observation, dispersedData->getHostData(), dedispersedData->getHostData(), shifts->getHostData());
+	dedispersion(secondsToBuffer * observationCPU.getNrSamplesPerPaddedSecond(), observationCPU, dispersedData->getHostData(), dedispersedData->getHostData(), shifts->getHostData());
 
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-			if ( !same((*dedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample], (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample]) ) {
+			if ( !same((*dedispersedData)[(dm * observationCPU.getNrSamplesPerPaddedSecond()) + sample], (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample]) ) {
 				wrongOnes++;
 
-				cout << dm << " " << sample << " " << (*dedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << " " << (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << " " << (*dedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] - (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << endl;
+				cout << dm << " " << sample << " " << (*dedispersedData)[(dm * observationCPU.getNrSamplesPerPaddedSecond()) + sample] << " " << (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << " " << (*dedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] - (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << endl;
 			}
 		}
 	}
