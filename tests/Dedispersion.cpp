@@ -84,6 +84,8 @@ int main(int argc, char *argv[]) {
 	unsigned int nrDMsPerBlock = 0;
 	unsigned int nrSamplesPerThread = 0;
 	unsigned int nrDMsPerThread = 0;
+	unsigned int nrSamplesPerChannel = 0;
+	unsigned int secondsToBuffer = 0;
 	long long unsigned int wrongOnes = 0;
 	Observation< dataType > observation("DedispersionTest", typeName);
 	CLData< unsigned int > * shifts = 0;
