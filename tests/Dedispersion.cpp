@@ -204,10 +204,10 @@ int main(int argc, char *argv[]) {
 
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-			if ( !same((*dedispersedData)[(dm * observationCPU.getNrSamplesPerPaddedSecond()) + sample], (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample]) ) {
+			if ( !same(dedispersedData[(dm * observationCPU.getNrSamplesPerPaddedSecond()) + sample], (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample]) ) {
 				wrongOnes++;
 
-				cout << dm << " " << sample << " " << (*dedispersedData)[(dm * observationCPU.getNrSamplesPerPaddedSecond()) + sample] << " " << (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << " " << (*dedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] - (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << endl;
+				cout << dm << " " << sample << " " << dedispersedData[(dm * observationCPU.getNrSamplesPerPaddedSecond()) + sample] << " " << (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << " " << dedispersedData[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] - (*clDedispersedData)[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << endl;
 			}
 		}
 	}
