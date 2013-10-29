@@ -31,7 +31,7 @@ using std::ceil;
 #include <Exceptions.hpp>
 #include <CLData.hpp>
 #include <utils.hpp>
-#include <kernels/Kernel.hpp>
+#include <Kernel.hpp>
 #include <Observation.hpp>
 using isa::Exceptions::OpenCLError;
 using isa::OpenCL::CLData;

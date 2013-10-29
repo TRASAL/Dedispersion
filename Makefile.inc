@@ -32,4 +32,3 @@ LINKER		:= g++
 INTELCXX	:= icc
 
 UTILS_SRC	:= $(HOME)/src/utils/src/utils.cpp
-
