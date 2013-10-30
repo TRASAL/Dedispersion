@@ -34,7 +34,7 @@ using AstroData::Observation;
 #ifndef SHIFTS_CPU_HPP
 #define SHIFTS_CPU_HPP
 
-namespace TDM {
+namespace PulsarSearch {
 
 template< typename T > unsigned int * getShiftsCPU(Observation< T > & observation);
 

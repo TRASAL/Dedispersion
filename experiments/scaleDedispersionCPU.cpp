@@ -46,8 +46,8 @@ using isa::utils::ArgumentList;
 using isa::utils::Timer;
 using isa::utils::giga;
 using AstroData::Observation;
-using TDM::getShiftsCPU;
-using TDM::dedispersion;
+using PulsarSearch::getShiftsCPU;
+using PulsarSearch::dedispersion;
 
 typedef float dataType;
 const string typeName("float");

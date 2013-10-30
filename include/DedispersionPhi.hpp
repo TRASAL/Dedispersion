@@ -32,7 +32,7 @@ using std::ceil;
 #ifndef DEDISPERSION_PHI_HPP
 #define DEDISPERSION_PHI_HPP
 
-namespace TDM {
+namespace PulsarSearch {
 
 // OpenMP + SIMD dedispersion algorithm
 template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const T  * const __restrict__ input, T * const __restrict__ output, unsigned int * const __restrict__ shifts);
@@ -59,6 +59,6 @@ template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel,
 	}
 }
 
-} // TDM
+} // PulsarSearch
 
 #endif // DEDISPERSION_PHI_HPP

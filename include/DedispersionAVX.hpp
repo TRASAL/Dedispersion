@@ -35,7 +35,7 @@ using AstroData::Observation;
 #ifndef DEDISPERSION_AVX_HPP
 #define DEDISPERSION_AVX_HPP
 
-namespace TDM {
+namespace PulsarSearch {
 
 // OpenMP + SIMD dedispersion algorithm
 template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, unsigned int * const __restrict__ shifts);
@@ -61,6 +61,6 @@ template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel,
 	}
 }
 
-} // TDM
+} // PulsarSearch
 
 #endif // DEDISPERSION_AVX_HPP

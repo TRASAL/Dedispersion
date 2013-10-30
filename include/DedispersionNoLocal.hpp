@@ -46,7 +46,7 @@ using AstroData::Observation;
 #ifndef DEDISPERSION_HPP
 #define DEDISPERSION_HPP
 
-namespace TDM {
+namespace PulsarSearch {
 
 // OpenCL dedispersion algorithm
 template< typename T > class Dedispersion : public Kernel< T > {
@@ -223,6 +223,6 @@ template< typename T > inline void Dedispersion< T >::setShifts(CLData< unsigned
 	shifts = data;
 }
 	
-} // TDM
+} // PulsarSearch
 
 #endif // DEDISPERSION_HPP

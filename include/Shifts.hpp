@@ -26,7 +26,7 @@ using AstroData::Observation;
 #ifndef SHIFTS_HPP
 #define SHIFTS_HPP
 
-namespace TDM {
+namespace PulsarSearch {
 
 template< typename T > CLData< unsigned int > * getShifts(Observation< T > & observation);
 
@@ -54,7 +54,7 @@ template< typename T > CLData< unsigned int > * getShifts(Observation< T > & obs
 
 	return shifts;
 }
-} // TDM
+} // PulsarSearch
 
 #endif // SHIFTS_HPP
 
