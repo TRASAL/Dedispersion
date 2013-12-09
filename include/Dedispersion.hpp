@@ -197,7 +197,7 @@ template< typename T > void Dedispersion< T >::generateCode() throw (OpenCLError
 	delete sums;
 	delete stores;
 
-	globalSize = cl::NDRange((observation->getNrSamplesPerSecond() / nrSamplesPerThread), (observation->getNrDMs() / nrDMsPerThread));
+	globalSize = cl::NDRange((observation->getNrSamplesPerPaddedSecond() / nrSamplesPerThread), (observation->getNrDMs() / nrDMsPerThread));
 	localSize = cl::NDRange(nrSamplesPerBlock, nrDMsPerBlock);
 
 	this->compile();
