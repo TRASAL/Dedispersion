@@ -38,7 +38,7 @@ using AstroData::Observation;
 namespace PulsarSearch {
 
 // OpenMP + SIMD dedispersion algorithm
-template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, unsigned int * const __restrict__ shifts);
+template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts);
 
 
 // Implementation
