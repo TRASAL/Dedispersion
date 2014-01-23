@@ -45,15 +45,18 @@ template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel,
 		#pragma omp parallel for
 		for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
 			#pragma omp parallel for
-			for ( unsigned int sample = 0; sample < nrSamplesPerSecond; sample++ ) {
-				T dedispersedSample = static_cast< T >(0);
+			for ( unsigned int sample = 0; sample < nrSamplesPerSecond; sample += 16 ) {
+				__m512 dedispersedSample = _mm512_setzero_ps();
 	
 				for ( unsigned int channel = 0; channel < nrChannels; channel++ ) {
 					unsigned int shift = shifts[(dm * nrChannels) + channel];
-					dedispersedSample += input[(channel * nrSamplesPerChannel) + (sample + shift)];
+					__m512 dispersedSample;
+					
+					dispersedSample = _mm512_loadunpackhi_ps(_mm512_loadunpacklo_ps(dispersedSample, &(input[(channel * nrSamplesPerChannel) + (sample + shift)])), &(input[(channel * nrSamplesPerChannel) + (sample + shift)]) + 16);
+					dedispersedSample = _mm512_add_ps(dedispersedSample, dispersedSample);
 				}
-	
-				output[(dm * nrSamplesPerPaddedSecond) + sample] = dedispersedSample;
+
+				_mm512_store_ps(&(output[(dm * nrSamplesPerPaddedSecond) + sample]), dedispersedSample);
 			}
 		}
 	}
