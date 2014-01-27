@@ -40,7 +40,7 @@ namespace PulsarSearch {
 // OpenMP + SIMD dedispersion algorithm
 template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, unsigned int * const __restrict__ shifts);
 template< typename T > void dedispersionAVX(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts);
-template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrChannels, const unsigned int nrSamplesPerPaddedSecond, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts);
+template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrChannels, const unsigned int nrSamplesPerPaddedSecond, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts);
 
 
 // Implementation
@@ -81,7 +81,7 @@ template< typename T > void dedispersionAVX(const unsigned int nrSamplesPerChann
 	}
 }
 
-template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrChannels, const unsigned int nrSamplesPerPaddedSecond, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {
+template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrChannels, const unsigned int nrSamplesPerPaddedSecond, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {
 	#pragma offload target(mic) nocopy(input: alloc_if(0) free_if(0)) nocopy(output: alloc_if(0) free_if(0)) nocopy(shifts: alloc_if(0) free_if(0))
 	{
 		#pragma omp parallel for
