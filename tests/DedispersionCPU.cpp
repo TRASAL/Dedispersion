@@ -135,7 +135,7 @@ int main(int argc, char * argv[]) {
 
 	cout << endl;
 
-	cout << "Wrong samples: " << wrongOnes << " (" << (wrongOnes * 100) / (static_cast< long long unsigned int >(observation.getNrSeconds()) * observation.getNrDMs() * observation.getNrSamplesPerSecond()) << "%)." << endl;
+	cout << "Wrong samples: " << wrongOnes << " (" << (wrongOnes * 100) / (static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond()) << "%)." << endl;
 	cout << endl;
 	
 	return 0;
