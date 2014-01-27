@@ -99,9 +99,6 @@ int main(int argc, char * argv[]) {
 	observation.setNrChannels(nrChannels);
 	observation.setFirstDM(firstDM);
 	observation.setDMStep(DMStep);
-	observation.setFirstPeriod(nrBins);
-	observation.setPeriodStep(nrBins);
-	observation.setNrBins(nrBins);
 	
 	cout << fixed << endl;
 	cout << "# nrDMs GFLOPs err time err" << endl << endl;
