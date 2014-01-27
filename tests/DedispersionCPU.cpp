@@ -45,6 +45,7 @@ using std::numeric_limits;
 using isa::utils::ArgumentList;
 using isa::utils::Timer;
 using isa::utils::giga;
+using isa::utils::same;
 using AstroData::Observation;
 using PulsarSearch::getShiftsCPU;
 using PulsarSearch::dedispersion;
@@ -87,7 +88,7 @@ int main(int argc, char * argv[]) {
 	try {
 		ArgumentList args(argc, argv);
 
-		observation.setNrDMs(args.getSwitchArgument("-dms"));
+		observation.setNrDMs(args.getSwitchArgument< unsigned int >("-dms"));
 	} catch ( exception & err ) {
 		cerr << err.what() << endl;
 		return 1;
