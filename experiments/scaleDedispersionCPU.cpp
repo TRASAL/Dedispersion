@@ -128,7 +128,7 @@ int main(int argc, char * argv[]) {
 		for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
 			dedispersionTimer.start();
 			dedispersionAVX(nrSamplesPerChannel, observation, dispersedData, dedispersedData, shifts);
-			//dedispersionPhi(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
+			//dedispersionPhi(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedData, shifts);
 			dedispersionTimer.stop();
 
 			if ( iteration == 0 ) {
