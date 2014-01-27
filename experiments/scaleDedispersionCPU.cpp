@@ -47,11 +47,12 @@ using isa::utils::Timer;
 using isa::utils::giga;
 using AstroData::Observation;
 using PulsarSearch::getShiftsCPU;
-using PulsarSearch::dedispersion;
+using PulsarSearch::dedispersionAVX;
+using PulsarSearch::dedispersionPhi;
 
 typedef float dataType;
 const string typeName("float");
-const unsigned int padding = 8;
+const unsigned int padding = 16;
 
 // Common parameters
 const unsigned int nrBeams = 1;
@@ -69,8 +70,6 @@ const unsigned int nrChannels = 1024;
 // DMs
 const float firstDM = 0.0f;
 const float DMStep = 0.25f;
-// Periods
-const unsigned int nrBins = 32;
 
 
 int main(int argc, char * argv[]) {
@@ -109,7 +108,6 @@ int main(int argc, char * argv[]) {
 	
 	for ( unsigned int nrDMs = 2; nrDMs <= 4096; nrDMs *= 2 )	{
 		unsigned int nrSamplesPerChannel = 0;
-		unsigned int secondsToBuffer = 0;
 		observation.setNrDMs(nrDMs);
 		shifts = getShiftsCPU(observation);
 		
@@ -118,10 +116,9 @@ int main(int argc, char * argv[]) {
 		} else {
 			nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + shifts[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
 		}
-		secondsToBuffer = static_cast< unsigned int >(ceil(static_cast< float >(nrSamplesPerChannel) / observation.getNrSamplesPerPaddedSecond()));
 
 		// Allocate memory
-		dispersedData = new dataType [secondsToBuffer * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond()];
+		dispersedData = new dataType [observation.getNrChannels() * nrSamplesPerChannel];
 		dedispersedData = new dataType [observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond()];
 
 		double gflops = giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond() * observation.getNrChannels());
@@ -133,7 +130,8 @@ int main(int argc, char * argv[]) {
 
 		for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
 			dedispersionTimer.start();
-			dedispersion(nrSamplesPerChannel, observation, dispersedData, dedispersedData, shifts);
+			dedispersionAVX(nrSamplesPerChannel, observation, dispersedData, dedispersedData, shifts);
+			//dedispersionPhi(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
 			dedispersionTimer.stop();
 
 			if ( iteration == 0 ) {
