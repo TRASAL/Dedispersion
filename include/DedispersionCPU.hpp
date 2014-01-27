@@ -97,7 +97,8 @@ template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChann
 				dedispersedSample = _mm512_add_ps(dedispersedSample, dispersedSample);
 			}
 
-			_mm512_store_ps(&(output[(dm * nrSamplesPerPaddedSecond) + sample]), dedispersedSample);
+			_mm512_packstorelo_ps(&(output[(dm * nrSamplesPerPaddedSecond) + sample]), dedispersedSample);
+			_mm512_packstorehi_ps(&(output[(dm * nrSamplesPerPaddedSecond) + sample]) + 16, dedispersedSample);
 		}
 	}
 }
