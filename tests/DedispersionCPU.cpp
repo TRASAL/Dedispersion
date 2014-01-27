@@ -25,6 +25,8 @@
 #include <iomanip>
 #include <limits>
 #include <cmath>
+#include <cstdlib>
+#include <ctime>
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -76,7 +78,6 @@ const float DMStep = 0.25f;
 
 int main(int argc, char * argv[]) {
 	unsigned int nrSamplesPerChannel = 0;
-	unsigned int secondsToBuffer = 0;
 	long long unsigned int wrongOnes = 0;
 	Observation< dataType > observation("DedispersionTest", typeName);
 	unsigned int * shifts = 0;
@@ -112,12 +113,18 @@ int main(int argc, char * argv[]) {
 	} else {
 		nrSamplesPerChannel = (observation.getNrSamplesPerSecond() + shifts[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
 	}
-	secondsToBuffer = static_cast< unsigned int >(ceil(static_cast< float >(nrSamplesPerChannel) / observation.getNrSamplesPerPaddedSecond()));
 
 	// Allocate memory
-	dispersedData = new dataType [secondsToBuffer * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond()];
+	dispersedData = new dataType [observation.getNrChannels() * nrSamplesPerChannel];
 	dedispersedData = new dataType [observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond()];
 	dedispersedDataPar = new dataType [observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond()];
+
+	srand(time(NULL));
+	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+		for ( unsigned int sample = 0; sample < nrSamplesPerChannel; sample++ ) {
+			dispersedData[(channel * nrSamplesPerChannel) + sample] = rand() % 1000;
+		}
+	}
 
 	dedispersion(nrSamplesPerChannel, observation, dispersedData, dedispersedData, shifts);
 	dedispersionAVX(nrSamplesPerChannel, observation, dispersedData, dedispersedDataPar, shifts);
