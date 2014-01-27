@@ -45,9 +45,7 @@ template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChann
 
 // Implementation
 template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T * const __restrict__ input, T * const __restrict__ output, unsigned int * const __restrict__ shifts) {
-	#pragma omp parallel for
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-		#pragma omp parallel for
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
 			T dedispersedSample = static_cast< T >(0);
 
