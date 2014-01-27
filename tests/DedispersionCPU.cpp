@@ -121,7 +121,7 @@ int main(int argc, char * argv[]) {
 
 	dedispersion(nrSamplesPerChannel, observation, dispersedData, dedispersedData, shifts);
 	dedispersionAVX(nrSamplesPerChannel, observation, dispersedData, dedispersedDataPar, shifts);
-	//dedispersionPhi(nrSamplesPerChannel, observation, dispersedData, dedispersedDataPar, shifts);
+	//dedispersionPhi(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
 
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {

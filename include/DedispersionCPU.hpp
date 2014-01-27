@@ -40,7 +40,7 @@ namespace PulsarSearch {
 // OpenMP + SIMD dedispersion algorithm
 template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, unsigned int * const __restrict__ shifts);
 template< typename T > void dedispersionAVX(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts);
-template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts);
+template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrChannels, const unsigned int nrSamplesPerPaddedSecond, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts);
 
 
 // Implementation
@@ -81,17 +81,17 @@ template< typename T > void dedispersionAVX(const unsigned int nrSamplesPerChann
 	}
 }
 
-template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {
+template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrChannels, const unsigned int nrSamplesPerPaddedSecond, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {
 	#pragma offload target(mic) nocopy(input: alloc_if(0) free_if(0)) nocopy(output: alloc_if(0) free_if(0)) nocopy(shifts: alloc_if(0) free_if(0))
 	{
 		#pragma omp parallel for
-		for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+		for ( unsigned int dm = 0; dm < nrDMs; dm++ ) {
 			#pragma omp parallel for
-			for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample += 16 ) {
+			for ( unsigned int sample = 0; sample < nrSamplesPerSecond; sample += 16 ) {
 				__m512 dedispersedSample = _mm512_setzero_ps();
 	
-				for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-					unsigned int shift = shifts[(dm * observation.getNrChannels()) + channel];
+				for ( unsigned int channel = 0; channel < nrChannels; channel++ ) {
+					unsigned int shift = shifts[(dm * nrChannels) + channel];
 					__m512 dispersedSample;
 
 					dispersedSample = _mm512_loadunpacklo_ps(dispersedSample, &(input[(channel * nrSamplesPerChannel) + (sample + shift)]));
@@ -99,7 +99,7 @@ template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChann
 					dedispersedSample = _mm512_add_ps(dedispersedSample, dispersedSample);
 				}
 
-				_mm512_store_ps(&(output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample]), dedispersedSample);
+				_mm512_store_ps(&(output[(dm * nrSamplesPerPaddedSecond) + sample]), dedispersedSample);
 			}
 		}
 	}
