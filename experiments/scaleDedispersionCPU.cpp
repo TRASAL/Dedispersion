@@ -40,6 +40,8 @@ using std::numeric_limits;
 #include <Observation.hpp>
 #include <ShiftsCPU.hpp>
 #include <DedispersionCPU.hpp>
+#include <dedispersionAVX.hpp>
+#include <DedispersionPhi.hpp>
 #include <Timer.hpp>
 #include <utils.hpp>
 using isa::utils::ArgumentList;

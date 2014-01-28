@@ -60,7 +60,8 @@ int main(int argc, char * argv[]) {
 
 void generatorPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread) {
 	string * code = new string();
-	*code = "template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrChannels, const unsigned int nrSamplesPerPaddedSecond, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
+	*code = "namespace PulsarSearch {\n"
+		"template< typename T > void dedispersionPhi(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrChannels, const unsigned int nrSamplesPerPaddedSecond, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
 		"#pragma omp parallel for schedule(static)\n"
 		"for ( unsigned int dm = 0; dm < nrDMs / " + toStringValue< unsigned int >(nrDMsPerThread) +  "; dm++ ) {\n"
 			"#pragma omp parallel for schedule(static)\n"
@@ -78,6 +79,7 @@ void generatorPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDM
 				
 			"}\n"
 		"}\n"
+	"}\n"
 	"}";
 	string defsTemplate = "__m512 dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm512_setzero_ps();\n";
 	string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + DM<%DM_NUM%>) * nrChannels) + channel];";
