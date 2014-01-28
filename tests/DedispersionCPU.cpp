@@ -58,7 +58,7 @@ using PulsarSearch::dedispersionPhi;
 
 typedef float dataType;
 const string typeName("float");
-const unsigned int padding = 8;
+const unsigned int padding = 16;
 
 // Common parameters
 const unsigned int nrBeams = 1;
@@ -129,7 +129,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	dedispersion(nrSamplesPerChannel, observation, dispersedData, dedispersedData, shifts);
-	dedispersionAVX(nrSamplesPerChannel, observation, dispersedData, dedispersedDataPar, shifts);
+	dedispersionAVX(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
 	//dedispersionPhi(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
 
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {

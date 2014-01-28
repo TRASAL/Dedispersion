@@ -26,9 +26,8 @@ using AstroData::Observation;
 
 namespace PulsarSearch {
 
-// OpenMP + SIMD dedispersion algorithm
+// Sequential dedispersion
 template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, unsigned int * const __restrict__ shifts);
-template< typename T > void dedispersionAVX(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts);
 
 
 // Implementation
@@ -44,25 +43,6 @@ template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel,
 			}
 
 			output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] = dedispersedSample;
-		}
-	}
-}
-
-template< typename T > void dedispersionAVX(const unsigned int nrSamplesPerChannel, Observation< T > & observation, const T * const __restrict__ input, T * const __restrict__ output, unsigned int * const __restrict__ shifts) {
-	#pragma omp parallel for schedule(static)
-	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-		#pragma omp parallel for schedule(static)
-		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample += 8 ) {
-			__m256 dedispersedSample = _mm256_setzero_ps();
-
-			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-				unsigned int shift = shifts[(dm * observation.getNrChannels()) + channel];
-				__m256 dispersedSample = _mm256_loadu_ps(&(input[(channel * nrSamplesPerChannel) + (sample + shift)]));
-				
-				dedispersedSample = _mm256_add_ps(dedispersedSample, dispersedSample);
-			}
-
-			_mm256_store_ps(&(output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample]), dedispersedSample);
 		}
 	}
 }
