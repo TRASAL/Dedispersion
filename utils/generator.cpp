@@ -29,6 +29,7 @@ using std::exception;
 using isa::utils::ArgumentList;
 #include <utils.hpp>
 using isa::utils::toStringValue;
+using isa::utils::replace;
 
 void generatorPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread);
 void generatorAVX();
@@ -100,7 +101,7 @@ void generatorPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDM
 	}
 	for ( unsigned int sample = 0; sample < nrSamplesPerThread; sample++ ) {
 		string sample_s = toStringValue< unsigned int >(sample);
-		string offset_s = toStringValue< unsigned int >(sample * nrSamplesPerBlock);
+		string offset_s = toStringValue< unsigned int >(sample * 16);
 		string * defsDM = new string();
 		string * sumsDM = new string();
 		string * storesDM = new string();
