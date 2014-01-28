@@ -82,7 +82,7 @@ void generatorPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDM
 	"}\n"
 	"}";
 	string defsTemplate = "__m512 dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm512_setzero_ps();\n";
-	string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + DM<%DM_NUM%>) * nrChannels) + channel];";
+	string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * nrChannels) + channel];";
 	string sumsTemplate = "dispersedSample = _mm512_loadunpacklo_ps(dispersedSample, &(input[(channel * nrSamplesPerChannel) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]));\n"
 		"dispersedSample = _mm512_loadunpackhi_ps(dispersedSample, &(input[(channel * nrSamplesPerChannel) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]) + 16);\n"
 		"dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm512_add_ps(dedispersedSample<%NUM%>DM<%DM_NUM%>, dispersedSample);\n";
