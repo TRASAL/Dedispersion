@@ -53,8 +53,6 @@ using isa::utils::same;
 using AstroData::Observation;
 using PulsarSearch::getShiftsCPU;
 using PulsarSearch::dedispersion;
-using PulsarSearch::dedispersionAVX;
-using PulsarSearch::dedispersionPhi;
 
 typedef float dataType;
 const string typeName("float");
@@ -129,8 +127,8 @@ int main(int argc, char * argv[]) {
 	}
 
 	dedispersion(nrSamplesPerChannel, observation, dispersedData, dedispersedData, shifts);
-	dedispersionAVX(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
-	//dedispersionPhi(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
+	//PulsarSearch::dedispersionAVX(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
+	//PulsarSearch::dedispersionPhi(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
 
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
