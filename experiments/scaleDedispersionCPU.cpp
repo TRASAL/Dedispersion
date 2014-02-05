@@ -40,7 +40,7 @@ using std::numeric_limits;
 #include <Observation.hpp>
 #include <ShiftsCPU.hpp>
 #include <DedispersionCPU.hpp>
-#include <dedispersionAVX.hpp>
+#include <DedispersionAVX.hpp>
 #include <DedispersionPhi.hpp>
 #include <Timer.hpp>
 #include <utils.hpp>
@@ -127,8 +127,8 @@ int main(int argc, char * argv[]) {
 
 		for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
 			dedispersionTimer.start();
-			//PulsarSearch::dedispersionAVX(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
-			//PulsarSearch::dedispersionPhi(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedDataPar, shifts);
+			//PulsarSearch::dedispersionAVX(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedData, shifts);
+			//PulsarSearch::dedispersionPhi(nrSamplesPerChannel, observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrChannels(), observation.getNrSamplesPerPaddedSecond(), dispersedData, dedispersedData, shifts);
 			dedispersionTimer.stop();
 
 			if ( iteration == 0 ) {
