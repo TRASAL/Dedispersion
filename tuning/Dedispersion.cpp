@@ -49,6 +49,9 @@ using PulsarSearch::getShifts;
 using PulsarSearch::Dedispersion;
 #include <utils.hpp>
 using isa::utils::pad;
+#include <Exceptions.hpp>
+using isa::Exceptions::OpenCLError;
+using isa::Exceptions::EmptyCommandLine;
 
 typedef float dataType;
 const string typeName("float");
@@ -87,6 +90,9 @@ int main(int argc, char * argv[]) {
 		observation.setNrDMs(args.getSwitchArgument< unsigned int >("-dms"));
 		observation.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
 		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
+	} catch ( EmptyCommandLine err ) {
+		cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... -padding ... -min_threads ... -max_threads ... -max_items ... -max_rows ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << endl;
+		return 1;
 	} catch ( exception &err ) {
 		cerr << err.what() << endl;
 		return 1;
