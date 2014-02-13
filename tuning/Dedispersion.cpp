@@ -80,7 +80,7 @@ int main(int argc, char * argv[]) {
 		maxItemsPerThread = args.getSwitchArgument< unsigned int >("-max_items");
 		maxRows = args.getSwitchArgument< unsigned int >("-max_rows");
 		observation.setMinFreq(args.getSwitchArgument< float >("-min_freq"));
-		observation.setMaxFreq(observation.getMinFreq() + (channelBandwidth * (nrChannels - 1)));
+		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
 		observation.setChannelBandwidth(args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
 		observation.setNrChannels(args.getSwitchArgument< unsigned int >("-channels"));
