@@ -138,7 +138,7 @@ int main(int argc, char * argv[]) {
 	
 	// Find the parameters
 	vector< unsigned int > samplesPerBlock;
-	for ( unsigned int samples = minThreads; samples <= maxThreadsPerBlock; samples++ ) {
+	for ( unsigned int samples = minThreads; samples <= maxThreadsPerBlock; samples += minThreads ) {
 		if ( (observation.getNrSamplesPerPaddedSecond() % samples) == 0 ) {
 			samplesPerBlock.push_back(samples);
 		}
