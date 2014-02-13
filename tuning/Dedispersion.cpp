@@ -83,13 +83,13 @@ int main(int argc, char * argv[]) {
 		maxItemsPerThread = args.getSwitchArgument< unsigned int >("-max_items");
 		maxRows = args.getSwitchArgument< unsigned int >("-max_rows");
 		observation.setMinFreq(args.getSwitchArgument< float >("-min_freq"));
-		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
 		observation.setChannelBandwidth(args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
 		observation.setNrChannels(args.getSwitchArgument< unsigned int >("-channels"));
 		observation.setNrDMs(args.getSwitchArgument< unsigned int >("-dms"));
 		observation.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
 		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
+		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
 	} catch ( EmptyCommandLine err ) {
 		cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... -padding ... -min_threads ... -max_threads ... -max_items ... -max_rows ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << endl;
 		return 1;
