@@ -7,7 +7,6 @@ all: clean Dedispersion
  
 
 Dedispersion: Dedispersion.cpp
-	rm -f $(PROJ_BASE)/bin/DedispersionTuning
 	$(LINKER) -o $(PROJ_BASE)/bin/DedispersionTuning Dedispersion.cpp $(UTILS_SRC) $(INCLUDES) $(LIBS) $(CFLAGS) $(LDFLAGS) 
 
 clean:
