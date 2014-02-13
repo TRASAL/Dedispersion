@@ -80,7 +80,7 @@ int main(int argc, char * argv[]) {
 		maxItemsPerThread = args.getSwitchArgument< unsigned int >("-max_items");
 		maxRows = args.getSwitchArgument< unsigned int >("-max_rows");
 		observation.setMinFreq(args.getSwitchArgument< float >("-min_freq"));
-		observation.setMaxFreq(minFreq + (channelBandwidth * (nrChannels - 1)));
+		observation.setMaxFreq(observation.getMinFreq() + (channelBandwidth * (nrChannels - 1)));
 		observation.setChannelBandwidth(args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
 		observation.setNrChannels(args.getSwitchArgument< unsigned int >("-channels"));
@@ -201,7 +201,7 @@ int main(int argc, char * argv[]) {
 						}
 						Vcur = sqrt(Vcur / nrIterations);
 
-						cout << nrDMs << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " " << setprecision(3) << Acur << " " << Vcur << " " << setprecision(6) << clDedisperse.getTimer().getAverageTime() << " " << clDedisperse.getTimer().getStdDev() << endl;
+						cout << observation.getNrDMs() << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " " << setprecision(3) << Acur << " " << Vcur << " " << setprecision(6) << clDedisperse.getTimer().getAverageTime() << " " << clDedisperse.getTimer().getStdDev() << endl;
 					} catch ( OpenCLError err ) {
 						cerr << err.what() << endl;
 						continue;
