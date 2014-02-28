@@ -162,11 +162,6 @@ int main(int argc, char * argv[]) {
 				}
 
 				for ( unsigned int DMsPerThread = 1; DMsPerThread <= maxItemsPerThread; DMsPerThread++ ) {
-					double Acur = 0.0;
-					double Aold = 0.0;
-					double Vcur = 0.0;
-					double Vold = 0.0;
-
 					if ( (observation.getNrDMs() % ((*DMs) * DMsPerThread)) != 0 ) {
 						continue;
 					}
@@ -193,21 +188,9 @@ int main(int argc, char * argv[]) {
 
 						for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
 							clDedisperse(dispersedData, dedispersedData);
-
-							if ( iteration == 0 ) {
-								Acur = clDedisperse.getGFLOP() / clDedisperse.getTimer().getLastRunTime();
-							}
-							else {
-								Aold = Acur;
-								Vold = Vcur;
-
-								Acur = Aold + (((clDedisperse.getGFLOP() / clDedisperse.getTimer().getLastRunTime()) - Aold) / (iteration + 1));
-								Vcur = Vold + (((clDedisperse.getGFLOP() / clDedisperse.getTimer().getLastRunTime()) - Aold) * ((clDedisperse.getGFLOP() / clDedisperse.getTimer().getLastRunTime()) - Acur));
-							}
 						}
-						Vcur = sqrt(Vcur / nrIterations);
 
-						cout << observation.getNrDMs() << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " " << setprecision(3) << Acur << " " << Vcur << " " << setprecision(6) << clDedisperse.getTimer().getAverageTime() << " " << clDedisperse.getTimer().getStdDev() << endl;
+						cout << observation.getNrDMs() << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " " << setprecision(3) << clDedisperse.getGFLOPs() << " " << clDedisperse.getGFLOPsErr()  << " " << setprecision(6) << clDedisperse.getTimer().getAverageTime() << " " << clDedisperse.getTimer().getStdDev() << endl;
 					} catch ( OpenCLError err ) {
 						cerr << err.what() << endl;
 						continue;
