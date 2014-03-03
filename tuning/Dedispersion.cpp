@@ -185,6 +185,7 @@ int main(int argc, char * argv[]) {
 						// Warm-up
 						clDedisperse(dispersedData, dedispersedData);
 						clDedisperse.getTimer().reset();
+						clDedisperse.resetStats();
 
 						for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
 							clDedisperse(dispersedData, dedispersedData);
