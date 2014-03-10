@@ -64,6 +64,7 @@ int main(int argc, char * argv[]) {
 	unsigned int minThreads = 0;
 	unsigned int maxThreadsPerBlock = 0;
 	unsigned int maxItemsPerThread = 0;
+	unsigned int maxColumns = 0;
 	unsigned int maxRows = 0;
 	unsigned int secondsToBuffer = 0;
 	Observation< dataType > observation("DedispersionTuning", typeName);
@@ -81,6 +82,7 @@ int main(int argc, char * argv[]) {
 		minThreads = args.getSwitchArgument< unsigned int >("-min_threads");
 		maxThreadsPerBlock = args.getSwitchArgument< unsigned int >("-max_threads");
 		maxItemsPerThread = args.getSwitchArgument< unsigned int >("-max_items");
+		maxColumns = args.getSwitchArgument< unsigned int >("-max_columns");
 		maxRows = args.getSwitchArgument< unsigned int >("-max_rows");
 		observation.setMinFreq(args.getSwitchArgument< float >("-min_freq"));
 		observation.setChannelBandwidth(args.getSwitchArgument< float >("-channel_bandwidth"));
@@ -138,7 +140,7 @@ int main(int argc, char * argv[]) {
 	
 	// Find the parameters
 	vector< unsigned int > samplesPerBlock;
-	for ( unsigned int samples = minThreads; samples <= maxThreadsPerBlock; samples += minThreads ) {
+	for ( unsigned int samples = minThreads; samples <= maxColumns; samples += minThreads ) {
 		if ( (observation.getNrSamplesPerPaddedSecond() % samples) == 0 ) {
 			samplesPerBlock.push_back(samples);
 		}
