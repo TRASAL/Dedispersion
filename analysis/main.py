@@ -37,6 +37,24 @@ elif COMMAND == "export":
   except:
     print(sys.exc_info()[0])
     sys.exit(1)
+elif COMMAND == "tuneNoReuse":
+  try:
+    confs = export.tuneNoReuse(queue, sys.argv[2], sys.argv[3])
+    export.printResults(confs)
+  except pymysql.err.ProgrammingError:
+    pass
+  except:
+    print(sys.exc_info()[0])
+    sys.exit(1)
+elif COMMAND == "tuneThreadsNoReuse":
+  try:
+    confs = export.tuneThreadsNoReuse(queue, sys.argv[2], sys.argv[3])
+    export.printResults(confs)
+  except pymysql.err.ProgrammingError:
+    pass
+  except:
+    print(sys.exc_info()[0])
+    sys.exit(1)
 elif COMMAND == "statistics":
   try:
     confs = export.statistics(queue, sys.argv[2])
@@ -57,7 +75,7 @@ elif COMMAND == "snr":
     sys.exit(1)
 else:
   print("Unknown command.")
-  print("Supported commands are: create, delete, load, export, statistics, snr")
+  print("Supported commands are: create, delete, load, export, tuneNoReuse, tuneThreadsNoReuse, statistics, snr")
 
 queue.close()
 dbConn.commit()
