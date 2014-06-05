@@ -88,7 +88,7 @@ int main(int argc, char * argv[]) {
 		observation.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
 		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
 		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
-	} catch ( EmptyCommandLine err ) {
+	} catch ( EmptyCommandLine &err ) {
 		cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... -padding ... -min_threads ... -max_threads ... -max_items ... -max_rows ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << endl;
 		return 1;
 	} catch ( exception &err ) {
@@ -129,7 +129,7 @@ int main(int argc, char * argv[]) {
 		dedispersedData->setCLContext(clContext);
 		dedispersedData->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
 		dedispersedData->allocateDeviceData();
-	} catch ( OpenCLError err ) {
+	} catch ( OpenCLError &err ) {
 		cerr << err.what() << endl;
 		return 1;
 	}
@@ -148,8 +148,8 @@ int main(int argc, char * argv[]) {
 		}
 	}
 
-	for ( vector< unsigned int >::iterator samples = samplesPerBlock.begin(); samples != samplesPerBlock.end(); samples++ ) {
-		for ( vector< unsigned int >::iterator DMs = DMsPerBlock.begin(); DMs != DMsPerBlock.end(); DMs++ ) {
+	for ( vector< unsigned int >::iterator samples = samplesPerBlock.begin(); samples != samplesPerBlock.end(); ++samples ) {
+		for ( vector< unsigned int >::iterator DMs = DMsPerBlock.begin(); DMs != DMsPerBlock.end(); ++DMs ) {
 			if ( ((*samples) * (*DMs)) > maxThreadsPerBlock ) {
 				break;
 			}
@@ -190,7 +190,7 @@ int main(int argc, char * argv[]) {
 						}
 
 						cout << observation.getNrDMs() << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " " << setprecision(3) << clDedisperse.getGFLOPs() << " " << clDedisperse.getGFLOPsErr()  << " " << setprecision(6) << clDedisperse.getTimer().getAverageTime() << " " << clDedisperse.getTimer().getStdDev() << endl;
-					} catch ( OpenCLError err ) {
+					} catch ( OpenCLError &err ) {
 						cerr << err.what() << endl;
 						continue;
 					}

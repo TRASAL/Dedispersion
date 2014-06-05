@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 		clDedispersedData->setCLContext(clContext);
 		clDedispersedData->setCLQueue(&((clQueues->at(clDeviceID)).at(0)));
 		clDedispersedData->allocateDeviceData();
-	} catch ( OpenCLError err ) {
+	} catch ( OpenCLError &err ) {
 		cerr << err.what() << endl;
 		return 1;
 	}
@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
 
 		clDedisperse(dispersedData, clDedispersedData);
 		clDedispersedData->copyDeviceToHost();
-	} catch ( OpenCLError err ) {
+	} catch ( OpenCLError &err ) {
 		cerr << err.what() << endl;
 		return 1;
 	}
