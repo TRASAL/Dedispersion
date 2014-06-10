@@ -23,14 +23,16 @@
 
 namespace PulsarSearch {
 
-// Sequential dedispersion algorithm
-template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, AstroData::Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const std::vector< unsigned int > & shifts);
+// Sequential dedispersion
+template< typename T > void dedispersion(AstroData::Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const std::vector< unsigned int > & shifts);
 // OpenCL dedispersion algorithm
-template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int inputChannelSize, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts);
+template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts);
+// AVX dedispersion algorithm
+template< typename T > std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
 
 
 // Implementations
-template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, AstroData::Observation< T > & observation, const T * const __restrict__ input, T * const __restrict__ output, const std::vector< unsigned int > & shifts) {
+template< typename T > void dedispersion(AstroData::Observation< T > & observation, const T * const __restrict__ input, T * const __restrict__ output, const std::vector< unsigned int > & shifts) {
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
 			T dedispersedSample = static_cast< T >(0);
@@ -38,7 +40,7 @@ template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel,
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 				unsigned int shift = shifts[(dm * observation.getNrChannels()) + channel];
 
-				dedispersedSample += input[(channel * nrSamplesPerChannel) + (sample + shift)];
+				dedispersedSample += input[(channel * observation.get nrSamplesPerChannel) + (sample + shift)];
 			}
 
 			output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] = dedispersedSample;
@@ -46,7 +48,7 @@ template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel,
 	}
 }
 
-template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int inputChannelSize, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts) {
+template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts) {
   std::string * code = new std::string();
   std::string sumsTemplate = string();
   std::string nrTotalSamplesPerBlock_s = isa::utils::toStringValue< unsigned int >(nrSamplesPerBlock * nrSamplesPerThread);
@@ -75,7 +77,7 @@ template< typename T > std::string * getDedispersionOpenCL(const bool localMem, 
       "inShMem = (get_local_id(1) * " + isa::utils::toString< unsigned int >(nrSamplesPerBlock) + ") + get_local_id(0);\n"
       "inGlMem = ((get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem) + minShift;\n"
       "while ( inShMem < (" + nrTotalSamplesPerBlock_s + " + (maxShift - minShift)) ) {\n"
-      "buffer[inShMem] = input[(channel * " + isa::utils::toString< unsigned int >(inputChannelSize) + ") + inGlMem];\n"
+      "buffer[inShMem] = input[(channel * " + isa::utils::toString< unsigned int >(observation.getNrSamplesPerDispersedChannel()) + ") + inGlMem];\n"
       "inShMem += " + nrTotalThreads_s + ";\n"
       "inGlMem += " + nrTotalThreads_s + ";\n"
       "}\n"
@@ -104,7 +106,7 @@ template< typename T > std::string * getDedispersionOpenCL(const bool localMem, 
       "<%STORES%>"
       "}";
     
-    sumsTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(channel * " + nrSamplesPerDispersedChannel_s + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
+    sumsTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(channel * " + isa::utils::toString< unsigned int >(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
   }
 	// End kernel's template
 
@@ -165,7 +167,97 @@ template< typename T > std::string * getDedispersionOpenCL(const bool localMem, 
 	delete shifts;
 	delete sums;
 	delete stores;
+
+  return code;
 }
+
+template< typename T > std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation) {
+	string * code = new string();
+	*code = "namespace PulsarSearch {\n"
+		"template< typename T > void dedispersionAVX" + toString< unsigned int >(nrSamplesPerThread) + "x" + toString< unsigned int >(nrDMsPerThread) + "(const unsigned int nrSamplesPerChannel, const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrChannels, const unsigned int nrSamplesPerPaddedSecond, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
+		"#pragma omp parallel for schedule(static)\n"
+		"for ( unsigned int dm = 0; dm < nrDMs; dm += " + toString< unsigned int >(nrDMsPerThread) + " ) {\n"
+			"#pragma omp parallel for schedule(static)\n"
+			"for ( unsigned int sample = 0; sample < nrSamplesPerSecond; sample += 8 * " + toString< unsigned int >(nrSamplesPerThread) + ") {\n"
+				"<%DEFS%>"
+				"\n"
+				"for ( unsigned int channel = 0; channel < nrChannels; channel++ ) {\n"
+					"<%SHIFTS%>"
+					"__m256 dispersedSample;\n"
+					"\n"
+					"<%SUMS%>"
+				"}\n"
+				"\n"
+				"<%STORES%>"
+
+			"}\n"
+		"}\n"
+	"}\n"
+	"}";
+	string defsTemplate = "__m256 dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm256_setzero_ps();\n";
+	string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * nrChannels) + channel];";
+	string sumsTemplate = "dispersedSample = _mm256_loadu_ps(&(input[(channel * nrSamplesPerChannel) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]));\n"
+		"dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm256_add_ps(dedispersedSample<%NUM%>DM<%DM_NUM%>, dispersedSample);\n";
+	string storesTemplate = "_mm256_store_ps(&(output[((dm + <%DM_NUM%>) * nrSamplesPerPaddedSecond) + (sample + <%OFFSET%>)]), dedispersedSample<%NUM%>DM<%DM_NUM%>);\n";
+
+	string * defs = new string();
+	string * shifts = new string();
+	string * sums = new string();
+	string * stores = new string();
+	for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
+		string dm_s = toString< unsigned int >(dm);
+		string * temp = 0;
+
+		temp = replace(&shiftsTemplate, "<%DM_NUM%>", dm_s);
+		shifts->append(*temp);
+		delete temp;
+	}
+	for ( unsigned int sample = 0; sample < nrSamplesPerThread; sample++ ) {
+		string sample_s = toString< unsigned int >(sample);
+		string offset_s = toString< unsigned int >(sample * 16);
+		string * defsDM = new string();
+		string * sumsDM = new string();
+		string * storesDM = new string();
+
+		for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
+			string dm_s = toString< unsigned int >(dm);
+			string * temp = 0;
+
+			temp = replace(&defsTemplate, "<%DM_NUM%>", dm_s);
+			defsDM->append(*temp);
+			delete temp;
+			temp = replace(&sumsTemplate, "<%DM_NUM%>", dm_s);
+			sumsDM->append(*temp);
+			delete temp;
+			temp = replace(&storesTemplate, "<%DM_NUM%>", dm_s);
+			storesDM->append(*temp);
+			delete temp;
+		}
+		defsDM = replace(defsDM, "<%NUM%>", sample_s, true);
+		defs->append(*defsDM);
+		delete defsDM;
+		sumsDM = replace(sumsDM, "<%NUM%>", sample_s, true);
+		sumsDM = replace(sumsDM, "<%OFFSET%>", offset_s, true);
+		sums->append(*sumsDM);
+		delete sumsDM;
+		storesDM = replace(storesDM, "<%NUM%>", sample_s, true);
+		storesDM = replace(storesDM, "<%OFFSET%>", offset_s, true);
+		stores->append(*storesDM);
+		delete storesDM;
+	}
+	code = replace(code, "<%DEFS%>", *defs, true);
+	code = replace(code, "<%SHIFTS%>", *shifts, true);
+	code = replace(code, "<%SUMS%>", *sums, true);
+	code = replace(code, "<%STORES%>", *stores, true);
+	delete defs;
+	delete shifts;
+	delete sums;
+	delete stores;
+
+	cout << *code << endl;
+}
+
 } // PulsarSearch
 
 #endif // DEDISPERSION_HPP
+
