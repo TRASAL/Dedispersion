@@ -13,7 +13,9 @@
 // limitations under the License.
 
 #include <string>
+#include <vector>
 
+#include <Observation.hpp>
 
 #ifndef DEDISPERSION_HPP
 #define DEDISPERSION_HPP
