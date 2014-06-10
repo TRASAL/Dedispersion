@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <CLData.hpp>
+#include <vector>
+
 #include <Observation.hpp>
-using isa::OpenCL::CLData;
-using AstroData::Observation;
 
 
 #ifndef SHIFTS_HPP
@@ -23,16 +22,13 @@ using AstroData::Observation;
 
 namespace PulsarSearch {
 
-template< typename T > CLData< unsigned int > * getShifts(Observation< T > & observation);
+template< typename T > std::vector< unsigned int > * getShifts(AstroData::Observation< T > & observation);
 
 
 // Implementation
-template< typename T > CLData< unsigned int > * getShifts(Observation< T > & observation) {
+template< typename T > std::vector< unsigned int > * getShifts(AstroData::Observation< T > & observation) {
 	float inverseHighFreq = 1.0f / (observation.getMaxFreq() * observation.getMaxFreq());
-	CLData< unsigned int > * shifts = new CLData< unsigned int >("Shifts", true);
-
-	shifts->allocateHostData(observation.getNrDMs() * observation.getNrPaddedChannels());
-	shifts->setDeviceReadOnly();
+  std::vector< unsigned int > * shifts = new std::vector< unsigned int >(observation.getNrDMs() * observation.getNrPaddedChannels());
 
 	#pragma omp parallel for
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
@@ -43,7 +39,7 @@ template< typename T > CLData< unsigned int > * getShifts(Observation< T > & obs
 			float inverseFreq = 1.0f / ((observation.getMinFreq() + (channel * observation.getChannelBandwidth())) * (observation.getMinFreq() + (channel * observation.getChannelBandwidth())));
 			float delta = kDM * (inverseFreq - inverseHighFreq);
 
-			*(shifts->getHostDataAt((dm * observation.getNrPaddedChannels()) + channel)) = static_cast< unsigned int >(delta * observation.getNrSamplesPerSecond());
+			shifts->at((dm * observation.getNrPaddedChannels()) + channel) = static_cast< unsigned int >(delta * observation.getNrSamplesPerSecond());
 		}
 	}
 
