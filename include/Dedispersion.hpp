@@ -23,12 +23,30 @@
 
 namespace PulsarSearch {
 
+// Sequential dedispersion algorithm
+template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, AstroData::Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const std::vector< unsigned int > & shifts);
 // OpenCL dedispersion algorithm
-template< typename T >std::string * getDedispersionOpenCL(bool localMem, unsigned int nrSamplesPerBlock, unsigned int nrDMsPerBlock, unsigned int nrSamplesPerThread, unsigned int nrDMsPerThread, unsigned int inputChannelSize, std::string & dataType, AstroData::Observation< T > & observation, std::vector & shifts);
+template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int inputChannelSize, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts);
 
 
-// Implementation
-template< typename T > std::string * getDedispersionOpenCL(bool localMem, unsigned int nrSamplesPerBlock, unsigned int nrDMsPerBlock, unsigned int nrSamplesPerThread, unsigned int nrDMsPerThread, unsigned int inputChannelSize, std::string & dataType, AstroData::Observation< T > & observation, std::vector & shifts) {
+// Implementations
+template< typename T > void dedispersion(const unsigned int nrSamplesPerChannel, AstroData::Observation< T > & observation, const T * const __restrict__ input, T * const __restrict__ output, const std::vector< unsigned int > & shifts) {
+	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
+			T dedispersedSample = static_cast< T >(0);
+
+			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+				unsigned int shift = shifts[(dm * observation.getNrChannels()) + channel];
+
+				dedispersedSample += input[(channel * nrSamplesPerChannel) + (sample + shift)];
+			}
+
+			output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] = dedispersedSample;
+		}
+	}
+}
+
+template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int inputChannelSize, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts) {
   std::string * code = new std::string();
   std::string sumsTemplate = string();
   std::string nrTotalSamplesPerBlock_s = isa::utils::toStringValue< unsigned int >(nrSamplesPerBlock * nrSamplesPerThread);
