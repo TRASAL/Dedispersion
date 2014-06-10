@@ -14,8 +14,8 @@
 
 #include <string>
 
+#include <Dedispersion.hpp>
 #include <utils.hpp>
-#include <Observation.hpp>
 
 
 namespace PulsarSearch {
