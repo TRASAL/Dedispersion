@@ -50,7 +50,6 @@ int main(int argc, char *argv[]) {
 	unsigned int secondsToBuffer = 0;
 	long long unsigned int wrongSamples= 0;
 	AstroData::Observation< dataType > observation("DedispersionTest", typeName);
-  std::vector< unsigned int > * shifts;
 
 	try {
     isa:::utils::ArgumentList args(argc, argv);
@@ -87,14 +86,14 @@ int main(int argc, char *argv[]) {
 	observation.setNrBeams(nrStations);
 	observation.setNrStations(nrBeams);
 
-	// Test
+	// Initialize OpenCL
 	cl::Context * clContext = new cl::Context();
 	std::vector< cl::Platform > * clPlatforms = new std::vector< cl::Platform >();
 	std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
 	std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
 
 	initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
-  shifts = PulsarSearch::getShifts(observation);
+  std::vector< unsigned int > * shifts = PulsarSearch::getShifts(observation);
 
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + (*shifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
 
@@ -110,7 +109,7 @@ int main(int argc, char *argv[]) {
     dispersedData_d = new cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), NULL, NULL);
     dedispersedData_d = new cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(dataType), NULL, NULL);
   } catch ( cl::Error &err ) {
-    std::cerr << "OpenCL error allocating memory: " << isa::utils::toString< cl_int >(err.err()) << "." << std::cerr;
+    std::cerr << "OpenCL error allocating memory: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
   }
 
@@ -127,7 +126,7 @@ int main(int argc, char *argv[]) {
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()), NULL, NULL);
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dedispersedData_d, CL_FALSE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()), NULL, NULL);
   } catch ( cl::Error &err ) {
-    std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::cerr;
+    std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
   }
 
