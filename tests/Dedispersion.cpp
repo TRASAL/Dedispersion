@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception &err ) {
-    std::cerr << "Usage: " << argv[0] << "" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " -opencl_platform ... -opencl_device ... -padding ... [-local] -sb ... -db ... -st ... -dt ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
