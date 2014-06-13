@@ -14,6 +14,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <Observation.hpp>
 #include <utils.hpp>
@@ -31,6 +32,8 @@ template< typename T > std::string * getDedispersionOpenCL(const bool localMem, 
 template< typename T > std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
 // Xeon Phi dedispers algorithm
 template< typename T > std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
+// Function pointers to AVX and Phi implementations
+std::map< std::string, void * > * getDedispersionPointers();
 // OpenCL memory bandwidth analysis
 template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector< unsigned int > & shifts);
 
