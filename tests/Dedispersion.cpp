@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 	AstroData::Observation< dataType > observation("DedispersionTest", typeName);
 
 	try {
-    isa:::utils::ArgumentList args(argc, argv);
+    isa::utils::ArgumentList args(argc, argv);
 
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
@@ -105,9 +105,9 @@ int main(int argc, char *argv[]) {
   cl::Buffer dedispersedData_d;
   std::vector< dataType > controlData = std::vector< dataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
   try {
-    shifts_d = new cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts.size() * sizeof(unsigned int), NULL, NULL);
-    dispersedData_d = new cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), NULL, NULL);
-    dedispersedData_d = new cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(dataType), NULL, NULL);
+    shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(unsigned int), NULL, NULL);
+    dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), NULL, NULL);
+    dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(dataType), NULL, NULL);
   } catch ( cl::Error &err ) {
     std::cerr << "OpenCL error allocating memory: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 
   // Copy data structures to device
   try {
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts.size() * sizeof(unsigned int), reinterpret_cast< void * >(shifts.data()), NULL, NULL);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts->size() * sizeof(unsigned int), reinterpret_cast< void * >(shifts->data()), NULL, NULL);
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()), NULL, NULL);
   } catch ( cl::Error &err ) {
     std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
@@ -164,9 +164,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	cout << endl;
-	cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond()) << "%)." << endl;
-	cout << endl;
+  std::cout << std::endl;
+  std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond()) << "%)." << std::endl;
+  std::cout << std::endl;
 
 	return 0;
 }
