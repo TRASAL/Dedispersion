@@ -47,7 +47,6 @@ int main(int argc, char *argv[]) {
 	unsigned int nrDMsPerBlock = 0;
 	unsigned int nrSamplesPerThread = 0;
 	unsigned int nrDMsPerThread = 0;
-	unsigned int secondsToBuffer = 0;
 	long long unsigned int wrongSamples= 0;
 	AstroData::Observation< dataType > observation("DedispersionTest", typeName);
 
@@ -115,7 +114,7 @@ int main(int argc, char *argv[]) {
 
 	srand(time(NULL));
 	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-		for ( unsigned int sample = 0; sample < (secondsToBuffer * observation.getNrSamplesPerSecond()); sample++ ) {
+		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedChannel(); sample++ ) {
       dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< dataType >(rand() % 10);
 		}
 	}
