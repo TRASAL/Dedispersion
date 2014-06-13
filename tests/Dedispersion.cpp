@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 	std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
 	std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
 
-	initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
+  isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
   std::vector< unsigned int > * shifts = PulsarSearch::getShifts(observation);
 
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + (*shifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
   std::cout << *code << std::endl;
 	try {
     kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -cl-uniform-work-group-size -Werror", *clContext, clDevices->at(clDeviceID));
-	} catch ( OpenCLError &err ) {
+	} catch ( isa::Exceptions::OpenCLError &err ) {
     std::cerr << err.what() << std::endl;
 		return 1;
 	}
