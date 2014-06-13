@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
   }
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getDedispersionOpenCL(localMem, nrSamplesPerBlock, nrDMsPerBlock, nrSamplesPerThread, nrDMsPerThread, typeName, observation, *shifts);
+  std::string * code = PulsarSearch::getDedispersionOpenCL< dataType >(localMem, nrSamplesPerBlock, nrDMsPerBlock, nrSamplesPerThread, nrDMsPerThread, typeName, observation, *shifts);
   cl::Kernel * kernel;
   std::cout << *code << std::endl;
 	try {
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
     kernel->setArg(1, dedispersedData_d);
     kernel->setArg(2, shifts_d);
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
-    PulsarSearch::dedispersion(observation, dispersedData, controlData, shifts);
+    PulsarSearch::dedispersion< dataType >(observation, dispersedData, controlData, shifts);
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()));
   } catch ( cl::Error &err ) {
     std::cerr << "OpenCL error kernel execution: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
