@@ -23,6 +23,7 @@
 #include <ArgumentList.hpp>
 #include <Observation.hpp>
 #include <InitializeOpenCL.hpp>
+#include <Kernel.hpp>
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
 #include <utils.hpp>
