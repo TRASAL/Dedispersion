@@ -31,7 +31,7 @@
 #include <Stats.hpp>
 
 typedef float dataType;
-const string typeName("float");
+string typeName("float");
 
 
 int main(int argc, char * argv[]) {
@@ -47,7 +47,7 @@ int main(int argc, char * argv[]) {
   AstroData::Observation< dataType > observation("DedispersionTuning", typeName);
 
 	try {
-		ArgumentList args(argc, argv);
+    isa::utils::ArgumentList args(argc, argv);
 
 		nrIterations = args.getSwitchArgument< unsigned int >("-iterations");
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
@@ -67,10 +67,10 @@ int main(int argc, char * argv[]) {
 		observation.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
 		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
 		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
-	} catch ( EmptyCommandLine &err ) {
+	} catch ( isa::Exceptions::EmptyCommandLine &err ) {
 		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-local] -padding ... -min_threads ... -max_threads ... -max_items ... -max_rows ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
-	} catch ( exception &err ) {
+	} catch ( std::exception &err ) {
 		std::cerr << err.what() << std::endl;
 		return 1;
 	}
@@ -81,7 +81,7 @@ int main(int argc, char * argv[]) {
 	std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
 	std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
 
-	initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
+  isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
   std::vector< unsigned int > * shifts = PulsarSearch::getShifts(observation);
 
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + (*shifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
@@ -93,9 +93,9 @@ int main(int argc, char * argv[]) {
   std::vector< dataType > dedispersedData = std::vector< dataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
   cl::Buffer dedispersedData_d;
   try {
-    shifts_d = new cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts.size() * sizeof(unsigned int), NULL, NULL);
-    dispersedData_d = new cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), NULL, NULL);
-    dedispersedData_d = new cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(dataType), NULL, NULL);
+    shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(unsigned int), NULL, NULL);
+    dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), NULL, NULL);
+    dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(dataType), NULL, NULL);
   } catch ( cl::Error &err ) {
     std::cerr << "OpenCL error allocating memory: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
@@ -103,14 +103,14 @@ int main(int argc, char * argv[]) {
 
 	srand(time(NULL));
 	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-		for ( unsigned int sample = 0; sample < (secondsToBuffer * observation.getNrSamplesPerSecond()); sample++ ) {
+		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedChannel(); sample++ ) {
       dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< dataType >(rand() % 10);
 		}
 	}
 
   // Copy data structures to device
   try {
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts.size() * sizeof(unsigned int), reinterpret_cast< void * >(shifts.data()));
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts->size() * sizeof(unsigned int), reinterpret_cast< void * >(shifts->data()));
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()));
   } catch ( cl::Error &err ) {
     std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
@@ -159,7 +159,7 @@ int main(int argc, char * argv[]) {
 
           try {
             kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -cl-uniform-work-group-size -Werror", *clContext, clDevices->at(clDeviceID));
-          } catch ( OpenCLError &err ) {
+          } catch ( isa::Exceptions::OpenCLError &err ) {
             std::cerr << err.what() << std::endl;
             continue;
           }
@@ -197,7 +197,7 @@ int main(int argc, char * argv[]) {
             continue;
           }
 
-          std::cout << observation.getNrDMs() << " " << observation.getNrChannels() << " " << observation.getNrSamplesPerSecond() << " " << localMem << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " " << setprecision(3) << stats.getAverage() << " " << stats.getStdDev() << " " << setprecision(6) << timer.getAverageTime() << " " << timer.getStdDev() << std::endl;
+          std::cout << observation.getNrDMs() << " " << observation.getNrChannels() << " " << observation.getNrSamplesPerSecond() << " " << localMem << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " " << std::setprecision(3) << stats.getAverage() << " " << stats.getStdDev() << " " << std::setprecision(6) << timer.getAverageTime() << " " << timer.getStdDev() << std::endl;
 				}
 			}
 		}
