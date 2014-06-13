@@ -26,13 +26,13 @@ namespace PulsarSearch {
 // Sequential dedispersion
 template< typename T > void dedispersion(AstroData::Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const std::vector< unsigned int > & shifts);
 // OpenCL dedispersion algorithm
-template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts);
+template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, AstroData::Observation< T > & observation, std::vector & shifts);
 // AVX dedispersion algorithm
 template< typename T > std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
 // Xeon Phi dedispers algorithm
 template< typename T > std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
 // OpenCL memory bandwidth analysis
-template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts);
+template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector & shifts);
 
 
 // Implementations
@@ -180,7 +180,7 @@ template< typename T > std::string * getDedispersionAVX(const unsigned int nrSam
 	*code = "namespace PulsarSearch {\n"
 		"template< typename T > void dedispersionAVX" + isa::utils::toString< unsigned int >(nrSamplesPerThread) + "x" + isa::utils::toString< unsigned int >(nrDMsPerThread) + "(const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
 		"#pragma omp parallel for schedule(static)\n"
-		"for ( unsigned int dm = 0; dm < " + isa::utils::toString< unsigned int >(bservation.getNrDMs()) + "; dm += " + isa::utils::toString< unsigned int >(nrDMsPerThread) + " ) {\n"
+		"for ( unsigned int dm = 0; dm < " + isa::utils::toString< unsigned int >(observation.getNrDMs()) + "; dm += " + isa::utils::toString< unsigned int >(nrDMsPerThread) + " ) {\n"
 			"#pragma omp parallel for schedule(static)\n"
 			"for ( unsigned int sample = 0; sample < " + isa::utils::toString< unsigned int >(observation.getNrSamplesPerSecond()) + "; sample += 8 * " + isa::utils::toString< unsigned int >(nrSamplesPerThread) + ") {\n"
 				"<%DEFS%>"
@@ -270,7 +270,7 @@ template< typename T > std::string * getDedispersionPhi(const unsigned int nrSam
 	*code = "namespace PulsarSearch {\n"
 		"template< typename T > void dedispersionPhi" + isa::utils::toString< unsigned int >(nrSamplesPerThread) + "x" + isa::utils::toString< unsigned int >(nrDMsPerThread) + "(const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
 		"#pragma omp parallel for schedule(static)\n"
-		"for ( unsigned int dm = 0; dm < " + isa::utils::toString< unsigned int >(bservation.getNrDMs()) + "; dm += " + isa::utils::toString< unsigned int >(nrDMsPerThread) + " ) {\n"
+		"for ( unsigned int dm = 0; dm < " + isa::utils::toString< unsigned int >(observation.getNrDMs()) + "; dm += " + isa::utils::toString< unsigned int >(nrDMsPerThread) + " ) {\n"
 			"#pragma omp parallel for schedule(static)\n"
 			"for ( unsigned int sample = 0; sample < " + isa::utils::toString< unsigned int >(observation.getNrSamplesPerSecond()) + "; sample += 16 * " + isa::utils::toString< unsigned int >(nrSamplesPerThread) + ") {\n"
 				"<%DEFS%>"
@@ -355,7 +355,7 @@ template< typename T > std::string * getDedispersionPhi(const unsigned int nrSam
   return code;
 }
 
-template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts) {
+template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector & shifts) {
   std::string * code = new std::string();
   std::string sumsTemplate = string();
   std::string nrTotalSamplesPerBlock_s = isa::utils::toStringValue< unsigned int >(nrSamplesPerBlock * nrSamplesPerThread);
