@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
   cl::Kernel * kernel;
   std::cout << *code << std::endl;
 	try {
-    kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -cl-uniform-work-group-size -Werror", *clContext, clDevices->at(clDeviceID));
+    kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
 	} catch ( isa::Exceptions::OpenCLError &err ) {
     std::cerr << err.what() << std::endl;
 		return 1;
