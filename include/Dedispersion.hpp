@@ -26,13 +26,13 @@ namespace PulsarSearch {
 // Sequential dedispersion
 template< typename T > void dedispersion(AstroData::Observation< T > & observation, const T  * const __restrict__ input, T * const __restrict__ output, const std::vector< unsigned int > & shifts);
 // OpenCL dedispersion algorithm
-template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, AstroData::Observation< T > & observation, std::vector & shifts);
+template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector< unsigned int > & shifts);
 // AVX dedispersion algorithm
 template< typename T > std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
 // Xeon Phi dedispers algorithm
 template< typename T > std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
 // OpenCL memory bandwidth analysis
-template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector & shifts);
+template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector< unsigned int > & shifts);
 
 
 // Implementations
@@ -52,13 +52,13 @@ template< typename T > void dedispersion(AstroData::Observation< T > & observati
 	}
 }
 
-template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const std::string & dataType, const AstroData::Observation< T > & observation, const std::vector & shifts) {
+template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector< unsigned int > & shifts) {
   std::string * code = new std::string();
   std::string sumsTemplate = string();
-  std::string nrTotalSamplesPerBlock_s = isa::utils::toStringValue< unsigned int >(nrSamplesPerBlock * nrSamplesPerThread);
+  std::string nrTotalSamplesPerBlock_s = isa::utils::toString< unsigned int >(nrSamplesPerBlock * nrSamplesPerThread);
   std::string nrTotalDMsPerBlock_s = isa::utils::toString< unsigned int >(nrDMsPerBlock * nrDMsPerThread);
   std::string nrPaddedChannels_s = isa::utils::toString< unsigned int >(observation.getNrPaddedChannels());
-  std::string nrTotalThreads_s = isa::utils::toStringValue< unsigned int >(nrSamplesPerBlock * nrDMsPerBlock);
+  std::string nrTotalThreads_s = isa::utils::toString< unsigned int >(nrSamplesPerBlock * nrDMsPerBlock);
 
   // Begin kernel's template
   if ( localMem ) {
@@ -124,7 +124,7 @@ template< typename T > std::string * getDedispersionOpenCL(const bool localMem, 
     string dm_s = toString< unsigned int >(dm);
     string * temp_s = 0;
 
-    temp_s = replace(&shiftsTemplate, "<%DM_NUM%>", dm_s);
+    temp_s = isa::utils::replace(&shiftsTemplate, "<%DM_NUM%>", dm_s);
     shifts->append(*temp_s);
     delete temp_s;
   }
@@ -139,32 +139,32 @@ template< typename T > std::string * getDedispersionOpenCL(const bool localMem, 
       string * dm_s = toStringPointer< unsigned int >(dm);
       string * temp_s = 0;
 
-      temp_s = replace(&defsTemplate, "<%DM_NUM%>", dm_s);
+      temp_s = isa::utils::replace(&defsTemplate, "<%DM_NUM%>", dm_s);
       defsDM->append(*temp_s);
       delete temp_s;
-      temp_s = replace(&sumsTemplate, "<%DM_NUM%>", dm_s);
+      temp_s = isa::utils::replace(&sumsTemplate, "<%DM_NUM%>", dm_s);
       sumsDM->append(*temp_s);
       delete temp_s;
-      temp_s = replace(&storesTemplate, "<%DM_NUM%>", dm_s);
+      temp_s = isa::utils::replace(&storesTemplate, "<%DM_NUM%>", dm_s);
       storesDM->append(*temp_s);
       delete temp_s;
     }
-    defsDM = replace(defsDM, "<%NUM%>", sample_s, true);
+    defsDM = isa::utils::replace(defsDM, "<%NUM%>", sample_s, true);
     defs->append(*defsDM);
     delete defsDM;
-    sumsDM = replace(sumsDM, "<%NUM%>", sample_s, true);
-    sumsDM = replace(sumsDM, "<%OFFSET%>", offset_s, true);
+    sumsDM = isa::utils::replace(sumsDM, "<%NUM%>", sample_s, true);
+    sumsDM = isa::utils::replace(sumsDM, "<%OFFSET%>", offset_s, true);
     sums->append(*sumsDM);
     delete sumsDM;
-    storesDM = replace(storesDM, "<%NUM%>", sample_s, true);
-    storesDM = replace(storesDM, "<%OFFSET%>", offset_s, true);
+    storesDM = isa::utils::replace(storesDM, "<%NUM%>", sample_s, true);
+    storesDM = isa::utils::replace(storesDM, "<%OFFSET%>", offset_s, true);
     stores->append(*storesDM);
     delete storesDM;
   }
-  code = replace(code, "<%DEFS%>", *defs, true);
-  code = replace(code, "<%SHIFTS%>", *shifts, true);
-  code = replace(code, "<%SUMS%>", *sums, true);
-  code = replace(code, "<%STORES%>", *stores, true);
+  code = isa::utils::replace(code, "<%DEFS%>", *defs, true);
+  code = isa::utils::replace(code, "<%SHIFTS%>", *shifts, true);
+  code = isa::utils::replace(code, "<%SUMS%>", *sums, true);
+  code = isa::utils::replace(code, "<%STORES%>", *stores, true);
   delete defs;
   delete shifts;
   delete sums;
@@ -355,13 +355,13 @@ template< typename T > std::string * getDedispersionPhi(const unsigned int nrSam
   return code;
 }
 
-template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector & shifts) {
+template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector< unsigned int > & shifts) {
   std::string * code = new std::string();
   std::string sumsTemplate = string();
-  std::string nrTotalSamplesPerBlock_s = isa::utils::toStringValue< unsigned int >(nrSamplesPerBlock * nrSamplesPerThread);
+  std::string nrTotalSamplesPerBlock_s = isa::utils::toString< unsigned int >(nrSamplesPerBlock * nrSamplesPerThread);
   std::string nrTotalDMsPerBlock_s = isa::utils::toString< unsigned int >(nrDMsPerBlock * nrDMsPerThread);
   std::string nrPaddedChannels_s = isa::utils::toString< unsigned int >(observation.getNrPaddedChannels());
-  std::string nrTotalThreads_s = isa::utils::toStringValue< unsigned int >(nrSamplesPerBlock * nrDMsPerBlock);
+  std::string nrTotalThreads_s = isa::utils::toString< unsigned int >(nrSamplesPerBlock * nrDMsPerBlock);
 
   // Begin kernel's template
   if ( localMem ) {
@@ -424,50 +424,50 @@ template< typename T > std::string * getDedispersionOpenCLMemory(const bool loca
   string * stores = new string();
 
   for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
-    string dm_s = toString< unsigned int >(dm);
+    string dm_s = isa::utils::toString< unsigned int >(dm);
     string * temp_s = 0;
 
-    temp_s = replace(&shiftsTemplate, "<%DM_NUM%>", dm_s);
+    temp_s = isa::utils::replace(&shiftsTemplate, "<%DM_NUM%>", dm_s);
     shifts->append(*temp_s);
     delete temp_s;
   }
   for ( unsigned int sample = 0; sample < nrSamplesPerThread; sample++ ) {
-    string sample_s = toString< unsigned int >(sample);
-    string offset_s = toString< unsigned int >(sample * nrSamplesPerBlock);
+    string sample_s = isa::utils::toString< unsigned int >(sample);
+    string offset_s = isa::utils::toString< unsigned int >(sample * nrSamplesPerBlock);
     string * defsDM = new string();
     string * sumsDM = new string();
     string * storesDM = new string();
 
     for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
-      string * dm_s = toStringPointer< unsigned int >(dm);
+      string * dm_s = isa::utils::toStringPointer< unsigned int >(dm);
       string * temp_s = 0;
 
-      temp_s = replace(&defsTemplate, "<%DM_NUM%>", dm_s);
+      temp_s = isa::utils::replace(&defsTemplate, "<%DM_NUM%>", dm_s);
       defsDM->append(*temp_s);
       delete temp_s;
-      temp_s = replace(&sumsTemplate, "<%DM_NUM%>", dm_s);
+      temp_s = isa::utils::replace(&sumsTemplate, "<%DM_NUM%>", dm_s);
       sumsDM->append(*temp_s);
       delete temp_s;
-      temp_s = replace(&storesTemplate, "<%DM_NUM%>", dm_s);
+      temp_s = isa::utils::replace(&storesTemplate, "<%DM_NUM%>", dm_s);
       storesDM->append(*temp_s);
       delete temp_s;
     }
-    defsDM = replace(defsDM, "<%NUM%>", sample_s, true);
+    defsDM = isa::utils::replace(defsDM, "<%NUM%>", sample_s, true);
     defs->append(*defsDM);
     delete defsDM;
-    sumsDM = replace(sumsDM, "<%NUM%>", sample_s, true);
-    sumsDM = replace(sumsDM, "<%OFFSET%>", offset_s, true);
+    sumsDM = isa::utils::replace(sumsDM, "<%NUM%>", sample_s, true);
+    sumsDM = isa::utils::replace(sumsDM, "<%OFFSET%>", offset_s, true);
     sums->append(*sumsDM);
     delete sumsDM;
-    storesDM = replace(storesDM, "<%NUM%>", sample_s, true);
-    storesDM = replace(storesDM, "<%OFFSET%>", offset_s, true);
+    storesDM = isa::utils::replace(storesDM, "<%NUM%>", sample_s, true);
+    storesDM = isa::utils::replace(storesDM, "<%OFFSET%>", offset_s, true);
     stores->append(*storesDM);
     delete storesDM;
   }
-  code = replace(code, "<%DEFS%>", *defs, true);
-  code = replace(code, "<%SHIFTS%>", *shifts, true);
-  code = replace(code, "<%SUMS%>", *sums, true);
-  code = replace(code, "<%STORES%>", *stores, true);
+  code = isa::utils::replace(code, "<%DEFS%>", *defs, true);
+  code = isa::utils::replace(code, "<%SHIFTS%>", *shifts, true);
+  code = isa::utils::replace(code, "<%SUMS%>", *sums, true);
+  code = isa::utils::replace(code, "<%STORES%>", *stores, true);
   delete defs;
   delete shifts;
   delete sums;
