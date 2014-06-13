@@ -31,7 +31,7 @@
 #include <Dedispersion.hpp>
 
 typedef float dataType;
-const string typeName("float");
+std::string typeName("float");
 
 // Common parameters
 const unsigned int nrSeconds = 1;
