@@ -48,7 +48,7 @@ int main(int argc, char * argv[]) {
     implementationFilename = args.getSwitchArgument< std::string >("-implementation");
     avx = args.getSwitch("-avx");
     phi = args.getSwitch("-phi");
-    if ( avx ^ phi ) {
+    if ( !(avx ^ phi) ) {
       throw isa::Exceptions::EmptyCommandLine();
     }
 		maxItemsPerThread = args.getSwitchArgument< unsigned int >("-max_items");
