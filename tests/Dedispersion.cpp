@@ -41,6 +41,7 @@ const unsigned int nrStations = 64;
 
 int main(int argc, char *argv[]) {
   bool localMem = false;
+  bool print = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
 	unsigned int nrSamplesPerBlock = 0;
@@ -52,6 +53,7 @@ int main(int argc, char *argv[]) {
 
 	try {
     isa::utils::ArgumentList args(argc, argv);
+    print = args.getSwitch("-print");
 
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
@@ -76,7 +78,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception &err ) {
-    std::cerr << "Usage: " << argv[0] << " -opencl_platform ... -opencl_device ... -padding ... [-local] -sb ... -db ... -st ... -dt ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print] -opencl_platform ... -opencl_device ... -padding ... [-local] -sb ... -db ... -st ... -dt ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
@@ -131,7 +133,9 @@ int main(int argc, char *argv[]) {
 	// Generate kernel
   std::string * code = PulsarSearch::getDedispersionOpenCL< dataType >(localMem, nrSamplesPerBlock, nrDMsPerBlock, nrSamplesPerThread, nrDMsPerThread, typeName, observation, *shifts);
   cl::Kernel * kernel;
-  std::cout << *code << std::endl;
+  if ( print ) {
+    std::cout << *code << std::endl;
+  }
 	try {
     kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
 	} catch ( isa::Exceptions::OpenCLError &err ) {
@@ -163,9 +167,11 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-  std::cout << std::endl;
-  std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond()) << "%)." << std::endl;
-  std::cout << std::endl;
+  if ( wrongSamples > 0 ) {
+    std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond()) << "%)." << std::endl;
+  } else {
+    std::cout << "TEST PASSED." << std::endl;
+  }
 
 	return 0;
 }
