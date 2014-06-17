@@ -24,6 +24,8 @@
 
 namespace PulsarSearch {
 
+template< typename T > typedef void (* dedispersionFunc)(T *, T *, unsigned int *);
+
 // Sequential dedispersion
 template< typename T > void dedispersion(AstroData::Observation< T > & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< unsigned int > & shifts);
 // OpenCL dedispersion algorithm
@@ -33,7 +35,7 @@ template< typename T > std::string * getDedispersionAVX(const unsigned int nrSam
 // Xeon Phi dedispers algorithm
 template< typename T > std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
 // Function pointers to AVX and Phi implementations
-std::map< std::string, void * > * getDedispersionPointers();
+std::map< std::string, dedispersionFunc > * getDedispersionPointers();
 // OpenCL memory bandwidth analysis
 template< typename T > std::string * getDedispersionOpenCLMemory(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector< unsigned int > & shifts);
 
