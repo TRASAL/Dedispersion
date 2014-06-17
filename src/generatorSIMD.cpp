@@ -71,11 +71,12 @@ int main(int argc, char * argv[]) {
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + (*shifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
   delete shifts;
 
-  std::string * defineName = isa::utils::replace(&headerFilename, ".", "_");
+  std::string underscore("_");
+  std::string * defineName = isa::utils::replace(&headerFilename, ".", underscore);
   std::ofstream headerFile(headerFilename);
   std::ofstream implementationFile(implementationFilename);
 
-  headerFile << "#ifndef " + defineName + "\n#define " + defineName << std::endl;
+  headerFile << "#ifndef " + *defineName + "\n#define " + *defineName << std::endl;
   implementationFile << "#include <" + headerFilename + ">\n#include <Dedispersion.hpp>" << std::endl;
   implementationFile << "namespace PulsarSearch {\nstd::map< std::string, void * > * getDedispersionPointers() {" << std::endl;
   implementationFile << "std::map< std::string, void * > functionPointers = new std::map< std::string, void * >();" << std::endl;
