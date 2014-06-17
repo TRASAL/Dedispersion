@@ -95,7 +95,7 @@ int main(int argc, char * argv[]) {
       isa::utils::Timer timer("Kernel Timer");
       isa::utils::Stats< double > stats;
 
-      funcType dedispersion = functionPointers["dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread)];
+      dedispersionFunc dedispersion = functionPointers["dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread)];
       for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
         timer.start();
         dedispersion(dispersedData.data(), dedispersedData.data(), shifts->data());

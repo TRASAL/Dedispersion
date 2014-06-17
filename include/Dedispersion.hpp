@@ -24,7 +24,7 @@
 
 namespace PulsarSearch {
 
-template< typename T > using dedispersionFunc =void (*)(T *, T *, unsigned int *);
+template< typename T > using dedispersionFunc = void (*)(T *, T *, unsigned int *);
 
 // Sequential dedispersion
 template< typename T > void dedispersion(AstroData::Observation< T > & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< unsigned int > & shifts);

@@ -78,8 +78,8 @@ int main(int argc, char * argv[]) {
 
   headerFile << "#ifndef " + *defineName + "\n#define " + *defineName << std::endl;
   implementationFile << "#include <" + headerFilename + ">\n#include <Dedispersion.hpp>" << std::endl;
-  implementationFile << "namespace PulsarSearch {\nstd::map< std::string, dedispersionFunc > * getDedispersionPointers() {" << std::endl;
-  implementationFile << "std::map< std::string, dedispersionFunc > functionPointers = new std::map< std::string, dedispersionFunc >();" << std::endl;
+  implementationFile << "namespace PulsarSearch {\ntemplate< typename T > std::map< std::string, dedispersionFunc< T > > * getDedispersionPointers() {" << std::endl;
+  implementationFile << "std::map< std::string, dedispersionFunc< T > > functionPointers = new std::map< std::string, dedispersionFunc< T > >();" << std::endl;
 
   for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItemsPerThread; samplesPerThread++ ) {
     if ( (observation.getNrSamplesPerPaddedSecond() % samplesPerThread) != 0 ) {
