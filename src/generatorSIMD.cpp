@@ -76,7 +76,7 @@ int main(int argc, char * argv[]) {
 
   headerFile << "#ifndef " + *defineName + "\n#define " + *defineName << std::endl;
   implementation += "namespace PulsarSearch {\ntemplate< typename T > std::map< std::string, dedispersionFunc< T > > * getDedispersionPointers() {\n";
-  implementation += "std::map< std::string, dedispersionFunc< T > > functionPointers = new std::map< std::string, dedispersionFunc< T > >();\n";
+  implementation += "std::map< std::string, dedispersionFunc< T > > * functionPointers = new std::map< std::string, dedispersionFunc< T > >();\n";
 
   for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItemsPerThread; samplesPerThread++ ) {
     if ( (observation.getNrSamplesPerPaddedSecond() % samplesPerThread) != 0 ) {
