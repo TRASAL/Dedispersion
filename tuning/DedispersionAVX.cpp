@@ -26,6 +26,8 @@
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
 #include <utils.hpp>
+#include <Timer.hpp>
+#include <Stats.hpp>
 #include <Exceptions.hpp>
 
 typedef float dataType;
