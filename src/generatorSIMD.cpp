@@ -77,9 +77,10 @@ int main(int argc, char * argv[]) {
   std::ofstream implementationFile(implementationFilename);
 
   headerFile << "#ifndef " + *defineName + "\n#define " + *defineName << std::endl;
+  headerFile << "typedef void (* funcType)(T *, T *, unsigned int *);" << std::endl;
   implementationFile << "#include <" + headerFilename + ">\n#include <Dedispersion.hpp>" << std::endl;
-  implementationFile << "namespace PulsarSearch {\nstd::map< std::string, void * > * getDedispersionPointers() {" << std::endl;
-  implementationFile << "std::map< std::string, void * > functionPointers = new std::map< std::string, void * >();" << std::endl;
+  implementationFile << "namespace PulsarSearch {\nstd::map< std::string, funcType > * getDedispersionPointers() {" << std::endl;
+  implementationFile << "std::map< std::string, funcType > functionPointers = new std::map< std::string, funcType >();" << std::endl;
 
   for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItemsPerThread; samplesPerThread++ ) {
     if ( (observation.getNrSamplesPerPaddedSecond() % samplesPerThread) != 0 ) {
@@ -98,17 +99,17 @@ int main(int argc, char * argv[]) {
       
       if ( avx ) {
         code = PulsarSearch::getDedispersionAVX(samplesPerThread, DMsPerThread, observation);
-        implementationFile << "functionPointers->insert(std::make_pair(\"dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", &PulsarSearch::dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "));" << std::endl;
+        implementationFile << "functionPointers->insert(std::make_pair(\"dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", PulsarSearch::dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "));" << std::endl;
       } else if ( phi ) {
         code = PulsarSearch::getDedispersionPhi(samplesPerThread, DMsPerThread, observation);
-        implementationFile << "functionPointers->insert(std::make_pair(\"dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", &PulsarSearch::dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "));" << std::endl;
+        implementationFile << "functionPointers->insert(std::make_pair(\"dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", PulsarSearch::dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "));" << std::endl;
       }
       headerFile << *code << std::endl;
       delete code;
     }
   }
 
-  implementationFile << "}\n" << std::endl;
+  implementationFile << "return functionPointers;\n}" << std::endl;
   headerFile << "#endif" << std::endl;
 
 	return 0;
