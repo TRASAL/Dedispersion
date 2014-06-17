@@ -66,7 +66,7 @@ int main(int argc, char * argv[]) {
   // Allocate memory
   std::vector< dataType > dispersedData = std::vector< dataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
   std::vector< dataType > dedispersedData = std::vector< dataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
-  std::map< std::string, PulsarSearch::dedispersionFunc< dataType > > * functionPointers = PulsarSearch::getDedispersionPointers();
+  std::map< std::string, PulsarSearch::dedispersionFunc< dataType > > * functionPointers = PulsarSearch::getDedispersionPointers< dataType >();
 
 	srand(time(NULL));
 	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
@@ -95,7 +95,7 @@ int main(int argc, char * argv[]) {
       isa::utils::Timer timer("Kernel Timer");
       isa::utils::Stats< double > stats;
 
-      PulsarSearch::dedispersionFunc< dataType > dedispersion = functionPointers["dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread)];
+      PulsarSearch::dedispersionFunc< dataType > dedispersion = functionPointers->at("dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread));
       for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
         timer.start();
         dedispersion(dispersedData.data(), dedispersedData.data(), shifts->data());
