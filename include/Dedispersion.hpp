@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <x86intrin.h>
 
 #include <Observation.hpp>
 #include <utils.hpp>
