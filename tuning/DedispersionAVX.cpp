@@ -66,7 +66,7 @@ int main(int argc, char * argv[]) {
   // Allocate memory
   std::vector< dataType > dispersedData = std::vector< dataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
   std::vector< dataType > dedispersedData = std::vector< dataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
-  std::map< std::string, void * > * functionPointers = PulsarSearch::getDedispersionPointers();
+  std::map< std::string, dedispersionFunc< dataType > > * functionPointers = PulsarSearch::getDedispersionPointers();
 
 	srand(time(NULL));
 	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
