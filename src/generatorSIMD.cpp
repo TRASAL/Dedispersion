@@ -108,7 +108,7 @@ int main(int argc, char * argv[]) {
     }
   }
 
-  implementationFile << "return functionPointers;\n}" << std::endl;
+  implementationFile << "return functionPointers;\n}\n}" << std::endl;
   headerFile << "#endif" << std::endl;
 
 	return 0;
