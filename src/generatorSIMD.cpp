@@ -95,10 +95,10 @@ int main(int argc, char * argv[]) {
       
       if ( avx ) {
         code = PulsarSearch::getDedispersionAVX(samplesPerThread, DMsPerThread, observation);
-        implementation += "functionPointers->insert(std::pair< std::string, dedispersionFunc< T > >(\"dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "));\n";
+        implementation += "functionPointers->insert(std::pair< std::string, dedispersionFunc< T > >(\"dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", reinterpret_cast< dedispersionFunc< T >  >(dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "< T >)));\n";
       } else if ( phi ) {
         code = PulsarSearch::getDedispersionPhi(samplesPerThread, DMsPerThread, observation);
-        implementation += "functionPointers->insert(std::pair< std::string, dedispersionFunc< T > >(\"dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "));\n";
+        implementation += "functionPointers->insert(std::pair< std::string, dedispersionFunc< T > >(\"dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", reinterpret_cast< dedispersionFunc< T >  >(dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "< T >)));\n";
       }
       headerFile << *code << std::endl;
       delete code;
