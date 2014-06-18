@@ -37,7 +37,6 @@ int main(int argc, char * argv[]) {
   bool phi = false;
 	unsigned int maxItemsPerThread = 0;
   std::string headerFilename;
-  AstroData::Observation< dataType > observation("DedispersionTuning", typeName);
 
 	try {
     isa::utils::ArgumentList args(argc, argv);
@@ -66,13 +65,7 @@ int main(int argc, char * argv[]) {
   implementation += "std::map< std::string, dedispersionFunc< T > > * functionPointers = new std::map< std::string, dedispersionFunc< T > >();\n";
 
   for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItemsPerThread; samplesPerThread++ ) {
-    if ( (observation.getNrSamplesPerPaddedSecond() % samplesPerThread) != 0 ) {
-      continue;
-    }
     for ( unsigned int DMsPerThread = 1; DMsPerThread <= maxItemsPerThread; DMsPerThread++ ) {
-      if ( (observation.getNrDMs() % DMsPerThread) != 0 ) {
-        continue;
-      }
       if ( ( samplesPerThread * DMsPerThread ) > maxItemsPerThread ) {
         break;
       }
@@ -81,10 +74,10 @@ int main(int argc, char * argv[]) {
       std::string * code = 0;
       
       if ( avx ) {
-        code = PulsarSearch::getDedispersionAVX(samplesPerThread, DMsPerThread, observation);
+        code = PulsarSearch::getDedispersionAVX(samplesPerThread, DMsPerThread);
         implementation += "functionPointers->insert(std::pair< std::string, dedispersionFunc< T > >(\"dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", reinterpret_cast< dedispersionFunc< T >  >(dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "< T >)));\n";
       } else if ( phi ) {
-        code = PulsarSearch::getDedispersionPhi(samplesPerThread, DMsPerThread, observation);
+        code = PulsarSearch::getDedispersionPhi(samplesPerThread, DMsPerThread);
         implementation += "functionPointers->insert(std::pair< std::string, dedispersionFunc< T > >(\"dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", reinterpret_cast< dedispersionFunc< T >  >(dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "< T >)));\n";
       }
       headerFile << *code << std::endl;
