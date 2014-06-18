@@ -3,15 +3,19 @@ debug		:= 0
 include		../Makefile.inc
 
 
-all: clean Dedispersion DedispersionAVX
+all: clean Dedispersion DedispersionAVX DedispersionPhi
  
 
 Dedispersion: Dedispersion.cpp
 	$(LINKER) -o $(PROJ_BASE)/bin/DedispersionTuning Dedispersion.cpp $(UTILS_SRC) $(INCLUDES) $(LIBS) $(CFLAGS) $(LDFLAGS) 
 
-DedispersionAVX: DedispersionAVX.cpp
-	$(INTELCXX) -o $(PROJ_BASE)/bin/DedispersionAVXTuning DedispersionAVX.cpp $(UTILS_SRC) $(CPU_INCLUDES) $(CPU_CFLAGS) $(CPU_LDFLAGS)
+DedispersionAVX: DedispersionSIMD.cpp
+	$(INTELCXX) -o $(PROJ_BASE)/bin/DedispersionAVXTuning DedispersionSIMD.cpp $(UTILS_SRC) $(CPU_INCLUDES) $(CPU_CFLAGS) $(CPU_LDFLAGS)
+
+DedispersionPhi: DedispersionSIMD.cpp
+	$(INTELCXX) -o $(PROJ_BASE)/bin/DedispersionPhiTuning DedispersionSIMD.cpp $(UTILS_SRC) $(PHI_INCLUDES) $(PHI_CFLAGS) $(PHI_LDFLAGS)
 
 clean:
 	rm -f $(PROJ_BASE)/bin/DedispersionTuning
 	rm -f $(PROJ_BASE)/bin/DedispersionAVXTuning
+	rm -f $(PROJ_BASE)/bin/DedispersionPhiTuning

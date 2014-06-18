@@ -35,6 +35,8 @@ string typeName("float");
 
 
 int main(int argc, char * argv[]) {
+  bool avx = false;
+  bool phi = false;
   unsigned int nrIterations = 0;
 	unsigned int maxItemsPerThread = 0;
   AstroData::Observation< dataType > observation("DedispersionTuning", typeName);
@@ -42,6 +44,11 @@ int main(int argc, char * argv[]) {
 	try {
     isa::utils::ArgumentList args(argc, argv);
 
+    avx = args.getSwitch("-avx");
+    phi = args.getSwitch("-phi");
+    if ( !(avx || phi) ) {
+      throw isa::Exceptions::EmptyCommandLine();
+    }
     nrIterations = args.getSwitchArgument< unsigned int >("-iterations");
 		observation.setPadding(args.getSwitchArgument< unsigned int >("-padding"));
 		maxItemsPerThread = args.getSwitchArgument< unsigned int >("-max_items");
@@ -54,7 +61,7 @@ int main(int argc, char * argv[]) {
 		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
 		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
 	} catch ( isa::Exceptions::EmptyCommandLine &err ) {
-		std::cerr << argv[0] << " -iterations ... -padding ... -max_items ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+		std::cerr << argv[0] << " [-avx] [-phi] -iterations ... -padding ... -max_items ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	} catch ( std::exception &err ) {
 		std::cerr << err.what() << std::endl;
@@ -77,6 +84,7 @@ int main(int argc, char * argv[]) {
 
 	std::cout << std::fixed << std::endl;
 	std::cout << "# nrDMs nrChannels nrSamples samplesPerThread DMsPerThread GFLOP/s err time err" << std::endl << std::endl;
+  double flops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
 
   for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItemsPerThread; samplesPerThread++ ) {
     if ( (observation.getNrSamplesPerPaddedSecond() % samplesPerThread) != 0 ) {
@@ -91,11 +99,14 @@ int main(int argc, char * argv[]) {
       }
 
       // Tuning runs
-      double flops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
       isa::utils::Timer timer("Kernel Timer");
       isa::utils::Stats< double > stats;
 
-      PulsarSearch::dedispersionFunc< dataType > dedispersion = functionPointers->at("dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread));
+      if ( avx ) {
+        PulsarSearch::dedispersionFunc< dataType > dedispersion = functionPointers->at("dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread));
+      } else if ( phi ) {
+        PulsarSearch::dedispersionFunc< dataType > dedispersion = functionPointers->at("dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread));
+      }
       for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
         timer.start();
         dedispersion(dispersedData.data(), dedispersedData.data(), shifts->data());
