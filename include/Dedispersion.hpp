@@ -274,14 +274,14 @@ template< typename T > std::string * getDedispersionPhi(const unsigned int nrSam
 
   // Begin kernel's template
 	*code = "namespace PulsarSearch {\n"
-		"template< typename T > void dedispersionPhi" + isa::utils::toString< unsigned int >(nrSamplesPerThread) + "x" + isa::utils::toString< unsigned int >(nrDMsPerThread) + "(const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
+		"template< typename T > void dedispersionPhi" + isa::utils::toString< unsigned int >(nrSamplesPerThread) + "x" + isa::utils::toString< unsigned int >(nrDMsPerThread) + "(const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerDispersedSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const unsigned int nrPaddedChannels,const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
 		"#pragma omp parallel for schedule(static)\n"
-		"for ( unsigned int dm = 0; dm < " + isa::utils::toString< unsigned int >(observation.getNrDMs()) + "; dm += " + isa::utils::toString< unsigned int >(nrDMsPerThread) + " ) {\n"
+		"for ( unsigned int dm = 0; dm < nrDMs; dm += " + isa::utils::toString< unsigned int >(nrDMsPerThread) + " ) {\n"
 			"#pragma omp parallel for schedule(static)\n"
-			"for ( unsigned int sample = 0; sample < " + isa::utils::toString< unsigned int >(observation.getNrSamplesPerSecond()) + "; sample += 16 * " + isa::utils::toString< unsigned int >(nrSamplesPerThread) + ") {\n"
+			"for ( unsigned int sample = 0; sample < nrSamplesPerSecond; sample += 16 * " + isa::utils::toString< unsigned int >(nrSamplesPerThread) + ") {\n"
 				"<%DEFS%>"
 				"\n"
-				"for ( unsigned int channel = 0; channel < " + isa::utils::toString< unsigned int >(observation.getNrChannels()) + "; channel++ ) {\n"
+				"for ( unsigned int channel = 0; channel < nrChannels; channel++ ) {\n"
 					"<%SHIFTS%>"
 					"__m512 dispersedSample;\n"
 					"\n"
@@ -295,12 +295,12 @@ template< typename T > std::string * getDedispersionPhi(const unsigned int nrSam
 	"}\n"
 	"}";
 	std::string def_sTemplate = "__m512 dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm512_setzero_ps();\n";
-	std::string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * " + isa::utils::toString< unsigned int >(observation.getNrChannels()) + ") + channel];";
-	std::string sum_sTemplate = "dispersedSample = _mm512_loadunpacklo_ps(dispersedSample, &(input[(channel * " + isa::utils::toString< unsigned int >(observation.getNrSamplesPerDispersedChannel()) +  ") + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]));\n"
-		"dispersedSample = _mm512_loadunpackhi_ps(dispersedSample, &(input[(channel * " + isa::utils::toString< unsigned int >(observation.getNrSamplesPerDispersedChannel()) +  ") + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]) + 16);\n"
+	std::string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * nrPaddedChannels) + channel];";
+	std::string sum_sTemplate = "dispersedSample = _mm512_loadunpacklo_ps(dispersedSample, &(input[(channel * nrSamplesPerDispersedSecond) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]));\n"
+		"dispersedSample = _mm512_loadunpackhi_ps(dispersedSample, &(input[(channel * nrSamplesPerDispersedSecond) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]) + 16);\n"
 		"dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm512_add_ps(dedispersedSample<%NUM%>DM<%DM_NUM%>, dispersedSample);\n";
-	std::string store_sTemplate = "_mm512_packstorelo_ps(&(output[((dm + <%DM_NUM%>) * " + isa::utils::toString< unsigned int >(observation.getNrSamplesPerPaddedSecond()) + ") + (sample + <%OFFSET%>)]), dedispersedSample<%NUM%>DM<%DM_NUM%>);\n"
-		"_mm512_packstorehi_ps(&(output[((dm + <%DM_NUM%>) * " + isa::utils::toString< unsigned int >(observation.getNrSamplesPerPaddedSecond()) + ") + (sample + <%OFFSET%>)]) + 16, dedispersedSample<%NUM%>DM<%DM_NUM%>);\n";
+	std::string store_sTemplate = "_mm512_packstorelo_ps(&(output[((dm + <%DM_NUM%>) * nrSamplesPerPaddedSecond) + (sample + <%OFFSET%>)]), dedispersedSample<%NUM%>DM<%DM_NUM%>);\n"
+		"_mm512_packstorehi_ps(&(output[((dm + <%DM_NUM%>) * nrSamplesPerPaddedSecond) + (sample + <%OFFSET%>)]) + 16, dedispersedSample<%NUM%>DM<%DM_NUM%>);\n";
   // End kernel's template
 
 	std::string * def_s =  new std::string();
