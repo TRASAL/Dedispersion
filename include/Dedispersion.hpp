@@ -32,9 +32,9 @@ template< typename T > void dedispersion(AstroData::Observation< T > & observati
 // OpenCL dedispersion algorithm
 template< typename T > std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation< T > & observation, std::vector< unsigned int > & shifts);
 // AVX dedispersion algorithm
-template< typename T > std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
+template< typename T > std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread);
 // Xeon Phi dedispers algorithm
-template< typename T > std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation);
+template< typename T > std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread);
 // Function pointers to AVX and Phi implementations
 template< typename T > std::map< std::string, dedispersionFunc< T > > * getDedispersionPointers();
 // OpenCL memory bandwidth analysis
@@ -179,7 +179,7 @@ template< typename T > std::string * getDedispersionOpenCL(const bool localMem, 
   return code;
 }
 
-template< typename T > std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation) {
+template< typename T > std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread) {
 	std::string * code =  new std::string();
 
   // Begin kernel's template
@@ -269,7 +269,7 @@ template< typename T > std::string * getDedispersionAVX(const unsigned int nrSam
   return code;
 }
 
-template< typename T > std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const AstroData::Observation< T > & observation) {
+template< typename T > std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread) {
 	std::string * code =  new std::string();
 
   // Begin kernel's template
