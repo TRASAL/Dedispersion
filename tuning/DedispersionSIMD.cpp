@@ -87,8 +87,14 @@ int main(int argc, char * argv[]) {
   double flops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
 
   for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItemsPerThread; samplesPerThread++ ) {
-    if ( (observation.getNrSamplesPerPaddedSecond() % samplesPerThread) != 0 ) {
-      continue;
+    if ( avx ) {
+      if ( (observation.getNrSamplesPerPaddedSecond() % (samplesPerThread * 8)) != 0 ) {
+        continue;
+      }
+    } else if ( phi ) {
+      if ( (observation.getNrSamplesPerPaddedSecond() % (samplesPerThread * 16)) != 0 ) {
+        continue;
+      }
     }
     for ( unsigned int DMsPerThread = 1; DMsPerThread <= maxItemsPerThread; DMsPerThread++ ) {
       if ( (observation.getNrDMs() % DMsPerThread) != 0 ) {
