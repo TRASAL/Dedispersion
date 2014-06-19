@@ -101,11 +101,12 @@ int main(int argc, char * argv[]) {
       // Tuning runs
       isa::utils::Timer timer("Kernel Timer");
       isa::utils::Stats< double > stats;
+      PulsarSearch::dedispersionFunc< dataType > dedispersion = 0;
 
       if ( avx ) {
-        PulsarSearch::dedispersionFunc< dataType > dedispersion = functionPointers->at("dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread));
+        dedispersion = functionPointers->at("dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread));
       } else if ( phi ) {
-        PulsarSearch::dedispersionFunc< dataType > dedispersion = functionPointers->at("dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread));
+        dedispersion = functionPointers->at("dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread));
       }
       for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
         timer.start();
