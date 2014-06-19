@@ -7,7 +7,7 @@ all: clean Dedispersion DedispersionAVX DedispersionPhi
  
 
 Dedispersion: Dedispersion.cpp
-	$(LINKER) -o $(PROJ_BASE)/bin/DedispersionTuning Dedispersion.cpp $(UTILS_SRC) $(INCLUDES) $(LIBS) $(CFLAGS) $(LDFLAGS) 
+	$(INTELCXX) -o $(PROJ_BASE)/bin/DedispersionTuning Dedispersion.cpp $(UTILS_SRC) $(INCLUDES) $(LIBS) $(CFLAGS) $(LDFLAGS) 
 
 DedispersionAVX: DedispersionSIMD.cpp
 	$(INTELCXX) -o $(PROJ_BASE)/bin/DedispersionAVXTuning DedispersionSIMD.cpp $(UTILS_SRC) $(CPU_INCLUDES) $(CPU_CFLAGS) $(CPU_LDFLAGS)
