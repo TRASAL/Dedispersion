@@ -74,10 +74,10 @@ int main(int argc, char * argv[]) {
       std::string * code = 0;
       
       if ( avx ) {
-        code = PulsarSearch::getDedispersionAVX(samplesPerThread, DMsPerThread);
+        code = PulsarSearch::getDedispersionAVXsamplesPerThread, DMsPerThread);
         implementation += "functionPointers->insert(std::pair< std::string, dedispersionFunc< T > >(\"dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", reinterpret_cast< dedispersionFunc< T >  >(dedispersionAVX" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "< T >)));\n";
       } else if ( phi ) {
-        code = PulsarSearch::getDedispersionPhi(samplesPerThread, DMsPerThread);
+        code = PulsarSearch::getDedispersionPhisamplesPerThread, DMsPerThread);
         implementation += "functionPointers->insert(std::pair< std::string, dedispersionFunc< T > >(\"dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "\", reinterpret_cast< dedispersionFunc< T >  >(dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread) + "< T >)));\n";
       }
       headerFile << *code << std::endl;
