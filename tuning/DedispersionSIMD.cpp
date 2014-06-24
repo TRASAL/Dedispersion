@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <exception>
 #include <fstream>
@@ -116,6 +117,7 @@ int main(int argc, char * argv[]) {
       }
       for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
         timer.start();
+        std::memcpy(dispersedData.data(), dispersedData.data(), dispersedData.size() * sizeof(dataType));
         dedispersion(observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrSamplesPerDispersedChannel(), observation.getNrSamplesPerPaddedSecond(), observation.getNrChannels(), observation.getNrPaddedChannels(), dispersedData.data(), dedispersedData.data(), shifts->data());
         timer.stop();
         stats.addElement(flops / timer.getLastRunTime());
