@@ -116,8 +116,8 @@ int main(int argc, char * argv[]) {
         dedispersion = functionPointers->at("dedispersionPhi" + isa::utils::toString< unsigned int >(samplesPerThread) + "x" + isa::utils::toString< unsigned int >(DMsPerThread));
       }
       for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
-        timer.start();
         std::memcpy(dispersedData.data(), dispersedData.data(), dispersedData.size() * sizeof(dataType));
+        timer.start();
         dedispersion(observation.getNrDMs(), observation.getNrSamplesPerSecond(), observation.getNrSamplesPerDispersedChannel(), observation.getNrSamplesPerPaddedSecond(), observation.getNrChannels(), observation.getNrPaddedChannels(), dispersedData.data(), dedispersedData.data(), shifts->data());
         timer.stop();
         stats.addElement(flops / timer.getLastRunTime());
