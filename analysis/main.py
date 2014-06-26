@@ -19,78 +19,107 @@ import config
 import manage
 import export
 
+if len(sys.argv) == 1:
+    print("Supported commands are: create, delete, load, export, tuneNoReuse, statistics")
+    sys.exit(1)
+
 COMMAND = sys.argv[1]
 
-dbConn = pymysql.connect(host=config.myHost, port=config.myPort, user=config.myUser, passwd=config.myPass, db=config.myDb)
-queue = dbConn.cursor()
+DB_CONN = pymysql.connect(host=config.MY_HOST, port=config.MY_PORT, user=config.MY_USER, passwd=config.MY_PASS, db=config.MY_DB)
+QUEUE = DB_CONN.cursor()
 
 if COMMAND == "create":
-  try:
-    manage.createTable(queue, sys.argv[2])
-  except pymysql.err.InternalError:
-    pass
+    if len(sys.argv) < 3 or len(sys.argv) > 4:
+        print("Usage: " + sys.argv[0] + " create <table> [opencl]")
+        QUEUE.close()
+        DB_CONN.close()
+        sys.exit(1)
+    try:
+        if 'opencl' in sys.argv:
+            manage.create_table(QUEUE, sys.argv[2], True)
+        else:
+            manage.create_table(QUEUE, sys.argv[2], False)
+    except pymysql.err.InternalError:
+        pass
 elif COMMAND == "delete":
-  try:
-    manage.deleteTable(queue, sys.argv[2])
-  except pymysql.err.InternalError:
-    pass
+    if len(sys.argv) != 3:
+        print("Usage: " + sys.argv[0] + " delete <table>")
+        QUEUE.close()
+        DB_CONN.close()
+        sys.exit(1)
+    try:
+        manage.delete_table(QUEUE, sys.argv[2])
+    except pymysql.err.InternalError:
+        pass
 elif COMMAND == "load":
-  inputFile = open(sys.argv[3])
-  try:
-    manage.loadFile(queue, sys.argv[2], inputFile)
-  except:
-    print(sys.exc_info()[0])
-    sys.exit(1)
-elif COMMAND == "export":
-  try:
-    confs = export.export(queue, sys.argv[2], sys.argv[3])
-    export.printResults(confs)
-  except pymysql.err.ProgrammingError:
-    pass
-  except:
-    print(sys.exc_info()[0])
-    sys.exit(1)
+    if len(sys.argv) < 4 or len(sys.argv) > 5:
+        print("Usage: " + sys.argv[0] + " load <table> <input_file> [opencl]")
+        QUEUE.close()
+        DB_CONN.close()
+        sys.exit(1)
+    INPUT_FILE = open(sys.argv[3])
+    try:
+        if "opencl" in sys.argv:
+            manage.load_file(QUEUE, sys.argv[2], INPUT_FILE, True)
+        else:
+            manage.load_file(QUEUE, sys.argv[2], INPUT_FILE, False)
+    except:
+        print(sys.exc_info()[0])
+        sys.exit(1)
+elif COMMAND == "tune":
+    if len(sys.argv) < 6 or len(sys.argv) > 7:
+        print("Usage: " + sys.argv[0] + " tune <table> <operator> <channels> <samples> [opencl]")
+        QUEUE.close()
+        DB_CONN.close()
+        sys.exit(1)
+    try:
+        if "opencl" in sys.argv:
+            CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], True)
+        else:
+            CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], False)
+        export.print_results(CONFS)
+    except pymysql.err.ProgrammingError:
+        pass
+    except:
+        print(sys.exc_info()[0])
+        sys.exit(1)
 elif COMMAND == "tuneNoReuse":
-  try:
-    confs = export.tuneNoReuse(queue, sys.argv[2], sys.argv[3])
-    export.printResults(confs)
-  except pymysql.err.ProgrammingError:
-    pass
-  except:
-    print(sys.exc_info()[0])
-    sys.exit(1)
-elif COMMAND == "tuneThreadsNoReuse":
-  try:
-    confs = export.tuneThreadsNoReuse(queue, sys.argv[2], sys.argv[3])
-    export.printResults(confs)
-  except pymysql.err.ProgrammingError:
-    pass
-  except:
-    print(sys.exc_info()[0])
-    sys.exit(1)
+    if len(sys.argv) < 6 or len(sys.argv) > 7:
+        print("Usage: " + sys.argv[0] + " tuneNoReuse <table> <operator> <channels> <samples> [opencl]")
+        QUEUE.close()
+        DB_CONN.close()
+        sys.exit(1)
+    try:
+        if "opencl" in sys.argv:
+            CONFS = export.tune_no_reuse(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], True)
+        else:
+            CONFS = export.tune_no_reuse(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], False)
+        export.print_results(CONFS)
+    except pymysql.err.ProgrammingError:
+        pass
+    except:
+        print(sys.exc_info()[0])
+        sys.exit(1)
 elif COMMAND == "statistics":
-  try:
-    confs = export.statistics(queue, sys.argv[2])
-    export.printResults(confs)
-  except pymysql.err.ProgrammingError:
-    pass
-  except:
-    print(sys.exc_info()[0])
-    sys.exit(1)
-elif COMMAND == "snr":
-  try:
-    confs = export.snr(queue, sys.argv[2])
-    export.printResults(confs)
-  except pymysql.err.ProgrammingError:
-    pass
-  except:
-    print(sys.exc_info()[0])
-    sys.exit(1)
+    if len(sys.argv) != 5:
+        print("Usage: " + sys.argv[0] + " statistics <table>, <channels>, <samples>")
+        QUEUE.close()
+        DB_CONN.close()
+        sys.exit(1)
+    try:
+        CONFS = export.statistics(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4])
+        export.print_results(CONFS)
+    except pymysql.err.ProgrammingError:
+        pass
+    except:
+        print(sys.exc_info()[0])
+        sys.exit(1)
 else:
-  print("Unknown command.")
-  print("Supported commands are: create, delete, load, export, tuneNoReuse, tuneThreadsNoReuse, statistics, snr")
+    print("Unknown command.")
+    print("Supported commands are: create, delete, load, export, tuneNoReuse, statistics")
 
-queue.close()
-dbConn.commit()
-dbConn.close()
+QUEUE.close()
+DB_CONN.commit()
+DB_CONN.close()
 sys.exit(0)
+
