@@ -75,7 +75,7 @@ template< typename T > std::string * getDedispersionOpenCL(const bool localMem, 
       "unsigned int inGlMem = 0;\n"
       "unsigned int minShift = 0;\n"
       "unsigned int maxShift = 0;\n"
-      "__local " + dataType + " buffer[" + isa::utils::toString< unsigned int >((nrSamplesPerBlock * nrSamplesPerThread) + (shifts[(observation.getNrDMs() - 1) * observation.getNrPaddedChannels()] - shifts[(observation.getNrDMs() - (nrDMsPerBlock * nrDMsPerThread)) * observation.getNrPaddedChannels()])) + "];\n"
+      "__local " + dataType + " buffer[" + isa::utils::toString< unsigned int >((nrSamplesPerBlock * nrSamplesPerThread) + (shifts[(observation.getNrDMs() - 1) * observation.getNrPaddedChannels()] - shifts[(observation.getNrDMs() - (nrDMsPerBlock * nrDMsPerThread)) * observation.getNrPaddedChannels()])) + " + 1];\n"
       "\n"
       "<%DEFS%>"
       "\n"
