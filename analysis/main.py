@@ -20,7 +20,7 @@ import manage
 import export
 
 if len(sys.argv) == 1:
-    print("Supported commands are: create, delete, load, export, tuneNoReuse, statistics")
+    print("Supported commands are: create, delete, load, tune, tuneNoReuse, statistics")
     sys.exit(1)
 
 COMMAND = sys.argv[1]
@@ -64,25 +64,26 @@ elif COMMAND == "load":
         else:
             manage.load_file(QUEUE, sys.argv[2], INPUT_FILE, False)
     except:
-        print(sys.exc_info()[0])
+        print(sys.exc_info())
         sys.exit(1)
 elif COMMAND == "tune":
-    if len(sys.argv) < 6 or len(sys.argv) > 7:
-        print("Usage: " + sys.argv[0] + " tune <table> <operator> <channels> <samples> [opencl]")
+    if len(sys.argv) < 6 or len(sys.argv) > 8:
+        print("Usage: " + sys.argv[0] + " tune <table> <operator> <channels> <samples> [opencl] [all|local]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
+        FLAGS = [False, False, False]
         if "opencl" in sys.argv:
-            CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], True)
-        else:
-            CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], False)
+            FLAGS[0] = True
+            if "all" in sys.argv:
+                FLAGS[1] = True
+            elif "local" in sys.argv:
+                FLAGS[2] = True
+        CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], FLAGS)
         export.print_results(CONFS)
-    except pymysql.err.ProgrammingError:
-        pass
     except:
-        print(sys.exc_info()[0])
-        sys.exit(1)
+        print(sys.exc_info())
 elif COMMAND == "tuneNoReuse":
     if len(sys.argv) < 6 or len(sys.argv) > 7:
         print("Usage: " + sys.argv[0] + " tuneNoReuse <table> <operator> <channels> <samples> [opencl]")
@@ -98,7 +99,7 @@ elif COMMAND == "tuneNoReuse":
     except pymysql.err.ProgrammingError:
         pass
     except:
-        print(sys.exc_info()[0])
+        print(sys.exc_info())
         sys.exit(1)
 elif COMMAND == "statistics":
     if len(sys.argv) != 5:
@@ -112,11 +113,11 @@ elif COMMAND == "statistics":
     except pymysql.err.ProgrammingError:
         pass
     except:
-        print(sys.exc_info()[0])
+        print(sys.exc_info())
         sys.exit(1)
 else:
     print("Unknown command.")
-    print("Supported commands are: create, delete, load, export, tuneNoReuse, statistics")
+    print("Supported commands are: create, delete, load, tune, tuneNoReuse, statistics")
 
 QUEUE.close()
 DB_CONN.commit()
