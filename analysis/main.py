@@ -106,13 +106,20 @@ elif COMMAND == "tuneNoReuse":
         print(sys.exc_info())
         sys.exit(1)
 elif COMMAND == "statistics":
-    if len(sys.argv) != 5:
-        print("Usage: " + sys.argv[0] + " statistics <table>, <channels>, <samples>")
+    if len(sys.argv) < 5 or len(sys.argv) > 6:
+        print("Usage: " + sys.argv[0] + " statistics <table> <channels> <samples> [local|nolocal]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
-        CONFS = export.statistics(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4])
+        FLAGS = [False, False]
+        if "local" in sys.argv:
+            FLAGS[1] = True
+        elif "nolocal" in sys.argv:
+            FLAGS[1] = False
+        else:
+            FLAGS[0] = True
+        CONFS = export.statistics(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], FLAGS)
         export.print_results(CONFS)
     except pymysql.err.ProgrammingError:
         pass

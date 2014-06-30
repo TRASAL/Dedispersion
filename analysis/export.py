@@ -65,11 +65,16 @@ def tune_no_reuse(queue, table, operator, channels, samples, flags):
                 confs.append([dm[0], best[0][0], best[0][1], best[0][2], best[0][3], best[0][4]])
     return confs
 
-def statistics(queue, table, channels, samples):
+def statistics(queue, table, channels, samples, flags):
     confs = list()
     dms_range = get_dm_range(queue, table)
     for dm in dms_range:
-        queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
+        if flags[0]:
+            queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
+        elif flags[1]:
+            queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1)")
+        else:
+            queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0)")
         line = queue.fetchall()
         confs.append([dm[0], line[0][0], line[0][2], line[0][1], line[0][3], (line[0][2] - line[0][1]) / line[0][3]])
     return confs
