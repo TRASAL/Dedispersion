@@ -18,9 +18,10 @@ import pymysql
 import config
 import manage
 import export
+import analysis
 
 if len(sys.argv) == 1:
-    print("Supported commands are: create, delete, load, tune, tuneNoReuse, statistics")
+    print("Supported commands are: create, list, delete, load, tune, tuneNoReuse, statistics, histogram")
     sys.exit(1)
 
 COMMAND = sys.argv[1]
@@ -39,6 +40,16 @@ if COMMAND == "create":
             manage.create_table(QUEUE, sys.argv[2], True)
         else:
             manage.create_table(QUEUE, sys.argv[2], False)
+    except pymysql.err.InternalError:
+        pass
+elif COMMAND == "list":
+    if len(sys.argv) != 2:
+        print("Usage: " + sys.argv[0] + " list")
+        QUEUE.close()
+        DB_CONN.close()
+        sys.exit(1)
+    try:
+        manage.print_results(manage.get_tables(QUEUE))
     except pymysql.err.InternalError:
         pass
 elif COMMAND == "delete":
@@ -81,7 +92,7 @@ elif COMMAND == "tune":
             elif "local" in sys.argv:
                 FLAGS[2] = True
         CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], FLAGS)
-        export.print_results(CONFS)
+        manage.print_results(CONFS)
     except:
         print(sys.exc_info())
 elif COMMAND == "tuneNoReuse":
@@ -99,7 +110,7 @@ elif COMMAND == "tuneNoReuse":
             elif "local" in sys.argv:
                 FLAGS[2] = True
         CONFS = export.tune_no_reuse(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], FLAGS)
-        export.print_results(CONFS)
+        manage.print_results(CONFS)
     except pymysql.err.ProgrammingError:
         pass
     except:
@@ -119,8 +130,34 @@ elif COMMAND == "statistics":
             FLAGS[1] = False
         else:
             FLAGS[0] = True
-        CONFS = export.statistics(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], FLAGS)
-        export.print_results(CONFS)
+        CONFS = analysis.statistics(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], FLAGS)
+        manage.print_results(CONFS)
+    except pymysql.err.ProgrammingError:
+        pass
+    except:
+        print(sys.exc_info())
+        sys.exit(1)
+elif COMMAND == "histogram":
+    if len(sys.argv) < 5 or len(sys.argv) > 6:
+        print("Usage: " + sys.argv[0] + " statistics <table> <channels> <samples> [local|nolocal]")
+        QUEUE.close()
+        DB_CONN.close()
+        sys.exit(1)
+    try:
+        FLAGS = [False, False]
+        if "local" in sys.argv:
+            FLAGS[1] = True
+        elif "nolocal" in sys.argv:
+            FLAGS[1] = False
+        else:
+            FLAGS[0] = True
+        HISTS = analysis.histogram(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], FLAGS)
+        for hist in HISTS:
+            i = 0
+            for item in hist:
+                print(i, item)
+                i = i + 1
+            print("\n\n")
     except pymysql.err.ProgrammingError:
         pass
     except:
@@ -128,7 +165,7 @@ elif COMMAND == "statistics":
         sys.exit(1)
 else:
     print("Unknown command.")
-    print("Supported commands are: create, delete, load, tune, tuneNoReuse, statistics")
+    print("Supported commands are: create, list, delete, load, tune, tuneNoReuse, statistics, histogram")
 
 QUEUE.close()
 DB_CONN.commit()
