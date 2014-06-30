@@ -31,11 +31,10 @@ def tune(queue, table, operator, channels, samples, flags):
             if flags[0]:
                 if flags[1]:
                     queue.execute("SELECT local,samplesPerBlock,DMsPerBlock,samplesPerThread,DMsPerThread,GFLOPS,GFLOPS_err,time,time_err FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + "))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
+                elif flags[2]:
+                    queue.execute("SELECT local,samplesPerBlock,DMsPerBlock,samplesPerThread,DMsPerThread,GFLOPS,GFLOPS_err,time,time_err FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1)")
                 else:
-                    if flags[2]:
-                        queue.execute("SELECT local,samplesPerBlock,DMsPerBlock,samplesPerThread,DMsPerThread,GFLOPS,GFLOPS_err,time,time_err FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1)")
-                    else:
-                        queue.execute("SELECT local,samplesPerBlock,DMsPerBlock,samplesPerThread,DMsPerThread,GFLOPS,GFLOPS_err,time,time_err FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0)")
+                    queue.execute("SELECT local,samplesPerBlock,DMsPerBlock,samplesPerThread,DMsPerThread,GFLOPS,GFLOPS_err,time,time_err FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0)")
                 best = queue.fetchall()
                 confs.append([dm[0], best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5], best[0][6], best[0][7], best[0][8]])
             else:
@@ -44,14 +43,19 @@ def tune(queue, table, operator, channels, samples, flags):
                 confs.append([dm[0], best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5]])
     return confs
 
-def tune_no_reuse(queue, table, operator, channels, samples, opencl):
+def tune_no_reuse(queue, table, operator, channels, samples, flags):
     confs = list()
     if operator.casefold() == "max" or operator.casefold() == "min":
         dms_range = get_dm_range(queue, table)
         for dm in dms_range:
-            if opencl:
+            if flags[0]:
                 no_reuse = "(DMsPerBlock = 1 AND DMsPerThread = 1)"
-                queue.execute("SELECT local,samplesPerBlock,samplesPerThread,GFLOPS,GFLOPS_err,time,time_err FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + "))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + ")")
+                if flags[1]:
+                    queue.execute("SELECT local,samplesPerBlock,samplesPerThread,GFLOPS,GFLOPS_err,time,time_err FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + "))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + ")")
+                elif flags[2]:
+                    queue.execute("SELECT local,samplesPerBlock,samplesPerThread,GFLOPS,GFLOPS_err,time,time_err FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + " AND local = 1))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + " AND local = 1)")
+                else:
+                    queue.execute("SELECT local,samplesPerBlock,samplesPerThread,GFLOPS,GFLOPS_err,time,time_err FROM " + table + " WHERE (GFLOPS = (SELECT " + operator + "(GFLOPS) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + " AND local = 0))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + " AND local = 0)")
                 best = queue.fetchall()
                 confs.append([dm[0], best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5], best[0][6]])
             else:

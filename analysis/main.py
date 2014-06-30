@@ -85,16 +85,20 @@ elif COMMAND == "tune":
     except:
         print(sys.exc_info())
 elif COMMAND == "tuneNoReuse":
-    if len(sys.argv) < 6 or len(sys.argv) > 7:
-        print("Usage: " + sys.argv[0] + " tuneNoReuse <table> <operator> <channels> <samples> [opencl]")
+    if len(sys.argv) < 6 or len(sys.argv) > 8:
+        print("Usage: " + sys.argv[0] + " tuneNoReuse <table> <operator> <channels> <samples> [opencl] [all|local]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
+        FLAGS = [False, False, False]
         if "opencl" in sys.argv:
-            CONFS = export.tune_no_reuse(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], True)
-        else:
-            CONFS = export.tune_no_reuse(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], False)
+            FLAGS[0] = True
+            if "all" in sys.argv:
+                FLAGS[1] = True
+            elif "local" in sys.argv:
+                FLAGS[2] = True
+        CONFS = export.tune_no_reuse(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], FLAGS)
         export.print_results(CONFS)
     except pymysql.err.ProgrammingError:
         pass
