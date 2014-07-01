@@ -1,7 +1,0 @@
-
-MY_HOST = "127.0.0.1"
-MY_PORT = 3306
-MY_USER = "user"
-MY_PASS = "passwd"
-MY_DB = "database"
-
