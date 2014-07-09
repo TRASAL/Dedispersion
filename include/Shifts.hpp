@@ -30,11 +30,9 @@ template< typename T > std::vector< unsigned int > * getShifts(AstroData::Observ
 	float inverseHighFreq = 1.0f / (observation.getMaxFreq() * observation.getMaxFreq());
   std::vector< unsigned int > * shifts = new std::vector< unsigned int >(observation.getNrDMs() * observation.getNrPaddedChannels());
 
-	#pragma omp parallel for
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		float kDM = 4148.808f * (observation.getFirstDM() + (dm * observation.getDMStep()));
 
-		#pragma omp parallel for
 		for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 			float inverseFreq = 1.0f / ((observation.getMinFreq() + (channel * observation.getChannelBandwidth())) * (observation.getMinFreq() + (channel * observation.getChannelBandwidth())));
 			float delta = kDM * (inverseFreq - inverseHighFreq);
