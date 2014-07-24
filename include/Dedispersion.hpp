@@ -184,7 +184,7 @@ std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const un
 
   // Begin kernel's template
 	*code = "namespace PulsarSearch {\n"
-		"template< typename T > void dedispersionAVX" + isa::utils::toString< unsigned int >(nrSamplesPerThread) + "x" + isa::utils::toString< unsigned int >(nrDMsPerThread) + "(const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerDispersedSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const unsigned int nrPaddedChannels, const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
+		"template< typename T > void dedispersionAVX" + isa::utils::toString< unsigned int >(nrSamplesPerThread) + "x" + isa::utils::toString< unsigned int >(nrDMsPerThread) + "(const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerDispersedSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const unsigned int nrPaddedChannels, const float  * const __restrict__ input, float * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
 		"#pragma omp parallel for schedule(static)\n"
 		"for ( unsigned int dm = 0; dm < nrDMs; dm += " + isa::utils::toString< unsigned int >(nrDMsPerThread) + " ) {\n"
 			"#pragma omp parallel for schedule(static)\n"
@@ -274,7 +274,7 @@ std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const un
 
   // Begin kernel's template
 	*code = "namespace PulsarSearch {\n"
-		"template< typename T > void dedispersionPhi" + isa::utils::toString< unsigned int >(nrSamplesPerThread) + "x" + isa::utils::toString< unsigned int >(nrDMsPerThread) + "(const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerDispersedSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const unsigned int nrPaddedChannels,const T  * const __restrict__ input, T * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
+		"template< typename T > void dedispersionPhi" + isa::utils::toString< unsigned int >(nrSamplesPerThread) + "x" + isa::utils::toString< unsigned int >(nrDMsPerThread) + "(const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerDispersedSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const unsigned int nrPaddedChannels,const float  * const __restrict__ input, float * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
 		"#pragma omp parallel for schedule(static)\n"
 		"for ( unsigned int dm = 0; dm < nrDMs; dm += " + isa::utils::toString< unsigned int >(nrDMsPerThread) + " ) {\n"
 			"#pragma omp parallel for schedule(static)\n"
