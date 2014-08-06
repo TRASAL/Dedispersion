@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 	unsigned int nrDMsPerBlock = 0;
 	unsigned int nrSamplesPerThread = 0;
 	unsigned int nrDMsPerThread = 0;
-	long long unsigned int wrongSamples= 0;
+	long long unsigned int wrongSamples = 0;
 	AstroData::Observation< dataType > observation("DedispersionTest", typeName);
 
 	try {
