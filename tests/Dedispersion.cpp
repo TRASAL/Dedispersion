@@ -33,11 +33,6 @@
 typedef float dataType;
 std::string typeName("float");
 
-// Common parameters
-const unsigned int nrSeconds = 1;
-const unsigned int nrBeams = 1;
-const unsigned int nrStations = 64;
-
 
 int main(int argc, char *argv[]) {
   bool localMem = false;
@@ -54,18 +49,14 @@ int main(int argc, char *argv[]) {
 	try {
     isa::utils::ArgumentList args(argc, argv);
     print = args.getSwitch("-print");
-
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
-	
     observation.setPadding(args.getSwitchArgument< unsigned int >("-padding"));
     localMem = args.getSwitch("-local");
-
 		nrSamplesPerBlock = args.getSwitchArgument< unsigned int >("-sb");
 		nrDMsPerBlock = args.getSwitchArgument< unsigned int >("-db");
 		nrSamplesPerThread = args.getSwitchArgument< unsigned int >("-st");
 		nrDMsPerThread = args.getSwitchArgument< unsigned int >("-dt");
-
 		observation.setMinFreq(args.getSwitchArgument< float >("-min_freq"));
 		observation.setChannelBandwidth(args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
@@ -81,11 +72,6 @@ int main(int argc, char *argv[]) {
     std::cerr << "Usage: " << argv[0] << " [-print] -opencl_platform ... -opencl_device ... -padding ... [-local] -sb ... -db ... -st ... -dt ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
-
-	// Remaining parameters
-	observation.setNrSeconds(nrSeconds);
-	observation.setNrBeams(nrStations);
-	observation.setNrStations(nrBeams);
 
 	// Initialize OpenCL
 	cl::Context * clContext = new cl::Context();
