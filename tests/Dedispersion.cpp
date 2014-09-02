@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 		observation.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
 		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
 		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
-	} catch  ( isa::Exceptions::SwitchNotFound &err ) {
+	} catch  ( isa::utils::SwitchNotFound &err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception &err ) {
@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
   }
 	try {
     kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-	} catch ( isa::Exceptions::OpenCLError &err ) {
+	} catch ( isa::OpenCL::OpenCLError &err ) {
     std::cerr << err.what() << std::endl;
 		return 1;
 	}
