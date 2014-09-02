@@ -27,7 +27,6 @@
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
 #include <utils.hpp>
-#include <Exceptions.hpp>
 #include <Timer.hpp>
 #include <Stats.hpp>
 
@@ -68,7 +67,7 @@ int main(int argc, char * argv[]) {
 		observation.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
 		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
 		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
-	} catch ( isa::Exceptions::EmptyCommandLine &err ) {
+	} catch ( isa::utils::EmptyCommandLine &err ) {
 		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-local] -padding ... -min_threads ... -max_threads ... -max_items ... -max_columns ... -max_rows ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	} catch ( std::exception &err ) {
@@ -160,7 +159,7 @@ int main(int argc, char * argv[]) {
 
           try {
             kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-          } catch ( isa::Exceptions::OpenCLError &err ) {
+          } catch ( isa::OpenCL::OpenCLError &err ) {
             std::cerr << err.what() << std::endl;
             continue;
           }
