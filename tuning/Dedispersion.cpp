@@ -132,7 +132,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	std::cout << std::fixed << std::endl;
-	std::cout << "# nrDMs nrChannels nrSamples local samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread GFLOP/s err time err" << std::endl << std::endl;
+	std::cout << "# nrDMs nrChannels nrSamples local samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread GFLOP/s err GB/s err time err" << std::endl << std::endl;
 
 	for ( std::vector< unsigned int >::iterator samples = samplesPerBlock.begin(); samples != samplesPerBlock.end(); ++samples ) {
 		for ( std::vector< unsigned int >::iterator DMs = DMsPerBlock.begin(); DMs != DMsPerBlock.end(); ++DMs ) {
@@ -154,9 +154,11 @@ int main(int argc, char * argv[]) {
 					}
 
           // Generate kernel
-          double flops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
+          double gflops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
+          double gbs = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * ((observation.getNrSamplesPerSecond() * (observation.getNrChannels() + 1)) + observation.getNrChannels()));
           isa::utils::Timer timer("Kernel Timer");
-          isa::utils::Stats< double > stats;
+          isa::utils::Stats< double > statsF;
+          isa::utils::Stats< double > statsB;
           cl::Event event;
           cl::Kernel * kernel;
           std::string * code = PulsarSearch::getDedispersionOpenCL(localMem, *samples, *DMs, samplesPerThread, DMsPerThread, typeName, observation, *shifts);
@@ -190,14 +192,20 @@ int main(int argc, char * argv[]) {
               clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
               event.wait();
               timer.stop();
-              stats.addElement(flops / timer.getLastRunTime());
+              statsF.addElement(gflops / timer.getLastRunTime());
+              statsB.addElement(gbs / timer.getLastRunTime());
             }
           } catch ( cl::Error & err ) {
             std::cerr << "OpenCL error kernel execution: " << isa::utils::toString(err.err()) << "." << std::endl;
             continue;
           }
 
-          std::cout << observation.getNrDMs() << " " << observation.getNrChannels() << " " << observation.getNrSamplesPerSecond() << " " << localMem << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " " << std::setprecision(3) << stats.getAverage() << " " << stats.getStdDev() << " " << std::setprecision(6) << timer.getAverageTime() << " " << timer.getStdDev() << std::endl;
+          std::cout << observation.getNrDMs() << " " << observation.getNrChannels() << " " << observation.getNrSamplesPerSecond() << " " << localMem << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " ";
+          std::cout << std::setprecision(3);
+          std::cout << statsF.getAverage() << " " << statsF.getStdDev() << " ";
+          std::cout << statsB.getAverage() << " " << statsB.getStdDev() << " ";
+          std::cout << std::setprecision(6);
+          std::cout << timer.getAverageTime() << " " << timer.getStdDev() << std::endl;
 				}
 			}
 		}
