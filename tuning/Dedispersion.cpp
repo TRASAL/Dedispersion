@@ -155,7 +155,7 @@ int main(int argc, char * argv[]) {
 
           // Generate kernel
           double gflops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
-          double gbs = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * ((observation.getNrSamplesPerSecond() * (observation.getNrChannels() + 1)) + observation.getNrChannels()));
+          double gbs = isa::utils::giga(((static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond() * (observation.getNrChannels() + 1)) * sizeof(dataType)) + ((observation.getNrDMs() * observation.getNrChannels()) * sizeof(unsigned int)));
           isa::utils::Timer timer("Kernel Timer");
           isa::utils::Stats< double > statsF;
           isa::utils::Stats< double > statsB;
