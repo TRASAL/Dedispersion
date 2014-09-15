@@ -40,10 +40,12 @@ int main(int argc, char * argv[]) {
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
 	unsigned int minThreads = 0;
-	unsigned int maxThreadsPerBlock = 0;
-	unsigned int maxItemsPerThread = 0;
-	unsigned int maxColumns = 0;
+  unsigned int maxThreads = 0;
 	unsigned int maxRows = 0;
+	unsigned int maxColumns = 0;
+  unsigned int threadUnit = 0;
+  unsigned int threadIncrement = 0;
+  unsigned int maxItems = 0;
   AstroData::Observation< dataType > observation("DedispersionTuning", typeName);
 
 	try {
@@ -54,11 +56,13 @@ int main(int argc, char * argv[]) {
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     localMem = args.getSwitch("-local");
 		observation.setPadding(args.getSwitchArgument< unsigned int >("-padding"));
+    threadUnit = args.getSwitchArgument< unsigned int >("-thread_unit");
 		minThreads = args.getSwitchArgument< unsigned int >("-min_threads");
-		maxThreadsPerBlock = args.getSwitchArgument< unsigned int >("-max_threads");
-		maxItemsPerThread = args.getSwitchArgument< unsigned int >("-max_items");
-		maxColumns = args.getSwitchArgument< unsigned int >("-max_columns");
+		maxThreads = args.getSwitchArgument< unsigned int >("-max_threads");
 		maxRows = args.getSwitchArgument< unsigned int >("-max_rows");
+		maxColumns = args.getSwitchArgument< unsigned int >("-max_columns");
+    threadIncrement = args.getSwitchArgument< unsigned int >("-thread_increment");
+		maxItems = args.getSwitchArgument< unsigned int >("-max_items");
 		observation.setMinFreq(args.getSwitchArgument< float >("-min_freq"));
 		observation.setChannelBandwidth(args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
@@ -119,7 +123,7 @@ int main(int argc, char * argv[]) {
 
 	// Find the parameters
 	std::vector< unsigned int > samplesPerBlock;
-	for ( unsigned int samples = minThreads; samples <= maxColumns; samples += minThreads ) {
+	for ( unsigned int samples = minThreads; samples <= maxColumns; samples += threadIncrement ) {
 		if ( (observation.getNrSamplesPerPaddedSecond() % samples) == 0 ) {
 			samplesPerBlock.push_back(samples);
 		}
@@ -136,20 +140,21 @@ int main(int argc, char * argv[]) {
 
 	for ( std::vector< unsigned int >::iterator samples = samplesPerBlock.begin(); samples != samplesPerBlock.end(); ++samples ) {
 		for ( std::vector< unsigned int >::iterator DMs = DMsPerBlock.begin(); DMs != DMsPerBlock.end(); ++DMs ) {
-			if ( ((*samples) * (*DMs)) > maxThreadsPerBlock ) {
+			if ( ((*samples) * (*DMs)) > maxThreads ) {
 				break;
-			}
+			} else if ( ((*samples) * (*DMs)) % threadUnit != 0 ) {
+        continue;
+      }
 
-			for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItemsPerThread; samplesPerThread++ ) {
+			for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItems; samplesPerThread++ ) {
 				if ( (observation.getNrSamplesPerPaddedSecond() % ((*samples) * samplesPerThread)) != 0 ) {
 					continue;
 				}
 
-				for ( unsigned int DMsPerThread = 1; DMsPerThread <= maxItemsPerThread; DMsPerThread++ ) {
+				for ( unsigned int DMsPerThread = 1; DMsPerThread <= maxItems; DMsPerThread++ ) {
 					if ( (observation.getNrDMs() % ((*DMs) * DMsPerThread)) != 0 ) {
 						continue;
-					}
-					if ( ( samplesPerThread * DMsPerThread ) > maxItemsPerThread ) {
+					} else if ( (samplesPerThread * DMsPerThread) > maxItems ) {
 						break;
 					}
 
