@@ -14,13 +14,13 @@ PHI_INCLUDES		:= -I"$(PROJ_BASE)/include" -I"$(ISA_UTILS_INCLUDE)" -I"$(ISA_ASTR
 LIBS				:= -L"$(OPENCL_LIB)"
 
 ifneq ($(debug), 1)
-	CFLAGS		:= -std=c++0x -O3 -g0 -Wall
-	CPU_CFLAGS	:= -std=c++0x -O3 -g0 -Wall -mavx -fopenmp
-	PHI_CFLAGS	:= -std=c++0x -O3 -g0 -Wall -mmic -openmp -vec-report3
+	CFLAGS		:= -std=c++11 -O3 -g0 -Wall
+	CPU_CFLAGS	:= -std=c++11 -O3 -g0 -Wall -mavx -fopenmp
+	PHI_CFLAGS	:= -std=c++11 -O3 -g0 -Wall -mmic -openmp -vec-report3
 else
-	CFLAGS		:= -std=c++0x -O0 -g3 -Wall
-	CPU_CFLAGS	:= -std=c++0x -O0 -g3 -Wall -mavx -fopenmp
-	PHI_CFLAGS	:= -std=c++0x -O0 -g3 -Wall -mmic -openmp -vec-report3
+	CFLAGS		:= -std=c++11 -O0 -g3 -Wall
+	CPU_CFLAGS	:= -std=c++11 -O0 -g3 -Wall -mavx -fopenmp
+	PHI_CFLAGS	:= -std=c++11 -O0 -g3 -Wall -mmic -openmp -vec-report3
 endif
 
 LDFLAGS         := -lm -lOpenCL
