@@ -53,14 +53,9 @@ int main(int argc, char * argv[]) {
     nrIterations = args.getSwitchArgument< unsigned int >("-iterations");
 		observation.setPadding(args.getSwitchArgument< unsigned int >("-padding"));
 		maxItemsPerThread = args.getSwitchArgument< unsigned int >("-max_items");
-		observation.setMinFreq(args.getSwitchArgument< float >("-min_freq"));
-		observation.setChannelBandwidth(args.getSwitchArgument< float >("-channel_bandwidth"));
+    observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
-		observation.setNrChannels(args.getSwitchArgument< unsigned int >("-channels"));
-		observation.setNrDMs(args.getSwitchArgument< unsigned int >("-dms"));
-		observation.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
-		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
-		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
+    observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch ( isa::Exceptions::EmptyCommandLine &err ) {
 		std::cerr << argv[0] << " [-avx] [-phi] -iterations ... -padding ... -max_items ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
@@ -106,7 +101,7 @@ int main(int argc, char * argv[]) {
       }
 
       // Tuning runs
-      isa::utils::Timer timer("Kernel Timer");
+      isa::utils::Timer timer();
       isa::utils::Stats< double > stats;
       PulsarSearch::dedispersionFunc< dataType > dedispersion = 0;
 
