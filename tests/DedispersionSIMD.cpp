@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 	unsigned int nrSamplesPerThread = 0;
 	unsigned int nrDMsPerThread = 0;
 	long long unsigned int wrongSamples = 0;
-	AstroData::Observation< float > observation("DedispersionTest", "float");
+	AstroData::Observation observation();
 
 	try {
     isa::utils::ArgumentList args(argc, argv);
@@ -48,13 +48,9 @@ int main(int argc, char *argv[]) {
 		nrSamplesPerThread = args.getSwitchArgument< unsigned int >("-st");
 		nrDMsPerThread = args.getSwitchArgument< unsigned int >("-dt");
 		observation.setMinFreq(args.getSwitchArgument< float >("-min_freq"));
-		observation.setChannelBandwidth(args.getSwitchArgument< float >("-channel_bandwidth"));
+    observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
-		observation.setNrChannels(args.getSwitchArgument< unsigned int >("-channels"));
-		observation.setNrDMs(args.getSwitchArgument< unsigned int >("-dms"));
-		observation.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
-		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
-		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
+    observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch  ( isa::Exceptions::SwitchNotFound &err ) {
     std::cerr << err.what() << std::endl;
     return 1;

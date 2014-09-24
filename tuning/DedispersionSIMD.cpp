@@ -40,7 +40,7 @@ int main(int argc, char * argv[]) {
   bool phi = false;
   unsigned int nrIterations = 0;
 	unsigned int maxItemsPerThread = 0;
-  AstroData::Observation< dataType > observation("DedispersionTuning", typeName);
+  AstroData::Observation observation();
 
 	try {
     isa::utils::ArgumentList args(argc, argv);

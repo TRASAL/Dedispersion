@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
   unsigned int threadUnit = 0;
   unsigned int threadIncrement = 0;
   unsigned int maxItems = 0;
-  AstroData::Observation< dataType > observation("DedispersionTuning", typeName);
+  AstroData::Observation observation();
 
 	try {
     isa::utils::ArgumentList args(argc, argv);
@@ -63,14 +63,9 @@ int main(int argc, char * argv[]) {
 		maxColumns = args.getSwitchArgument< unsigned int >("-max_columns");
     threadIncrement = args.getSwitchArgument< unsigned int >("-thread_increment");
 		maxItems = args.getSwitchArgument< unsigned int >("-max_items");
-		observation.setMinFreq(args.getSwitchArgument< float >("-min_freq"));
-		observation.setChannelBandwidth(args.getSwitchArgument< float >("-channel_bandwidth"));
+    observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
-		observation.setNrChannels(args.getSwitchArgument< unsigned int >("-channels"));
-		observation.setNrDMs(args.getSwitchArgument< unsigned int >("-dms"));
-		observation.setFirstDM(args.getSwitchArgument< float >("-dm_first"));
-		observation.setDMStep(args.getSwitchArgument< float >("-dm_step"));
-		observation.setMaxFreq(observation.getMinFreq() + (observation.getChannelBandwidth() * (observation.getNrChannels() - 1)));
+    observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
 		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-local] -padding ... -thread_unit ... -min_threads ... -max_threads ... -max_items ... -max_columns ... -max_rows ... -thread_increment ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
@@ -161,7 +156,7 @@ int main(int argc, char * argv[]) {
           // Generate kernel
           double gflops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
           double gbs = isa::utils::giga(((static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond() * (observation.getNrChannels() + 1)) * sizeof(dataType)) + ((observation.getNrDMs() * observation.getNrChannels()) * sizeof(unsigned int)));
-          isa::utils::Timer timer("Kernel Timer");
+          isa::utils::Timer timer();
           isa::utils::Stats< double > statsF;
           isa::utils::Stats< double > statsB;
           cl::Event event;
