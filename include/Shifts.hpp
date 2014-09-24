@@ -22,11 +22,11 @@
 
 namespace PulsarSearch {
 
-template< typename T > std::vector< unsigned int > * getShifts(AstroData::Observation< T > & observation);
+template< typename T > std::vector< unsigned int > * getShifts(AstroData::Observation & observation);
 
 
 // Implementation
-template< typename T > std::vector< unsigned int > * getShifts(AstroData::Observation< T > & observation) {
+template< typename T > std::vector< unsigned int > * getShifts(AstroData::Observation & observation) {
 	float inverseHighFreq = 1.0f / (observation.getMaxFreq() * observation.getMaxFreq());
   std::vector< unsigned int > * shifts = new std::vector< unsigned int >(observation.getNrDMs() * observation.getNrPaddedChannels());
 
