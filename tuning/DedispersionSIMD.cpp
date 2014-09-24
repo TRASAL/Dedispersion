@@ -32,7 +32,7 @@
 #include <Exceptions.hpp>
 
 typedef float dataType;
-string typeName("float");
+std::string typeName("float");
 
 
 int main(int argc, char * argv[]) {
@@ -101,7 +101,7 @@ int main(int argc, char * argv[]) {
       }
 
       // Tuning runs
-      isa::utils::Timer timer();
+      isa::utils::Timer timer;
       isa::utils::Stats< double > stats;
       PulsarSearch::dedispersionFunc< dataType > dedispersion = 0;
 
