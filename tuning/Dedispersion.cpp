@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
   unsigned int threadUnit = 0;
   unsigned int threadIncrement = 0;
   unsigned int maxItems = 0;
-  AstroData::Observation observation();
+  AstroData::Observation observation;
 
 	try {
     isa::utils::ArgumentList args(argc, argv);

@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 	unsigned int nrSamplesPerThread = 0;
 	unsigned int nrDMsPerThread = 0;
 	long long unsigned int wrongSamples = 0;
-	AstroData::Observation observation();
+	AstroData::Observation observation;
 
 	try {
     isa::utils::ArgumentList args(argc, argv);
