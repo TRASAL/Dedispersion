@@ -30,7 +30,7 @@ template< typename T > using dedispersionFunc = void (*)(unsigned int, unsigned 
 // Sequential dedispersion
 template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< unsigned int > & shifts);
 // OpenCL dedispersion algorithm
-std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation & observation, std::vector< unsigned int > & shifts);
+std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const std::string & dataType, const AstroData::Observation & observation, std::vector< unsigned int > & shifts);
 // AVX dedispersion algorithm
 std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread);
 // Xeon Phi dedispers algorithm
@@ -56,7 +56,7 @@ template< typename T > void dedispersion(AstroData::Observation & observation, c
 	}
 }
 
-std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, std::string & dataType, const AstroData::Observation & observation, std::vector< unsigned int > & shifts) {
+std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const std::string & dataType, const AstroData::Observation & observation, std::vector< unsigned int > & shifts) {
   std::string * code = new std::string();
   std::string sum_sTemplate = std::string();
   std::string nrTotalSamplesPerBlock_s = isa::utils::toString< unsigned int >(nrSamplesPerBlock * nrSamplesPerThread);
