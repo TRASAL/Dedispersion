@@ -197,6 +197,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       delete sumsDM_s;
     }
     unrolled_s = isa::utils::replace(unrolled_s, "<%SUMS%>", *sums_s, true);
+    unrolled_s = isa::utils::replace(unrolled_s, "<%UNROLL%>", loop_s, true);
     delete sums_s;
   }
   code = isa::utils::replace(code, "<%DEFS%>", *def_s, true);
