@@ -97,7 +97,8 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "}\n"
       "barrier(CLK_LOCAL_MEM_FENCE);\n"
       "\n"
-      "<%SUMS%>";
+      "<%SUMS%>"
+      "\n";
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + (shiftDM<%DM_NUM%> - minShift)];\n";
   } else {
     *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __global const int * restrict const shifts) {\n"
@@ -114,7 +115,8 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "}";
     unrolled_sTemplate = "<%SHIFTS%>"
       "\n"
-      "<%SUMS%>";
+      "<%SUMS%>"
+      "\n";
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
   }
 	std::string def_sTemplate = dataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
