@@ -118,14 +118,14 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
   }
 	std::string def_sTemplate = dataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
-  std::string defsShiftTemplate = "int shiftDM<%DM_NUM%> = 0;\n"
+  std::string defsShiftTemplate = "int shiftDM<%DM_NUM%> = 0;\n";
 	std::string shiftsTemplate = "shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * " + nrPaddedChannels_s + ") + channel + <%UNROLL%>];\n";
 	std::string store_sTemplate = "output[((dm + <%DM_NUM%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond()) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
 	// End kernel's template
 
   std::string * def_s =  new std::string();
   std::string * defsShift_s = new std::string();
-  std::string * unrolled_s = new string();
+  std::string * unrolled_s = new std::string();
   std::string * store_s =  new std::string();
 
   for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
@@ -167,7 +167,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     std::string * shifts_s = new std::string();
     std::string * sums_s = new std::string();
 
-    temp = isa::utils::replace(&unrolled_sTemplate, "<%UNROLL%>", loop_s);
+    temp_s = isa::utils::replace(&unrolled_sTemplate, "<%UNROLL%>", loop_s);
     unrolled_s->append(*temp_s);
     delete temp_s;
     for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
