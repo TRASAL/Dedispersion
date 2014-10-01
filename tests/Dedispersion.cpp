@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
   }
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getDedispersionOpenCL< dataType >(localMem, nrSamplesPerBlock, nrDMsPerBlock, nrSamplesPerThread, nrDMsPerThread, unroll, typeName, observation, *shifts);
+  std::string * code = PulsarSearch::getDedispersionOpenCL(localMem, nrSamplesPerBlock, nrDMsPerBlock, nrSamplesPerThread, nrDMsPerThread, unroll, typeName, observation, *shifts);
   cl::Kernel * kernel;
   if ( print ) {
     std::cout << *code << std::endl;
