@@ -98,6 +98,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "barrier(CLK_LOCAL_MEM_FENCE);\n"
       "\n"
       "<%SUMS%>"
+      "barrier(CLK_LOCAL_MEM_FENCE);\n"
       "\n";
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + (shiftDM<%DM_NUM%> - minShift)];\n";
   } else {
