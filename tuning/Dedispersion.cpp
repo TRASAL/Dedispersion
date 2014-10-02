@@ -133,7 +133,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	std::cout << std::fixed << std::endl;
-	std::cout << "# nrDMs nrChannels nrSamples local samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread unroll GFLOP/s GB/s time stdDeviation" << std::endl << std::endl;
+	std::cout << "# nrDMs nrChannels nrSamples local samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread unroll GFLOP/s GB/s time stdDeviation COV" << std::endl << std::endl;
 
 	for ( std::vector< unsigned int >::iterator samples = samplesPerBlock.begin(); samples != samplesPerBlock.end(); ++samples ) {
 		for ( std::vector< unsigned int >::iterator DMs = DMsPerBlock.begin(); DMs != DMsPerBlock.end(); ++DMs ) {
@@ -207,7 +207,8 @@ int main(int argc, char * argv[]) {
             std::cout << gflops / timer.getAverageTime() << " ";
             std::cout << gbs / timer.getAverageTime() << " ";
             std::cout << std::setprecision(6);
-            std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << std::endl;
+            std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " ";
+            std::cout << timer.getCoefficientOfVariation() <<  std::endl;
           }
 				}
 			}
