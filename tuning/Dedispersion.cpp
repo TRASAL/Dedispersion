@@ -47,6 +47,7 @@ int main(int argc, char * argv[]) {
   unsigned int threadIncrement = 0;
   unsigned int maxItems = 0;
   unsigned int maxUnroll = 0;
+  unsigned int maxLoopBodySize = 0;
   AstroData::Observation observation;
 
 	try {
@@ -65,11 +66,12 @@ int main(int argc, char * argv[]) {
     threadIncrement = args.getSwitchArgument< unsigned int >("-thread_increment");
 		maxItems = args.getSwitchArgument< unsigned int >("-max_items");
     maxUnroll = args.getSwitchArgument< unsigned int >("-max_unroll");
+    maxLoopBodySize = args.getSwitchArgument< unsigned int >("-max_loopsize");
     observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-local] -padding ... -thread_unit ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_columns ... -max_rows ... -thread_increment ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-local] -padding ... -thread_unit ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_loopsize ... -max_columns ... -max_rows ... -thread_increment ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	} catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -158,6 +160,8 @@ int main(int argc, char * argv[]) {
           for ( unsigned int unroll = 1; unroll <= maxUnroll; unroll++ ) {
             if ( observation.getNrChannels() % unroll != 0 ) {
               continue;
+            } else if ( (samplesPerThread * DMsPerThread * unroll) > maxLoopBodySize ) {
+              break;
             }
             // Generate kernel
             double gflops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
