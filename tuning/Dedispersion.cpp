@@ -158,7 +158,7 @@ int main(int argc, char * argv[]) {
 					}
 
           for ( unsigned int unroll = 1; unroll <= maxUnroll; unroll++ ) {
-            if ( observation.getNrChannels() % unroll != 0 ) {
+            if ( (observation.getNrChannels() - 1) % unroll != 0 ) {
               continue;
             } else if ( (samplesPerThread * DMsPerThread * unroll) > maxLoopBodySize ) {
               break;
