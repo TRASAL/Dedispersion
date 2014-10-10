@@ -58,6 +58,7 @@ template< typename T > void dedispersion(AstroData::Observation & observation, c
 
 std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< int > & shifts) {
   std::string * code = new std::string();
+  std::string sum0_sTemplate = std::string();
   std::string sum_sTemplate = std::string();
   std::string unrolled_sTemplate = std::string();
   std::string nrTotalSamplesPerBlock_s = isa::utils::toString(nrSamplesPerBlock * nrSamplesPerThread);
@@ -78,7 +79,17 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "<%DEFS_SHIFT%>"
       "__local " + dataType + " buffer[" + isa::utils::toString((nrSamplesPerBlock * nrSamplesPerThread) + (shifts[(observation.getNrDMs() - 1) * observation.getNrPaddedChannels()] - shifts[(observation.getNrDMs() - (nrDMsPerBlock * nrDMsPerThread)) * observation.getNrPaddedChannels()])) + "];\n"
       "\n"
-      "for ( int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels()) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
+      "inShMem = (get_local_id(1) * " + isa::utils::toString(nrSamplesPerBlock) + ") + get_local_id(0);\n"
+      "inGlMem = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem;\n"
+      "while ( inShMem < " + nrTotalSamplesPerBlock_s + " ) {\n"
+      "buffer[inShMem] = input[inGlMem];\n"
+      "inShMem += " + nrTotalThreads_s + ";\n"
+      "inGlMem += " + nrTotalThreads_s + ";\n"
+      "}\n"
+      "barrier(CLK_LOCAL_MEM_FENCE);\n"
+      "\n"
+      "<%SUM0%>"
+      "for ( int channel = 1; channel < " + isa::utils::toString(observation.getNrChannels()) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
       "<%UNROLLED_LOOP%>"
       "}\n"
       "\n"
@@ -102,6 +113,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     if ( unroll > 1 ) {
       unrolled_sTemplate += "barrier(CLK_LOCAL_MEM_FENCE);\n";
     }
+    sum0_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[get_local_id(0) + <%OFFSET%>];\n";
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + (shiftDM<%DM_NUM%> - minShift)];\n";
   } else {
     *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __global const int * restrict const shifts) {\n"
@@ -110,7 +122,8 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "<%DEFS%>"
       "<%DEFS_SHIFT%>"
       "\n"
-      "for ( int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels()) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
+      "<%SUM0%>"
+      "for ( int channel = 1; channel < " + isa::utils::toString(observation.getNrChannels()) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
       "<%UNROLLED_LOOP%>"
       "}\n"
       "\n"
@@ -120,6 +133,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "\n"
       "<%SUMS%>"
       "\n";
+    sum0_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[sample + <%OFFSET%>];\n";
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
   }
 	std::string def_sTemplate = dataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
@@ -130,6 +144,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
 
   std::string * def_s =  new std::string();
   std::string * defsShift_s = new std::string();
+  std::string * sum0_s = new std::string();
   std::string * unrolled_s = new std::string();
   std::string * store_s =  new std::string();
 
@@ -154,6 +169,9 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       temp_s = isa::utils::replace(&def_sTemplate, "<%DM_NUM%>", dm_s);
       def_sDM->append(*temp_s);
       delete temp_s;
+      temp_s = isa::utils::replace(&sum0_sTemplate, "<%DM_NUM%>", dm_s);
+      sum0_s->append(*temp_s);
+      delete temp_s;
       temp_s = isa::utils::replace(&store_sTemplate, "<%DM_NUM%>", dm_s);
       store_sDM->append(*temp_s);
       delete temp_s;
@@ -161,6 +179,8 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     def_sDM = isa::utils::replace(def_sDM, "<%NUM%>", sample_s, true);
     def_s->append(*def_sDM);
     delete def_sDM;
+    sum0_s = isa::utils::replace(sum0_s, "<%NUM%>", sample_s, true);
+    sum0_s = isa::utils::replace(sum0_s, "<%OFFSET%>", offset_s, true);
     store_sDM = isa::utils::replace(store_sDM, "<%NUM%>", sample_s, true);
     store_sDM = isa::utils::replace(store_sDM, "<%OFFSET%>", offset_s, true);
     store_s->append(*store_sDM);
@@ -168,7 +188,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
   }
   for ( unsigned int loop = 0; loop < unroll; loop++ ) {
     std::string loop_s = isa::utils::toString(loop);
-    std::string * temp_s = new std::string();
+    std::string * temp_s = 0;
     std::string * shifts_s = new std::string();
     std::string * sums_s = new std::string();
 
@@ -207,10 +227,12 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
   }
   code = isa::utils::replace(code, "<%DEFS%>", *def_s, true);
   code = isa::utils::replace(code, "<%DEFS_SHIFT%>", *defsShift_s, true);
+  code = isa::utils::replace(code, "<%SUM0%>", *sum0_s, true);
   code = isa::utils::replace(code, "<%UNROLLED_LOOP%>", *unrolled_s, true);
   code = isa::utils::replace(code, "<%STORES%>", *store_s, true);
   delete def_s;
   delete defsShift_s;
+  delete sum0_s;
   delete unrolled_s;
   delete store_s;
 
