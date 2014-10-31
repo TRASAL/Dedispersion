@@ -79,19 +79,19 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "<%DEFS_SHIFT%>"
       "__local " + dataType + " buffer[" + isa::utils::toString((nrSamplesPerBlock * nrSamplesPerThread) + (shifts[(observation.getNrDMs() - 1) * observation.getNrPaddedChannels()] - shifts[(observation.getNrDMs() - (nrDMsPerBlock * nrDMsPerThread)) * observation.getNrPaddedChannels()])) + "];\n"
       "\n"
+      "for ( int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
+      "<%UNROLLED_LOOP%>"
+      "}\n"
       "inShMem = (get_local_id(1) * " + isa::utils::toString(nrSamplesPerBlock) + ") + get_local_id(0);\n"
       "inGlMem = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem;\n"
       "while ( inShMem < " + nrTotalSamplesPerBlock_s + " ) {\n"
-      "buffer[inShMem] = input[inGlMem];\n"
+      "buffer[inShMem] = input[(" + isa::utils::toString(observation.getNrChannels() - 1) + " * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + inGlMem];\n"
       "inShMem += " + nrTotalThreads_s + ";\n"
       "inGlMem += " + nrTotalThreads_s + ";\n"
       "}\n"
       "barrier(CLK_LOCAL_MEM_FENCE);\n"
       "\n"
       "<%SUM0%>"
-      "for ( int channel = 1; channel < " + isa::utils::toString(observation.getNrChannels()) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
-      "<%UNROLLED_LOOP%>"
-      "}\n"
       "\n"
       "<%STORES%>"
       "}";
@@ -122,10 +122,10 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "<%DEFS%>"
       "<%DEFS_SHIFT%>"
       "\n"
-      "<%SUM0%>"
-      "for ( int channel = 1; channel < " + isa::utils::toString(observation.getNrChannels()) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
+      "for ( int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
       "<%UNROLLED_LOOP%>"
       "}\n"
+      "<%SUM0%>"
       "\n"
       "<%STORES%>"
       "}";
@@ -133,7 +133,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "\n"
       "<%SUMS%>"
       "\n";
-    sum0_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[sample + <%OFFSET%>];\n";
+    sum0_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(" + isa::utils::toString(observation.getNrChannels() - 1) + " * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + sample + <%OFFSET%>];\n";
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
   }
 	std::string def_sTemplate = dataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
