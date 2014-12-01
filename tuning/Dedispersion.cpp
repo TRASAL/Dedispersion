@@ -177,6 +177,7 @@ int main(int argc, char * argv[]) {
               std::cerr << err.what() << std::endl;
               continue;
             }
+            delete code;
 
             cl::NDRange global(observation.getNrSamplesPerPaddedSecond() / samplesPerThread, observation.getNrDMs() / DMsPerThread);
             cl::NDRange local(*samples, *DMs);
