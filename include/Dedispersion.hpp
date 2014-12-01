@@ -246,6 +246,12 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
         std::string dm_s = isa::utils::toString(dm);
 
         temp_s = isa::utils::replace(&sum_sTemplate, "<%DM_NUM%>", dm_s);
+        if ( loop == 0 ) {
+          std::string empty_s;
+          temp_s = isa::utils::replace(temp_s, " + <%UNROLL%>", empty_s, true);
+        } else {
+          temp_s = isa::utils::replace(temp_s, "<%UNROLL%>", loop_s, true);
+        }
         sumsDM_s->append(*temp_s);
         delete temp_s;
       }
