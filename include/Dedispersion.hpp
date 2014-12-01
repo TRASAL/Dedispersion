@@ -97,7 +97,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "}";
     unrolled_sTemplate = "minShift = shifts[((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + nrPaddedChannels_s + ") + channel + <%UNROLL%>];\n"
       "<%SHIFTS%>"
-      "maxShift = shifts[(((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + nrTotalDMsPerBlock_s + " - 1) * " + nrPaddedChannels_s + ") + channel + <%UNROLL%>];\n"
+      "maxShift = shifts[(((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((nrDMsPerBlock * nrDMsPerThread) - 1) + ") * " + nrPaddedChannels_s + ") + channel + <%UNROLL%>];\n"
       "\n"
       "inShMem = (get_local_id(1) * " + isa::utils::toString(nrSamplesPerBlock) + ") + get_local_id(0);\n"
       "inGlMem = ((get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem) + minShift;\n"
