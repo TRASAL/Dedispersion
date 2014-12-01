@@ -202,7 +202,12 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     std::string * shifts_s = new std::string();
     std::string * sums_s = new std::string();
 
-    temp_s = isa::utils::replace(&unrolled_sTemplate, "<%UNROLL%>", loop_s);
+    if ( loop == 0 ) {
+      std::string empty_s;
+      temp_s = isa::utils::replace(&unrolled_sTemplate, " + <%UNROLL%>", empty_s);
+    } else {
+      temp_s = isa::utils::replace(&unrolled_sTemplate, "<%UNROLL%>", loop_s);
+    }
     unrolled_s->append(*temp_s);
     delete temp_s;
     for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
@@ -237,7 +242,12 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       delete sumsDM_s;
     }
     unrolled_s = isa::utils::replace(unrolled_s, "<%SUMS%>", *sums_s, true);
-    unrolled_s = isa::utils::replace(unrolled_s, "<%UNROLL%>", loop_s, true);
+    if ( unroll == 0 ) {
+      std::string empty_s;
+      unrolled_s = isa::utils::replace(unrolled_s, " + <%UNROLL%>", empty_s, true);
+    } else {
+      unrolled_s = isa::utils::replace(unrolled_s, "<%UNROLL%>", loop_s, true);
+    }
     delete sums_s;
   }
   code = isa::utils::replace(code, "<%DEFS%>", *def_s, true);
