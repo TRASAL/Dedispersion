@@ -224,7 +224,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
         std::string empty_s;
         temp_s = isa::utils::replace(temp_s, " + <%DM_OFFSET%>", empty_s, true);
       } else {
-        temp_s = isa::utils::replace(temp_s, "<%DM_OFFSET%>", loop_s, true);
+        temp_s = isa::utils::replace(temp_s, "<%DM_OFFSET%>", dm_s, true);
       }
       if ( loop == 0 ) {
         std::string empty_s;
