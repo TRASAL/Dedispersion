@@ -28,9 +28,9 @@ namespace PulsarSearch {
 template< typename T > using dedispersionFunc = void (*)(int, int, int, int, int, int, T *, T *, int *);
 
 // Sequential dedispersion
-template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< int > & shifts);
+template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< unsigned int > & shifts);
 // OpenCL dedispersion algorithm
-std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< int > & shifts);
+std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< unsigned int > & shifts);
 // AVX dedispersion algorithm
 std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread);
 // Xeon Phi dedispers algorithm
@@ -46,7 +46,7 @@ template< typename T > void dedispersion(AstroData::Observation & observation, c
 			T dedispersedSample = static_cast< T >(0);
 
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-				int shift = shifts[(dm * observation.getNrChannels()) + channel];
+				unsigned int shift = shifts[(dm * observation.getNrChannels()) + channel];
 
 				dedispersedSample += input[(channel * observation.getNrSamplesPerDispersedChannel()) + (sample + shift)];
 			}
@@ -56,7 +56,7 @@ template< typename T > void dedispersion(AstroData::Observation & observation, c
 	}
 }
 
-std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< int > & shifts) {
+std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< unsigned int > & shifts) {
   std::string * code = new std::string();
   std::string sum0_sTemplate = std::string();
   std::string sum_sTemplate = std::string();
@@ -68,18 +68,18 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
 
   // Begin kernel's template
   if ( localMem ) {
-    *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __global const int * restrict const shifts) {\n"
-      "int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
-      "int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
-      "int inShMem = 0;\n"
-      "int inGlMem = 0;\n"
-      "int minShift = 0;\n"
-      "int maxShift = 0;\n"
+    *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __global const unsigned int * restrict const shifts) {\n"
+      "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
+      "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
+      "unsigned int inShMem = 0;\n"
+      "unsigned int inGlMem = 0;\n"
+      "unsigned int minShift = 0;\n"
+      "unsigned int maxShift = 0;\n"
       "<%DEFS%>"
       "<%DEFS_SHIFT%>"
       "__local " + dataType + " buffer[" + isa::utils::toString((nrSamplesPerBlock * nrSamplesPerThread) + (shifts[(observation.getNrDMs() - 1) * observation.getNrPaddedChannels()] - shifts[(observation.getNrDMs() - (nrDMsPerBlock * nrDMsPerThread)) * observation.getNrPaddedChannels()])) + "];\n"
       "\n"
-      "for ( int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
+      "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
       "<%UNROLLED_LOOP%>"
       "}\n"
       "inShMem = (get_local_id(1) * " + isa::utils::toString(nrSamplesPerBlock) + ") + get_local_id(0);\n"
@@ -116,13 +116,13 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     sum0_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[get_local_id(0) + <%OFFSET%>];\n";
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + (shiftDM<%DM_NUM%> - minShift)];\n";
   } else {
-    *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __global const int * restrict const shifts) {\n"
-      "int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
-      "int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
+    *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __global const unsigned int * restrict const shifts) {\n"
+      "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
+      "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
       "<%DEFS%>"
       "<%DEFS_SHIFT%>"
       "\n"
-      "for ( int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
+      "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
       "<%UNROLLED_LOOP%>"
       "}\n"
       "<%SUM0%>"
@@ -137,7 +137,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
   }
 	std::string def_sTemplate = dataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
-  std::string defsShiftTemplate = "int shiftDM<%DM_NUM%> = 0;\n";
+  std::string defsShiftTemplate = "unsigned int shiftDM<%DM_NUM%> = 0;\n";
 	std::string shiftsTemplate = "shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * " + nrPaddedChannels_s + ") + channel + <%UNROLL%>];\n";
 	std::string store_sTemplate = "output[((dm + <%DM_NUM%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond()) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
 	// End kernel's template
@@ -244,11 +244,11 @@ std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const un
 
   // Begin kernel's template
 	*code = "namespace PulsarSearch {\n"
-		"template< typename T > void dedispersionAVX" + isa::utils::toString(nrSamplesPerThread) + "x" + isa::utils::toString(nrDMsPerThread) + "(const int nrDMs, const int nrSamplesPerSecond, const int nrSamplesPerDispersedSecond, const int nrSamplesPerPaddedSecond, const int nrChannels, const int nrPaddedChannels, const float  * const __restrict__ input, float * const __restrict__ output, const int * const __restrict__ shifts) {\n"
+		"template< typename T > void dedispersionAVX" + isa::utils::toString(nrSamplesPerThread) + "x" + isa::utils::toString(nrDMsPerThread) + "(const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerDispersedSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const unsigned int nrPaddedChannels, const float  * const __restrict__ input, float * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
 		"#pragma omp parallel for schedule(static)\n"
-		"for ( int dm = 0; dm < nrDMs; dm += " + isa::utils::toString(nrDMsPerThread) + " ) {\n"
+		"for ( unsigned int dm = 0; dm < nrDMs; dm += " + isa::utils::toString(nrDMsPerThread) + " ) {\n"
 			"#pragma omp parallel for schedule(static)\n"
-			"for ( int sample = 0; sample < nrSamplesPerSecond; sample += 8 * " + isa::utils::toString(nrSamplesPerThread) + ") {\n"
+			"for ( unsigned int sample = 0; sample < nrSamplesPerSecond; sample += 8 * " + isa::utils::toString(nrSamplesPerThread) + ") {\n"
 				"<%DEFS%>"
 				"\n"
 				"for ( unsigned int channel = 0; channel < nrChannels; channel++ ) {\n"
@@ -265,7 +265,7 @@ std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const un
 	"}\n"
 	"}";
 	std::string def_sTemplate = "__m256 dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm256_setzero_ps();\n";
-	std::string shiftsTemplate = "int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * nrPaddedChannels) + channel];";
+	std::string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * nrPaddedChannels) + channel];";
 	std::string sum_sTemplate = "dispersedSample = _mm256_loadu_ps(&(input[(channel * nrSamplesPerDispersedSecond) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]));\n"
 		"dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm256_add_ps(dedispersedSample<%NUM%>DM<%DM_NUM%>, dispersedSample);\n";
 	std::string store_sTemplate = "_mm256_store_ps(&(output[((dm + <%DM_NUM%>) * nrSamplesPerPaddedSecond) + (sample + <%OFFSET%>)]), dedispersedSample<%NUM%>DM<%DM_NUM%>);\n";
@@ -334,14 +334,14 @@ std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const un
 
   // Begin kernel's template
 	*code = "namespace PulsarSearch {\n"
-		"template< typename T > void dedispersionPhi" + isa::utils::toString(nrSamplesPerThread) + "x" + isa::utils::toString(nrDMsPerThread) + "(const int nrDMs, const int nrSamplesPerSecond, const int nrSamplesPerDispersedSecond, const int nrSamplesPerPaddedSecond, const int nrChannels, const int nrPaddedChannels,const float  * const __restrict__ input, float * const __restrict__ output, const int * const __restrict__ shifts) {\n"
+		"template< typename T > void dedispersionPhi" + isa::utils::toString(nrSamplesPerThread) + "x" + isa::utils::toString(nrDMsPerThread) + "(const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerDispersedSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const unsigned int nrPaddedChannels,const float  * const __restrict__ input, float * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
 		"#pragma omp parallel for schedule(static)\n"
-		"for ( int dm = 0; dm < nrDMs; dm += " + isa::utils::toString(nrDMsPerThread) + " ) {\n"
+		"for ( unsigned int dm = 0; dm < nrDMs; dm += " + isa::utils::toString(nrDMsPerThread) + " ) {\n"
 			"#pragma omp parallel for schedule(static)\n"
-			"for ( int sample = 0; sample < nrSamplesPerSecond; sample += 16 * " + isa::utils::toString(nrSamplesPerThread) + ") {\n"
+			"for ( unsigned int sample = 0; sample < nrSamplesPerSecond; sample += 16 * " + isa::utils::toString(nrSamplesPerThread) + ") {\n"
 				"<%DEFS%>"
 				"\n"
-				"for ( int channel = 0; channel < nrChannels; channel++ ) {\n"
+				"for ( unsigned int channel = 0; channel < nrChannels; channel++ ) {\n"
 					"<%SHIFTS%>"
 					"__m512 dispersedSample;\n"
 					"\n"
@@ -355,7 +355,7 @@ std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const un
 	"}\n"
 	"}";
 	std::string def_sTemplate = "__m512 dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm512_setzero_ps();\n";
-	std::string shiftsTemplate = "int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * nrPaddedChannels) + channel];";
+	std::string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * nrPaddedChannels) + channel];";
 	std::string sum_sTemplate = "dispersedSample = _mm512_loadunpacklo_ps(dispersedSample, &(input[(channel * nrSamplesPerDispersedSecond) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]));\n"
 		"dispersedSample = _mm512_loadunpackhi_ps(dispersedSample, &(input[(channel * nrSamplesPerDispersedSecond) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]) + 16);\n"
 		"dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm512_add_ps(dedispersedSample<%NUM%>DM<%DM_NUM%>, dispersedSample);\n";
