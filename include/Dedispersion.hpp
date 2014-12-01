@@ -180,9 +180,17 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     def_s->append(*def_sDM);
     delete def_sDM;
     sum0_s = isa::utils::replace(sum0_s, "<%NUM%>", sample_s, true);
-    sum0_s = isa::utils::replace(sum0_s, "<%OFFSET%>", offset_s, true);
+    if ( sample * nrSamplesPerBlock == 0 ) {
+      sum0_s = isa::utils::replace(sum0_s, " + <%OFFSET%>", "", true);
+    } else {
+      sum0_s = isa::utils::replace(sum0_s, "<%OFFSET%>", offset_s, true);
+    }
     store_sDM = isa::utils::replace(store_sDM, "<%NUM%>", sample_s, true);
-    store_sDM = isa::utils::replace(store_sDM, "<%OFFSET%>", offset_s, true);
+    if ( sample * nrSamplesPerBlock == 0 ) {
+      store_sDM = isa::utils::replace(store_sDM, " + <%OFFSET%>", "", true);
+    } else {
+      store_sDM = isa::utils::replace(store_sDM, "<%OFFSET%>", offset_s, true);
+    }
     store_s->append(*store_sDM);
     delete store_sDM;
   }
@@ -217,7 +225,11 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
         delete temp_s;
       }
       sumsDM_s = isa::utils::replace(sumsDM_s, "<%NUM%>", sample_s, true);
-      sumsDM_s = isa::utils::replace(sumsDM_s, "<%OFFSET%>", offset_s, true);
+      if ( sample * nrSamplesPerBlock == 0 ) {
+        sumsDM_s = isa::utils::replace(sumsDM_s, " + <%OFFSET%>", "", true);
+      } else {
+        sumsDM_s = isa::utils::replace(sumsDM_s, "<%OFFSET%>", offset_s, true);
+      }
       sums_s->append(*sumsDM_s);
       delete sumsDM_s;
     }
