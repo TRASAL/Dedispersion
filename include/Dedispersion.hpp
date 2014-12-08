@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <x86intrin.h>
 
 #include <Observation.hpp>
 #include <utils.hpp>
@@ -25,18 +24,10 @@
 
 namespace PulsarSearch {
 
-template< typename T > using dedispersionFunc = void (*)(int, int, int, int, int, int, T *, T *, int *);
-
 // Sequential dedispersion
 template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< unsigned int > & shifts);
 // OpenCL dedispersion algorithm
 std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< unsigned int > & shifts);
-// AVX dedispersion algorithm
-std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread);
-// Xeon Phi dedispers algorithm
-std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread);
-// Function pointers to AVX and Phi implementations
-template< typename T > std::map< std::string, dedispersionFunc< T > > * getDedispersionPointers();
 
 
 // Implementations
@@ -284,188 +275,6 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
   delete sum0_s;
   delete unrolled_s;
   delete store_s;
-
-  return code;
-}
-
-std::string * getDedispersionAVX(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread) {
-	std::string * code =  new std::string();
-
-  // Begin kernel's template
-	*code = "namespace PulsarSearch {\n"
-		"template< typename T > void dedispersionAVX" + isa::utils::toString(nrSamplesPerThread) + "x" + isa::utils::toString(nrDMsPerThread) + "(const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerDispersedSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const unsigned int nrPaddedChannels, const float  * const __restrict__ input, float * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
-		"#pragma omp parallel for schedule(static)\n"
-		"for ( unsigned int dm = 0; dm < nrDMs; dm += " + isa::utils::toString(nrDMsPerThread) + " ) {\n"
-			"#pragma omp parallel for schedule(static)\n"
-			"for ( unsigned int sample = 0; sample < nrSamplesPerSecond; sample += 8 * " + isa::utils::toString(nrSamplesPerThread) + ") {\n"
-				"<%DEFS%>"
-				"\n"
-				"for ( unsigned int channel = 0; channel < nrChannels; channel++ ) {\n"
-					"<%SHIFTS%>"
-					"__m256 dispersedSample;\n"
-					"\n"
-					"<%SUMS%>"
-				"}\n"
-				"\n"
-				"<%STORES%>"
-
-			"}\n"
-		"}\n"
-	"}\n"
-	"}";
-	std::string def_sTemplate = "__m256 dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm256_setzero_ps();\n";
-	std::string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * nrPaddedChannels) + channel];";
-	std::string sum_sTemplate = "dispersedSample = _mm256_loadu_ps(&(input[(channel * nrSamplesPerDispersedSecond) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]));\n"
-		"dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm256_add_ps(dedispersedSample<%NUM%>DM<%DM_NUM%>, dispersedSample);\n";
-	std::string store_sTemplate = "_mm256_store_ps(&(output[((dm + <%DM_NUM%>) * nrSamplesPerPaddedSecond) + (sample + <%OFFSET%>)]), dedispersedSample<%NUM%>DM<%DM_NUM%>);\n";
-  // End kernel's template
-
-	std::string * def_s =  new std::string();
-	std::string * shift_s =  new std::string();
-	std::string * sum_s =  new std::string();
-	std::string * store_s =  new std::string();
-
-	for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
-		std::string dm_s = isa::utils::toString(dm);
-		std::string * temp = 0;
-
-		temp = isa::utils::replace(&shiftsTemplate, "<%DM_NUM%>", dm_s);
-		shift_s->append(*temp);
-		delete temp;
-	}
-	for ( unsigned int sample = 0; sample < nrSamplesPerThread; sample++ ) {
-		std::string sample_s = isa::utils::toString(sample);
-		std::string offset_s = isa::utils::toString(sample * 8);
-		std::string * def_sDM =  new std::string();
-		std::string * sum_sDM =  new std::string();
-		std::string * store_sDM =  new std::string();
-
-		for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
-			std::string dm_s = isa::utils::toString(dm);
-			std::string * temp = 0;
-
-			temp = isa::utils::replace(&def_sTemplate, "<%DM_NUM%>", dm_s);
-			def_sDM->append(*temp);
-			delete temp;
-			temp = isa::utils::replace(&sum_sTemplate, "<%DM_NUM%>", dm_s);
-			sum_sDM->append(*temp);
-			delete temp;
-			temp = isa::utils::replace(&store_sTemplate, "<%DM_NUM%>", dm_s);
-			store_sDM->append(*temp);
-			delete temp;
-		}
-		def_sDM = isa::utils::replace(def_sDM, "<%NUM%>", sample_s, true);
-		def_s->append(*def_sDM);
-		delete def_sDM;
-		sum_sDM = isa::utils::replace(sum_sDM, "<%NUM%>", sample_s, true);
-		sum_sDM = isa::utils::replace(sum_sDM, "<%OFFSET%>", offset_s, true);
-		sum_s->append(*sum_sDM);
-		delete sum_sDM;
-		store_sDM = isa::utils::replace(store_sDM, "<%NUM%>", sample_s, true);
-		store_sDM = isa::utils::replace(store_sDM, "<%OFFSET%>", offset_s, true);
-		store_s->append(*store_sDM);
-		delete store_sDM;
-	}
-	code = isa::utils::replace(code, "<%DEFS%>", *def_s, true);
-	code = isa::utils::replace(code, "<%SHIFTS%>", *shift_s, true);
-	code = isa::utils::replace(code, "<%SUMS%>", *sum_s, true);
-	code = isa::utils::replace(code, "<%STORES%>", *store_s, true);
-	delete def_s;
-	delete shift_s;
-	delete sum_s;
-	delete store_s;
-
-  return code;
-}
-
-std::string * getDedispersionPhi(const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread) {
-	std::string * code =  new std::string();
-
-  // Begin kernel's template
-	*code = "namespace PulsarSearch {\n"
-		"template< typename T > void dedispersionPhi" + isa::utils::toString(nrSamplesPerThread) + "x" + isa::utils::toString(nrDMsPerThread) + "(const unsigned int nrDMs, const unsigned int nrSamplesPerSecond, const unsigned int nrSamplesPerDispersedSecond, const unsigned int nrSamplesPerPaddedSecond, const unsigned int nrChannels, const unsigned int nrPaddedChannels,const float  * const __restrict__ input, float * const __restrict__ output, const unsigned int * const __restrict__ shifts) {\n"
-		"#pragma omp parallel for schedule(static)\n"
-		"for ( unsigned int dm = 0; dm < nrDMs; dm += " + isa::utils::toString(nrDMsPerThread) + " ) {\n"
-			"#pragma omp parallel for schedule(static)\n"
-			"for ( unsigned int sample = 0; sample < nrSamplesPerSecond; sample += 16 * " + isa::utils::toString(nrSamplesPerThread) + ") {\n"
-				"<%DEFS%>"
-				"\n"
-				"for ( unsigned int channel = 0; channel < nrChannels; channel++ ) {\n"
-					"<%SHIFTS%>"
-					"__m512 dispersedSample;\n"
-					"\n"
-					"<%SUMS%>"
-				"}\n"
-				"\n"
-				"<%STORES%>"
-
-			"}\n"
-		"}\n"
-	"}\n"
-	"}";
-	std::string def_sTemplate = "__m512 dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm512_setzero_ps();\n";
-	std::string shiftsTemplate = "unsigned int shiftDM<%DM_NUM%> = shifts[((dm + <%DM_NUM%>) * nrPaddedChannels) + channel];";
-	std::string sum_sTemplate = "dispersedSample = _mm512_loadunpacklo_ps(dispersedSample, &(input[(channel * nrSamplesPerDispersedSecond) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]));\n"
-		"dispersedSample = _mm512_loadunpackhi_ps(dispersedSample, &(input[(channel * nrSamplesPerDispersedSecond) + ((sample + <%OFFSET%>) + shiftDM<%DM_NUM%>)]) + 16);\n"
-		"dedispersedSample<%NUM%>DM<%DM_NUM%> = _mm512_add_ps(dedispersedSample<%NUM%>DM<%DM_NUM%>, dispersedSample);\n";
-	std::string store_sTemplate = "_mm512_packstorelo_ps(&(output[((dm + <%DM_NUM%>) * nrSamplesPerPaddedSecond) + (sample + <%OFFSET%>)]), dedispersedSample<%NUM%>DM<%DM_NUM%>);\n"
-		"_mm512_packstorehi_ps(&(output[((dm + <%DM_NUM%>) * nrSamplesPerPaddedSecond) + (sample + <%OFFSET%>)]) + 16, dedispersedSample<%NUM%>DM<%DM_NUM%>);\n";
-  // End kernel's template
-
-	std::string * def_s =  new std::string();
-	std::string * shift_s =  new std::string();
-	std::string * sum_s =  new std::string();
-	std::string * store_s =  new std::string();
-
-	for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
-		std::string dm_s = isa::utils::toString(dm);
-		std::string * temp = 0;
-
-		temp = isa::utils::replace(&shiftsTemplate, "<%DM_NUM%>", dm_s);
-		shift_s->append(*temp);
-		delete temp;
-	}
-	for ( unsigned int sample = 0; sample < nrSamplesPerThread; sample++ ) {
-		std::string sample_s = isa::utils::toString(sample);
-		std::string offset_s = isa::utils::toString(sample * 16);
-		std::string * def_sDM =  new std::string();
-		std::string * sum_sDM =  new std::string();
-		std::string * store_sDM =  new std::string();
-
-		for ( unsigned int dm = 0; dm < nrDMsPerThread; dm++ ) {
-			std::string dm_s = isa::utils::toString(dm);
-			std::string * temp = 0;
-
-			temp = isa::utils::replace(&def_sTemplate, "<%DM_NUM%>", dm_s);
-			def_sDM->append(*temp);
-			delete temp;
-			temp = isa::utils::replace(&sum_sTemplate, "<%DM_NUM%>", dm_s);
-			sum_sDM->append(*temp);
-			delete temp;
-			temp = isa::utils::replace(&store_sTemplate, "<%DM_NUM%>", dm_s);
-			store_sDM->append(*temp);
-			delete temp;
-		}
-		def_sDM = isa::utils::replace(def_sDM, "<%NUM%>", sample_s, true);
-		def_s->append(*def_sDM);
-		delete def_sDM;
-		sum_sDM = isa::utils::replace(sum_sDM, "<%NUM%>", sample_s, true);
-		sum_sDM = isa::utils::replace(sum_sDM, "<%OFFSET%>", offset_s, true);
-		sum_s->append(*sum_sDM);
-		delete sum_sDM;
-		store_sDM = isa::utils::replace(store_sDM, "<%NUM%>", sample_s, true);
-		store_sDM = isa::utils::replace(store_sDM, "<%OFFSET%>", offset_s, true);
-		store_s->append(*store_sDM);
-		delete store_sDM;
-	}
-	code = isa::utils::replace(code, "<%DEFS%>", *def_s, true);
-	code = isa::utils::replace(code, "<%SHIFTS%>", *shift_s, true);
-	code = isa::utils::replace(code, "<%SUMS%>", *sum_s, true);
-	code = isa::utils::replace(code, "<%STORES%>", *store_s, true);
-	delete def_s;
-	delete shift_s;
-	delete sum_s;
-	delete store_s;
 
   return code;
 }
