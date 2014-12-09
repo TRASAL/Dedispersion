@@ -206,6 +206,7 @@ int main(int argc, char * argv[]) {
               std::cerr << "OpenCL error kernel execution: " << isa::utils::toString(err.err()) << "." << std::endl;
               continue;
             }
+            delete kernel;
 
             std::cout << observation.getNrDMs() << " " << observation.getNrChannels() << " " << observation.getNrSamplesPerSecond() << " " << localMem << " " << *samples << " " << *DMs << " " << samplesPerThread << " " << DMsPerThread << " " << unroll << " ";
             std::cout << std::setprecision(3);
