@@ -28,16 +28,15 @@ std::vector< unsigned int > * getShifts(AstroData::Observation & observation);
 // Implementation
 std::vector< unsigned int > * getShifts(AstroData::Observation & observation) {
 	float inverseHighFreq = 1.0f / (observation.getMaxFreq() * observation.getMaxFreq());
-  std::vector< unsigned int > * shifts = new std::vector< unsigned int >(observation.getNrDMs() * observation.getNrPaddedChannels());
+  std::vector< unsigned int > * shifts = new std::vector< unsigned int >(observation.getNrChannels() * observation.getNrPaddedDMs());
 
-	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-		float kDM = 4148.808f * (observation.getFirstDM() + (dm * observation.getDMStep()));
-
-		for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-			float inverseFreq = 1.0f / ((observation.getMinFreq() + (channel * observation.getChannelBandwidth())) * (observation.getMinFreq() + (channel * observation.getChannelBandwidth())));
+  for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+    float inverseFreq = 1.0f / ((observation.getMinFreq() + (channel * observation.getChannelBandwidth())) * (observation.getMinFreq() + (channel * observation.getChannelBandwidth())));
+    for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+      float kDM = 4148.808f * (observation.getFirstDM() + (dm * observation.getDMStep()));
 			float delta = kDM * (inverseFreq - inverseHighFreq);
 
-			shifts->at((dm * observation.getNrPaddedChannels()) + channel) = static_cast< unsigned int >(delta * observation.getNrSamplesPerSecond());
+      shifts->at((channel * observation.getNrPaddedDMs()) + dm) = static_cast< unsigned int >(delta * observation.getNrSamplesPerSecond());
 		}
 	}
 
