@@ -37,7 +37,7 @@ template< typename T > void dedispersion(AstroData::Observation & observation, c
 			T dedispersedSample = static_cast< T >(0);
 
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-				unsigned int shift = shifts[(dm * observation.getNrChannels()) + channel];
+				unsigned int shift = shifts[(channel * observation.getNrPaddedDMs()) + dm];
 
 				dedispersedSample += input[(channel * observation.getNrSamplesPerDispersedChannel()) + (sample + shift)];
 			}
