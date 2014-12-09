@@ -32,6 +32,7 @@ std::vector< unsigned int > * getShifts(AstroData::Observation & observation) {
 
   for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
     float inverseFreq = 1.0f / ((observation.getMinFreq() + (channel * observation.getChannelBandwidth())) * (observation.getMinFreq() + (channel * observation.getChannelBandwidth())));
+
     for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
       float kDM = 4148.808f * (observation.getFirstDM() + (dm * observation.getDMStep()));
 			float delta = kDM * (inverseFreq - inverseHighFreq);

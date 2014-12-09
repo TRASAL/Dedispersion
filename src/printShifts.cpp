@@ -34,12 +34,13 @@ int main(int argc, char *argv[]) {
     isa::utils::ArgumentList args(argc, argv);
     observation.setPadding(args.getSwitchArgument< unsigned int >("-padding"));
     observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
+    observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch  ( isa::utils::SwitchNotFound &err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception &err ) {
-    std::cerr << "Usage: " << argv[0] << " -padding ... -min_freq ... -channel_bandwidth ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " -padding ... -min_freq ... -channel_bandwidth ... -channels ... -samples ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
