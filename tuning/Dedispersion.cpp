@@ -153,7 +153,7 @@ int main(int argc, char * argv[]) {
 				for ( unsigned int DMsPerThread = 1; DMsPerThread <= maxItems; DMsPerThread++ ) {
 					if ( (observation.getNrDMs() % ((*DMs) * DMsPerThread)) != 0 ) {
 						continue;
-					} else if ( (samplesPerThread * DMsPerThread) > maxItems ) {
+					} else if ( (samplesPerThread * DMsPerThread) + DMsPerThread > maxItems ) {
 						break;
 					}
 
