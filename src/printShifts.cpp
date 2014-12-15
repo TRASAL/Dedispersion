@@ -44,14 +44,10 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-  std::vector< unsigned int > * shifts = PulsarSearch::getShifts(observation);
+  std::vector< float > * shifts = PulsarSearch::getShifts(observation);
 
   for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-    std::cout << channel << ": ";
-    for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-      std::cout << shifts->at((channel * observation.getNrPaddedDMs() + dm)) << " ";
-    }
-    std::cout << std::endl;
+    std::cout << shifts->at(channel) << " ";
   }
   std::cout << std::endl;
 
