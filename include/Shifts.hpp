@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <vector>
+#include <cmath>
 
 #include <Observation.hpp>
 
@@ -22,23 +23,19 @@
 
 namespace PulsarSearch {
 
-std::vector< unsigned int > * getShifts(AstroData::Observation & observation);
+std::vector< float > * getShifts(AstroData::Observation & observation);
 
 
 // Implementation
-std::vector< unsigned int > * getShifts(AstroData::Observation & observation) {
-	float inverseHighFreq = 1.0f / (observation.getMaxFreq() * observation.getMaxFreq());
-  std::vector< unsigned int > * shifts = new std::vector< unsigned int >(observation.getNrChannels() * observation.getNrPaddedDMs());
+std::vector< float > * getShifts(AstroData::Observation & observation) {
+  float inverseHighFreq = 1.0f / std::pow(observation.getMaxFreq(), 2.0f);
+  std::vector< float > * shifts = new std::vector< float >(observation.getNrPaddedChannels());
 
   for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-    float inverseFreq = 1.0f / ((observation.getMinFreq() + (channel * observation.getChannelBandwidth())) * (observation.getMinFreq() + (channel * observation.getChannelBandwidth())));
+    float channelFreq = observation.getMinFreq() + (channel * observation.getChannelBandwidth());
+    float inverseFreq = 1.0f / std::pow(channelFreq, 2.0f);
 
-    for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-      float kDM = 4148.808f * (observation.getFirstDM() + (dm * observation.getDMStep()));
-			float delta = kDM * (inverseFreq - inverseHighFreq);
-
-      shifts->at((channel * observation.getNrPaddedDMs()) + dm) = static_cast< unsigned int >(delta * observation.getNrSamplesPerSecond());
-		}
+    shifts->at(channel) = 4148.808f * (inverseFreq - inverseHighFreq);
 	}
 
 	return shifts;

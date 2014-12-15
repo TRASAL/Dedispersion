@@ -25,19 +25,19 @@
 namespace PulsarSearch {
 
 // Sequential dedispersion
-template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< unsigned int > & shifts);
+template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< float > & shifts);
 // OpenCL dedispersion algorithm
-std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< unsigned int > & shifts);
+std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< float > & shifts);
 
 
 // Implementations
-template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< int > & shifts) {
+template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< float > & shifts) {
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
 			T dedispersedSample = static_cast< T >(0);
 
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-				unsigned int shift = shifts[(channel * observation.getNrPaddedDMs()) + dm];
+				unsigned int shift = static_cast< unsigned int >((observation.getFirstDM() + (dm * observation.getDMStep())) * shifts[channel]);
 
 				dedispersedSample += input[(channel * observation.getNrSamplesPerDispersedChannel()) + (sample + shift)];
 			}
@@ -47,7 +47,7 @@ template< typename T > void dedispersion(AstroData::Observation & observation, c
 	}
 }
 
-std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< unsigned int > & shifts) {
+std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSamplesPerBlock, const unsigned int nrDMsPerBlock, const unsigned int nrSamplesPerThread, const unsigned int nrDMsPerThread, const unsigned int unroll, const std::string & dataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
   std::string * code = new std::string();
   std::string sum0_sTemplate = std::string();
   std::string sum_sTemplate = std::string();
@@ -58,18 +58,18 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
 
   // Begin kernel's template
   if ( localMem ) {
-    *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __global const unsigned int * restrict const shifts) {\n"
-      "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
-      "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
-      "unsigned int inShMem = 0;\n"
-      "unsigned int inGlMem = 0;\n"
+    *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __constant const float * restrict const shifts) {\n"
+      "int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
+      "int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
+      "int inShMem = 0;\n"
+      "int inGlMem = 0;\n"
       "<%DEFS%>"
-      "__local " + dataType + " buffer[" + isa::utils::toString((nrSamplesPerBlock * nrSamplesPerThread) + (shifts[observation.getNrDMs() - 1] - shifts[observation.getNrDMs() - (nrDMsPerBlock * nrDMsPerThread)])) + "];\n"
+      "__local " + dataType + " buffer[" + isa::utils::toString((nrSamplesPerBlock * nrSamplesPerThread) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + ((nrDMsPerBlock * nrDMsPerThread) * observation.getDMStep())))) + "];\n"
       "\n"
-      "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
-      "unsigned int minShift = 0;\n"
+      "for ( int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
+      "int minShift = 0;\n"
       "<%DEFS_SHIFT%>"
-      "unsigned int maxShift = 0;\n"
+      "int maxShift = 0;\n"
       "\n"
       "<%UNROLLED_LOOP%>"
       "}\n"
@@ -86,9 +86,9 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "\n"
       "<%STORES%>"
       "}";
-    unrolled_sTemplate = "minShift = shifts[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrPaddedDMs()) + ") + (get_group_id(1) * " + nrTotalDMsPerBlock_s + ")];\n"
+    unrolled_sTemplate = "minShift = static_cast< int >(shifts[channel + <%UNROLL%>] * (" + isa::utils::toString(observation.getFirstDM()) + "f + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + isa::utils::toString(observation.getDMStep()) + "f)));\n"
       "<%SHIFTS%>"
-      "maxShift = shifts[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrPaddedDMs()) + ") + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((nrDMsPerBlock * nrDMsPerThread) - 1) + ")];\n"
+      "maxShift = static_cast< int >(shifts[channel + <%UNROLL%>] * (" + isa::utils::toString(observation.getFirstDM()) + "f + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((nrDMsPerBlock * nrDMsPerThread) - 1) + ") * " + isa::utils::toString(observation.getDMStep()) + "f)));\n"
       "\n"
       "inShMem = (get_local_id(1) * " + isa::utils::toString(nrSamplesPerBlock) + ") + get_local_id(0);\n"
       "inGlMem = ((get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem) + minShift;\n"
@@ -108,11 +108,11 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + (shiftDM<%DM_NUM%> - minShift)];\n";
   } else {
     *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __global const unsigned int * restrict const shifts) {\n"
-      "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
-      "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
+      "int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
+      "int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
       "<%DEFS%>"
       "\n"
-      "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
+      "for ( int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
       "<%DEFS_SHIFT%>"
       "<%UNROLLED_LOOP%>"
       "}\n"
@@ -128,8 +128,8 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
   }
 	std::string def_sTemplate = dataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
-  std::string defsShiftTemplate = "unsigned int shiftDM<%DM_NUM%> = 0;\n";
-	std::string shiftsTemplate = "shiftDM<%DM_NUM%> = shifts[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrPaddedDMs()) + ") + (dm + <%DM_OFFSET%>)];\n";
+  std::string defsShiftTemplate = "int shiftDM<%DM_NUM%> = 0;\n";
+	std::string shiftsTemplate = "shiftDM<%DM_NUM%> = static_cast< int >(shifts[channel + <%UNROLL%>] * (" + isa::utils::toString(observation.getFirstDM()) + "f + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f)));\n";
 	std::string store_sTemplate = "output[((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond()) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
 	// End kernel's template
 
