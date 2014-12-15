@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-  std::vector< unsigned int > * shifts = PulsarSearch::getShifts(observation);
-  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + (*shifts)[((observation.getNrDMs() - 1) * observation.getNrPaddedChannels())]);
+  std::vector< float > * shifts = PulsarSearch::getShifts(observation);
+  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
 
 	// Generate kernel
   std::string * code = PulsarSearch::getDedispersionOpenCL(localMem, nrSamplesPerBlock, nrDMsPerBlock, nrSamplesPerThread, nrDMsPerThread, unroll, typeName, observation, *shifts);
