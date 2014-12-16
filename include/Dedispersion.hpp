@@ -70,7 +70,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "int inShMem = 0;\n"
       "int inGlMem = 0;\n"
       "<%DEFS%>"
-      "__local " + dataType + " buffer[" + isa::utils::toString((nrSamplesPerBlock * nrSamplesPerThread) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + ((nrDMsPerBlock * nrDMsPerThread) * observation.getDMStep())))) + "];\n"
+      "__local " + dataType + " buffer[" + isa::utils::toString((nrSamplesPerBlock * nrSamplesPerThread) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((nrDMsPerBlock * nrDMsPerThread) - 1) * observation.getDMStep())))) + "];\n"
       "\n"
       "for ( int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(unroll) + " ) {\n"
       "int minShift = 0;\n"
