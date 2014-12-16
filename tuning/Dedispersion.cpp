@@ -49,6 +49,7 @@ int main(int argc, char * argv[]) {
   unsigned int maxUnroll = 0;
   unsigned int maxLoopBodySize = 0;
   AstroData::Observation observation;
+  cl::Event event;
 
 	try {
     isa::utils::ArgumentList args(argc, argv);
@@ -167,7 +168,6 @@ int main(int argc, char * argv[]) {
             double gflops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
             double gbs = isa::utils::giga(((static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond() * (observation.getNrChannels() + 1)) * sizeof(dataType)) + ((observation.getNrDMs() * observation.getNrChannels()) * sizeof(unsigned int)));
             isa::utils::Timer timer;
-            cl::Event event;
             cl::Kernel * kernel;
             std::string * code = PulsarSearch::getDedispersionOpenCL(localMem, *samples, *DMs, samplesPerThread, DMsPerThread, unroll, typeName, observation, *shifts);
 
