@@ -65,7 +65,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
   // Begin kernel's template
   if ( localMem ) {
     *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __constant const float * restrict const shifts) {\n"
-      "int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
+      "int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
       "int inShMem = 0;\n"
       "int inGlMem = 0;\n"
