@@ -199,7 +199,7 @@ int main(int argc, char * argv[]) {
               }
             } catch ( cl::Error & err ) {
               std::cerr << "OpenCL error kernel execution (";
-              std::cerr << *samples << ", " << *DMs << ", " << samplesPerBlock << ", " << DMsPerThread << "): ";
+              std::cerr << *samples << ", " << *DMs << ", " << samplesPerThread << ", " << DMsPerThread << "): ";
               std::cerr << isa::utils::toString(err.err()) << "." << std::endl;
               continue;
             }
