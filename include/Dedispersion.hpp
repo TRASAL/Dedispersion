@@ -92,9 +92,9 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
       "\n"
       "<%STORES%>"
       "}";
-    unrolled_sTemplate = "minShift = (int)(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + isa::utils::toString(observation.getDMStep()) + "f)));\n"
+    unrolled_sTemplate = "minShift = convert_int_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + isa::utils::toString(observation.getDMStep()) + "f)));\n"
       "<%SHIFTS%>"
-      "diffShift = (int)(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((nrDMsPerBlock * nrDMsPerThread) - 1) + ") * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n"
+      "diffShift = convert_int_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((nrDMsPerBlock * nrDMsPerThread) - 1) + ") * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n"
       "\n"
       "inShMem = (get_local_id(1) * " + isa::utils::toString(nrSamplesPerBlock) + ") + get_local_id(0);\n"
       "inGlMem = ((get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem) + minShift;\n"
@@ -137,9 +137,9 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
   std::string defsShiftTemplate = "int shiftDM<%DM_NUM%> = 0;\n";
   std::string shiftsTemplate;
   if ( localMem ) {
-    shiftsTemplate = "shiftDM<%DM_NUM%> = (int)(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n";
+    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_int_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n";
   } else {
-    shiftsTemplate = "shiftDM<%DM_NUM%> = (int)(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f)));\n";
+    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_int_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f)));\n";
   }
 	std::string store_sTemplate = "output[((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond()) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
 	// End kernel's template
