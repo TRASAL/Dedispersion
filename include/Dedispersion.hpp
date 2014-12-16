@@ -136,7 +136,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
 	std::string def_sTemplate = dataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
   std::string defsShiftTemplate = "int shiftDM<%DM_NUM%> = 0;\n";
   std::string shiftsTemplate;
-  if ( local ) {
+  if ( localMem ) {
     shiftsTemplate = "shiftDM<%DM_NUM%> = (int)(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n";
   } else {
     shiftsTemplate = "shiftDM<%DM_NUM%> = (int)(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f)));\n";
