@@ -114,7 +114,7 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
   } else {
     *code = "__kernel void dedispersion(__global const " + dataType + " * restrict const input, __global " + dataType + " * restrict const output, __constant const float * restrict const shifts) {\n"
-      "int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + (get_local_id(1) * " + isa::utils::toString(nrDMsPerThread) + ");\n"
+      "int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
       "<%DEFS%>"
       "\n"
@@ -179,7 +179,8 @@ std::string * getDedispersionOpenCL(const bool localMem, const unsigned int nrSa
         std::string empty_s;
         temp_s = isa::utils::replace(temp_s, " + <%DM_OFFSET%>", empty_s, true);
       } else {
-        temp_s = isa::utils::replace(temp_s, "<%DM_OFFSET%>", dm_s, true);
+        std::string offset_s = isa::utils::toString(dm * nrDMsPerBlock);
+        temp_s = isa::utils::replace(temp_s, "<%DM_OFFSET%>", offset_s, true);
       }
       store_sDM->append(*temp_s);
       delete temp_s;
