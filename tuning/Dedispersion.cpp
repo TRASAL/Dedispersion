@@ -186,16 +186,11 @@ int main(int argc, char * argv[]) {
             kernel->setArg(1, dedispersedData_d);
             kernel->setArg(2, shifts_d);
 
-            // Warm-up run
             try {
+              // Warm-up run
               clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
               event.wait();
-            } catch ( cl::Error & err ) {
-              std::cerr << "OpenCL error kernel execution: " << isa::utils::toString(err.err()) << "." << std::endl;
-              continue;
-            }
-            // Tuning runs
-            try {
+              // Tuning runs
               for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
                 timer.start();
                 clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
@@ -203,7 +198,9 @@ int main(int argc, char * argv[]) {
                 timer.stop();
               }
             } catch ( cl::Error & err ) {
-              std::cerr << "OpenCL error kernel execution: " << isa::utils::toString(err.err()) << "." << std::endl;
+              std::cerr << "OpenCL error kernel execution (";
+              std::cerr << *samples << ", " << *DMs << ", " << samplesPerBlock << ", " << DMsPerThread << "): ";
+              std::cerr << isa::utils::toString(err.err()) << "." << std::endl;
               continue;
             }
             delete kernel;
