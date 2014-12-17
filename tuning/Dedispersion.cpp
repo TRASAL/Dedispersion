@@ -188,6 +188,7 @@ int main(int argc, char * argv[]) {
 
             try {
               // Warm-up run
+              clQueues->at(clDeviceID)[0].finish();
               clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
               event.wait();
               // Tuning runs
@@ -201,6 +202,7 @@ int main(int argc, char * argv[]) {
               std::cerr << "OpenCL error kernel execution (";
               std::cerr << *samples << ", " << *DMs << ", " << samplesPerThread << ", " << DMsPerThread << "): ";
               std::cerr << isa::utils::toString(err.err()) << "." << std::endl;
+              delete kernel;
               continue;
             }
             delete kernel;
