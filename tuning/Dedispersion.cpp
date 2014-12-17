@@ -86,7 +86,7 @@ int main(int argc, char * argv[]) {
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
 
 	// Initialize OpenCL
-	cl::Context * clContext = new cl::Context();
+	cl::Context * clContext = 0;
 	std::vector< cl::Platform > * clPlatforms = new std::vector< cl::Platform >();
 	std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
 	std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
