@@ -33,7 +33,7 @@
 typedef float dataType;
 std::string typeName("float");
 
-void initializeDeviceMemory(cl::Context * context, cl::CommandQueue * queue, cl::Buffer * shifts_d, cl::Buffer * dispersed_d, cl::Buffer * dedispersed_d);
+void initializeDeviceMemory(cl::Context * clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, const unsigned int shifts_size, cl::Buffer * dispersed_d, const unsigned int dispersedData_size, cl::Buffer * dedispersed_d, const unsigned int dedispersedData_size);
 
 int main(int argc, char * argv[]) {
   bool localMem = false;
@@ -97,7 +97,7 @@ int main(int argc, char * argv[]) {
   cl::Buffer dispersedData_d;
   cl::Buffer dedispersedData_d;
 
-  initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &shifts_d, &dispersedData_d, &dedispersedData_d);
+  initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, shifts->size(), &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
 
 	// Find the parameters
 	std::vector< unsigned int > samplesPerBlock;
@@ -151,7 +151,7 @@ int main(int argc, char * argv[]) {
 
             if ( reInit ) {
               isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
-              initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), &shifts_d, &dispersedData_d, &dedispersedData_d);
+              initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, shifts->size(), &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
               reInit = false;
             }
             try {
@@ -211,12 +211,12 @@ int main(int argc, char * argv[]) {
 	return 0;
 }
 
-void initializeDeviceMemory(cl::Context * context, cl::CommandQueue * queue, cl::Buffer * shifts_d, cl::Buffer * dispersed_d, cl::Buffer * dedispersed_d) {
+void initializeDeviceMemory(cl::Context * clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, const unsigned int shifts_size, cl::Buffer * dispersed_d, const unsigned int dispersedData_size, cl::Buffer * dedispersed_d, const unsigned int dedispersedData_size) {
   try {
-    shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
-    dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), 0, 0);
-    dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(dataType), 0, 0);
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()));
+    shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts_size * sizeof(float), 0, 0);
+    dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(dataType), 0, 0);
+    dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData_size * sizeof(dataType), 0, 0);
+    clQueue.enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts_size * sizeof(float), reinterpret_cast< void * >(shifts->data()));
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error: " << isa::utils::toString(err.err()) << "." << std::endl;
     return 1;
