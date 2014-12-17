@@ -33,7 +33,7 @@
 typedef float dataType;
 std::string typeName("float");
 
-void initializeDeviceMemory(cl::Context * clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, const unsigned int shifts_size, cl::Buffer * dispersed_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size);
+void initializeDeviceMemory(cl::Context * clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, const unsigned int shifts_size, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size);
 
 int main(int argc, char * argv[]) {
   bool localMem = false;
@@ -211,7 +211,7 @@ int main(int argc, char * argv[]) {
 	return 0;
 }
 
-void initializeDeviceMemory(cl::Context * clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, const unsigned int shifts_size, cl::Buffer * dispersed_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size) {
+void initializeDeviceMemory(cl::Context * clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, const unsigned int shifts_size, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size) {
   try {
     *shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts_size * sizeof(float), 0, 0);
     *dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(dataType), 0, 0);
