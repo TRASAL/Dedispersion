@@ -186,7 +186,7 @@ int main(int argc, char * argv[]) {
               }
             } catch ( cl::Error & err ) {
               std::cerr << "OpenCL error kernel execution (";
-              std::cerr << localMem << " " << *samples << ", " << *DMs << ", " << samplesPerThread << ", " << DMsPerThread << ", " << unroll << "): ";
+              std::cerr << localMem << ", " << *samples << ", " << *DMs << ", " << samplesPerThread << ", " << DMsPerThread << ", " << unroll << "): ";
               std::cerr << isa::utils::toString(err.err()) << "." << std::endl;
               delete kernel;
               reInit = true;
