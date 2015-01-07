@@ -160,7 +160,8 @@ int main(int argc, char * argv[]) {
               kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
             } catch ( isa::OpenCL::OpenCLError & err ) {
               std::cerr << err.what() << std::endl;
-              continue;
+              reInit = true;
+              break;
             }
             delete code;
 
@@ -188,10 +189,8 @@ int main(int argc, char * argv[]) {
               std::cerr << *samples << ", " << *DMs << ", " << samplesPerThread << ", " << DMsPerThread << "): ";
               std::cerr << isa::utils::toString(err.err()) << "." << std::endl;
               delete kernel;
-              if ( err.err() == -36 ) {
-                reInit = true;
-              }
-              continue;
+              reInit = true;
+              break;
             }
             delete kernel;
 
