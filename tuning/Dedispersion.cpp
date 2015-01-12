@@ -160,7 +160,7 @@ int main(int argc, char * argv[]) {
               kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
             } catch ( isa::OpenCL::OpenCLError & err ) {
               std::cerr << err.what() << std::endl;
-              reInit = true;
+              delete code;
               break;
             }
             delete code;
