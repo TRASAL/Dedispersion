@@ -165,7 +165,7 @@ int main(int argc, char * argv[]) {
             }
             delete code;
 
-            cl::NDRange global(observation.getNrSamplesPerPaddedSecond() / samplesPerThread, observation.getNrDMs() / DMsPerThread);
+            cl::NDRange global(observation.getNrSamplesPerSecond() / samplesPerThread, observation.getNrDMs() / DMsPerThread);
             cl::NDRange local(*samples, *DMs);
 
             kernel->setArg(0, dispersedData_d);
