@@ -189,6 +189,9 @@ int main(int argc, char * argv[]) {
               std::cerr << localMem << ", " << *samples << ", " << *DMs << ", " << samplesPerThread << ", " << DMsPerThread << ", " << unroll << "): ";
               std::cerr << isa::utils::toString(err.err()) << "." << std::endl;
               delete kernel;
+              if ( err.err() == -4 || err.err() == -61 ) {
+                return -1;
+              }
               reInit = true;
               break;
             }
