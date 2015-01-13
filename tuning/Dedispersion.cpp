@@ -97,7 +97,11 @@ int main(int argc, char * argv[]) {
   cl::Buffer dispersedData_d;
   cl::Buffer dedispersedData_d;
 
+  try {
   initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, shifts->size(), &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+  } catch ( cl::Error & err ) {
+    return -1;
+  }
 
 	// Find the parameters
 	std::vector< unsigned int > samplesPerBlock;
