@@ -223,6 +223,7 @@ void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue,
     clQueue->enqueueWriteBuffer(*shifts_d, CL_FALSE, 0, shifts_size * sizeof(float), reinterpret_cast< void * >(shifts->data()));
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error: " << isa::utils::toString(err.err()) << "." << std::endl;
+    throw;
   }
 }
 
