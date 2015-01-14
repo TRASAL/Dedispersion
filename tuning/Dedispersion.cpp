@@ -108,7 +108,9 @@ int main(int argc, char * argv[]) {
 	for ( unsigned int samples = minThreads; samples <= maxColumns; samples += threadIncrement ) {
 		if ( (observation.getNrSamplesPerSecond() % samples) == 0 ) {
 			samplesPerBlock.push_back(samples);
-		}
+		} else if ( (observation.getNrSamplesPerPaddedSecond() % samples) == 0 ) {
+			samplesPerBlock.push_back(samples);
+    }
 	}
 	std::vector< unsigned int > DMsPerBlock;
 	for ( unsigned int DMs = 1; DMs <= maxRows; DMs++ ) {
@@ -129,7 +131,7 @@ int main(int argc, char * argv[]) {
       }
 
 			for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItems; samplesPerThread++ ) {
-				if ( (observation.getNrSamplesPerSecond() % ((*samples) * samplesPerThread)) != 0 ) {
+				if ( (observation.getNrSamplesPerSecond() % ((*samples) * samplesPerThread)) != 0 && (observation.getNrSamplesPerPaddedSecond() % (*samples * samplesPerThread)) != 0 ) {
 					continue;
 				}
 
@@ -173,7 +175,13 @@ int main(int argc, char * argv[]) {
             }
             delete code;
 
-            cl::NDRange global(observation.getNrSamplesPerSecond() / samplesPerThread, observation.getNrDMs() / DMsPerThread);
+            unsigned int nrThreads = 0;
+            if ( observation.getNrSamplesPerSecond() % (*samples * samplesPerThread) == 0 ) {
+              nrThreads = observation.getNrSamplesPerSecond() / samplesPerThread;
+            } else {
+              nrThreads = observation.getNrSamplesPerPaddedSecond() / samplesPerThread;
+            }
+            cl::NDRange global(nrThreads, observation.getNrDMs() / DMsPerThread);
             cl::NDRange local(*samples, *DMs);
 
             kernel->setArg(0, dispersedData_d);
