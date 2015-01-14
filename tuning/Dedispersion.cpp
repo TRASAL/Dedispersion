@@ -106,11 +106,9 @@ int main(int argc, char * argv[]) {
 	// Find the parameters
 	std::vector< unsigned int > samplesPerBlock;
 	for ( unsigned int samples = minThreads; samples <= maxColumns; samples += threadIncrement ) {
-		if ( (observation.getNrSamplesPerSecond() % samples) == 0 ) {
+		if ( (observation.getNrSamplesPerSecond() % samples) == 0 || (observation.getNrSamplesPerPaddedSecond() % samples) == 0 ) {
 			samplesPerBlock.push_back(samples);
-		} else if ( (observation.getNrSamplesPerPaddedSecond() % samples) == 0 ) {
-			samplesPerBlock.push_back(samples);
-    }
+		}
 	}
 	std::vector< unsigned int > DMsPerBlock;
 	for ( unsigned int DMs = 1; DMs <= maxRows; DMs++ ) {
