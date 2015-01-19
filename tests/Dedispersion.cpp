@@ -34,16 +34,11 @@ std::string typeName("float");
 
 
 int main(int argc, char *argv[]) {
-  bool localMem = false;
   bool print = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
-	unsigned int nrSamplesPerBlock = 0;
-	unsigned int nrDMsPerBlock = 0;
-  unsigned int nrSamplesPerThread = 0;
-  unsigned int nrDMsPerThread = 0;
-  unsigned int unroll = 0;
   long long unsigned int wrongSamples = 0;
+  PulsarSearch::DedispersionConf conf;
   AstroData::Observation observation;
 
   try {
@@ -52,19 +47,19 @@ int main(int argc, char *argv[]) {
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     observation.setPadding(args.getSwitchArgument< unsigned int >("-padding"));
-    localMem = args.getSwitch("-local");
-		nrSamplesPerBlock = args.getSwitchArgument< unsigned int >("-sb");
-		nrDMsPerBlock = args.getSwitchArgument< unsigned int >("-db");
-		nrSamplesPerThread = args.getSwitchArgument< unsigned int >("-st");
-		nrDMsPerThread = args.getSwitchArgument< unsigned int >("-dt");
-    unroll = args.getSwitchArgument< unsigned int >("-unroll");
+    conf.setLocalMem(args.getSwitch("-local"));
+    conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
+		conf.setNrDMsPerBlock(args.getSwitchArgument< unsigned int >("-db"));
+		conf.setNrSamplesPerThread(args.getSwitchArgument< unsigned int >("-st"));
+		conf.setNrDMsPerThread(args.getSwitchArgument< unsigned int >("-dt"));
+    conf.setUnroll(args.getSwitchArgument< unsigned int >("-unroll"));
     observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
-	} catch  ( isa::utils::SwitchNotFound &err ) {
+	} catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
-  }catch ( std::exception &err ) {
+  }catch ( std::exception & err ) {
     std::cerr << "Usage: " << argv[0] << " [-print] -opencl_platform ... -opencl_device ... -padding ... [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
@@ -91,7 +86,7 @@ int main(int argc, char *argv[]) {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
     dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), 0, 0);
     dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(dataType), 0, 0);
-  } catch ( cl::Error &err ) {
+  } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error allocating memory: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
   }
@@ -107,28 +102,28 @@ int main(int argc, char *argv[]) {
   try {
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()), 0, 0);
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()), 0, 0);
-  } catch ( cl::Error &err ) {
+  } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
   }
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getDedispersionOpenCL(localMem, nrSamplesPerBlock, nrDMsPerBlock, nrSamplesPerThread, nrDMsPerThread, unroll, typeName, observation, *shifts);
+  std::string * code = PulsarSearch::getDedispersionOpenCL(conf, typeName, observation, *shifts);
   cl::Kernel * kernel;
   if ( print ) {
     std::cout << *code << std::endl;
   }
 	try {
     kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
-	} catch ( isa::OpenCL::OpenCLError &err ) {
+	} catch ( isa::OpenCL::OpenCLError & err ) {
     std::cerr << err.what() << std::endl;
 		return 1;
 	}
 
   // Run OpenCL kernel and CPU control
   try {
-    cl::NDRange global(observation.getNrSamplesPerPaddedSecond() / nrSamplesPerThread, observation.getNrDMs() / nrDMsPerThread);
-    cl::NDRange local(nrSamplesPerBlock, nrDMsPerBlock);
+    cl::NDRange global(observation.getNrSamplesPerPaddedSecond() / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
+    cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
 
     kernel->setArg(0, dispersedData_d);
     kernel->setArg(1, dedispersedData_d);
@@ -136,7 +131,7 @@ int main(int argc, char *argv[]) {
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
     PulsarSearch::dedispersion< dataType >(observation, dispersedData, controlData, *shifts);
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()));
-  } catch ( cl::Error &err ) {
+  } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error kernel execution: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
   }
