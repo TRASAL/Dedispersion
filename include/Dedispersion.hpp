@@ -24,7 +24,7 @@
 
 namespace PulsarSearch {
 
-public DedispersionConf {
+class DedispersionConf {
 public:
   DedispersionConf();
   ~DedispersionConf();
