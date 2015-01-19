@@ -24,7 +24,7 @@ inline bool DedispersionConf::getLocalMem() const {
   return local;
 }
 
-inline unsigned int DedispersionConf::getNrsamplesPerBlock() const {
+inline unsigned int DedispersionConf::getNrSamplesPerBlock() const {
   return nrSamplesPerBlock;
 }
 

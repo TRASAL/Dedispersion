@@ -31,7 +31,7 @@ public:
 
   // Get
   inline bool getLocalMem() const;
-  inline unsigned int getNrsamplesPerBlock() const;
+  inline unsigned int getNrSamplesPerBlock() const;
   inline unsigned int getNrSamplesPerThread() const;
   inline unsigned int getNrDMsPerBlock() const;
   inline unsigned int getNrDMsPerThread() const;
