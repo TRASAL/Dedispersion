@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <Dedispersion.hpp>
+#include <utils.hpp>
 
 namespace PulsarSearch {
 
@@ -66,6 +67,12 @@ inline void DedispersionConf::setNrDMsPerThread(unsigned int dms) {
 
 inline void DedispersionConf::setUnroll(unsigned int unroll) {
   this->unroll = unroll;
+}
+
+std::string DedispersionConf::print() const {
+  std::string separator = isa::utils::toString(" ");
+
+  return std::string(isa::utils::toString(local) + separator + isa::utils::toString(unroll) + separator + isa::utils::toString(nrSamplesPerBlock) + separator + isa::utils::toString(nrSamplesPerThread) + separator + isa::utils::toString(nrDMsPerBlock) + separator + isa::utils::toString(nrDMsPerThread));
 }
 
 template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< float > & shifts) {
