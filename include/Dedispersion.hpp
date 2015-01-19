@@ -43,6 +43,8 @@ public:
   inline void setNrDMsPerBlock(unsigned int dms);
   inline void setNrDMsPerThread(unsigned int dms);
   inline void setUnroll(unsigned int unroll);
+  // Utils
+  std::string print() const;
 
 private:
   bool local;
