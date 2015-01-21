@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <Dedispersion.hpp>
-#include <utils.hpp>
 
 namespace PulsarSearch {
 
@@ -73,22 +72,6 @@ std::string DedispersionConf::print() const {
   std::string separator = isa::utils::toString(" ");
 
   return std::string(isa::utils::toString(local) + separator + isa::utils::toString(unroll) + separator + isa::utils::toString(nrSamplesPerBlock) + separator + isa::utils::toString(nrSamplesPerThread) + separator + isa::utils::toString(nrDMsPerBlock) + separator + isa::utils::toString(nrDMsPerThread));
-}
-
-template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< float > & shifts) {
-	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-			T dedispersedSample = static_cast< T >(0);
-
-			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-				unsigned int shift = static_cast< unsigned int >((observation.getFirstDM() + (dm * observation.getDMStep())) * shifts[channel]);
-
-				dedispersedSample += input[(channel * observation.getNrSamplesPerDispersedChannel()) + (sample + shift)];
-			}
-
-			output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] = dedispersedSample;
-		}
-	}
 }
 
 std::string * getDedispersionOpenCL(const DedispersionConf & conf, const std::string & dataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
