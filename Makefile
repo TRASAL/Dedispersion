@@ -23,14 +23,17 @@ CL_LDFLAGS := $(CPU_LDFLAGS) -lOpenCL
 CC := g++
 
 # Dependencies
-CPU_DEPS := $(ASTRODATA)/bin/Observation.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o bin/Dedispersion.o
+CPU_DEPS := $(ASTRODATA)/bin/Observation.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o bin/Shifts.o bin/Dedispersion.o
 CL_DEPS := $(CPU_DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
 
 
-all: Dedispersion.o DedispersionTest DedispersionTuning printCode printShifts
+all: Shifts.o Dedispersion.o DedispersionTest DedispersionTuning printCode printShifts
 
-Dedispersion.o: $(UTILS)/bin/utils.o include/Shifts.hpp include/Dedispersion.hpp src/Dedispersion.cpp
-	$(CC) -o bin/Dedispersion.o -c src/Dedispersion.cpp $(CL_INCLUDES) $(CFLAGS)
+Shifts.o: $(ASTRODATA)/bin/Observation.o include/Shifts.hpp src/Shifts.cpp
+	$(CC) -o bin/Shifts.o -c src/Shifts.cpp $(CPU_INCLUDES) $(CFLAGS)
+
+Dedispersion.o: $(UTILS)/bin/utils.o bin/Shifts.o include/Dedispersion.hpp src/Dedispersion.cpp
+	$(CC) -o bin/Dedispersion.o -c src/Dedispersion.cpp $(CPU_INCLUDES) $(CFLAGS)
 
 DedispersionTest: $(CL_DEPS) src/DedispersionTest.cpp
 	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(CL_LDFLAGS) $(CFLAGS)
