@@ -30,19 +30,19 @@ public:
   ~DedispersionConf();
 
   // Get
-  inline bool getLocalMem() const;
-  inline unsigned int getNrSamplesPerBlock() const;
-  inline unsigned int getNrSamplesPerThread() const;
-  inline unsigned int getNrDMsPerBlock() const;
-  inline unsigned int getNrDMsPerThread() const;
-  inline unsigned int getUnroll() const;
+  bool getLocalMem() const;
+  unsigned int getNrSamplesPerBlock() const;
+  unsigned int getNrSamplesPerThread() const;
+  unsigned int getNrDMsPerBlock() const;
+  unsigned int getNrDMsPerThread() const;
+  unsigned int getUnroll() const;
   // Set
-  inline void setLocalMem(bool local);
-  inline void setNrSamplesPerBlock(unsigned int samples);
-  inline void setNrSamplesPerThread(unsigned int samples);
-  inline void setNrDMsPerBlock(unsigned int dms);
-  inline void setNrDMsPerThread(unsigned int dms);
-  inline void setUnroll(unsigned int unroll);
+  void setLocalMem(bool local);
+  void setNrSamplesPerBlock(unsigned int samples);
+  void setNrSamplesPerThread(unsigned int samples);
+  void setNrDMsPerBlock(unsigned int dms);
+  void setNrDMsPerThread(unsigned int dms);
+  void setUnroll(unsigned int unroll);
   // Utils
   std::string print() const;
 
@@ -76,6 +76,54 @@ template< typename T > void dedispersion(AstroData::Observation & observation, c
 			output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] = dedispersedSample;
 		}
 	}
+}
+
+inline bool DedispersionConf::getLocalMem() const {
+  return local;
+}
+
+inline unsigned int DedispersionConf::getNrSamplesPerBlock() const {
+  return nrSamplesPerBlock;
+}
+
+inline unsigned int DedispersionConf::getNrSamplesPerThread() const {
+  return nrSamplesPerThread;
+}
+
+inline unsigned int DedispersionConf::getNrDMsPerBlock() const {
+  return nrDMsPerBlock;
+}
+
+inline unsigned int DedispersionConf::getNrDMsPerThread() const {
+  return nrDMsPerThread;
+}
+
+inline unsigned int DedispersionConf::getUnroll() const {
+  return unroll;
+}
+
+inline void DedispersionConf::setLocalMem(bool local) {
+  this->local = local;
+}
+
+inline void DedispersionConf::setNrSamplesPerBlock(unsigned int samples) {
+  nrSamplesPerBlock = samples;
+}
+
+inline void DedispersionConf::setNrSamplesPerThread(unsigned int samples) {
+  nrSamplesPerThread = samples;
+}
+
+inline void DedispersionConf::setNrDMsPerBlock(unsigned int dms) {
+  nrDMsPerBlock = dms;
+}
+
+inline void DedispersionConf::setNrDMsPerThread(unsigned int dms) {
+  nrDMsPerThread = dms;
+}
+
+inline void DedispersionConf::setUnroll(unsigned int unroll) {
+  this->unroll = unroll;
 }
 
 } // PulsarSearch

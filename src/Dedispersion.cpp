@@ -20,54 +20,6 @@ DedispersionConf::DedispersionConf() {}
 
 DedispersionConf::~DedispersionConf() {}
 
-inline bool DedispersionConf::getLocalMem() const {
-  return local;
-}
-
-inline unsigned int DedispersionConf::getNrSamplesPerBlock() const {
-  return nrSamplesPerBlock;
-}
-
-inline unsigned int DedispersionConf::getNrSamplesPerThread() const {
-  return nrSamplesPerThread;
-}
-
-inline unsigned int DedispersionConf::getNrDMsPerBlock() const {
-  return nrDMsPerBlock;
-}
-
-inline unsigned int DedispersionConf::getNrDMsPerThread() const {
-  return nrDMsPerThread;
-}
-
-inline unsigned int DedispersionConf::getUnroll() const {
-  return unroll;
-}
-
-inline void DedispersionConf::setLocalMem(bool local) {
-  this->local = local;
-}
-
-inline void DedispersionConf::setNrSamplesPerBlock(unsigned int samples) {
-  nrSamplesPerBlock = samples;
-}
-
-inline void DedispersionConf::setNrSamplesPerThread(unsigned int samples) {
-  nrSamplesPerThread = samples;
-}
-
-inline void DedispersionConf::setNrDMsPerBlock(unsigned int dms) {
-  nrDMsPerBlock = dms;
-}
-
-inline void DedispersionConf::setNrDMsPerThread(unsigned int dms) {
-  nrDMsPerThread = dms;
-}
-
-inline void DedispersionConf::setUnroll(unsigned int unroll) {
-  this->unroll = unroll;
-}
-
 std::string DedispersionConf::print() const {
   std::string separator = isa::utils::toString(" ");
 
