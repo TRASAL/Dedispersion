@@ -23,7 +23,7 @@ CPU_LDFLAGS := -lm
 CC := g++
 
 # Dependencies
-CPU_DEPS := $(ASTRODATA)/bin/Observation.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/utils.o bin/Dedispersion.o
+CPU_DEPS := $(ASTRODATA)/bin/Observation.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o bin/Dedispersion.o
 CL_DEPS := $(CPU_DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
 
 
