@@ -24,7 +24,7 @@ CC := g++
 
 # Dependencies
 CPU_DEPS := $(ASTRODATA)/bin/Observation.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/utils.o bin/Dedispersion.o
-CL_DEPS := $(CPU_DEPS) $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
+CL_DEPS := $(CPU_DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
 
 
 all: Dedispersion.o DedispersionTest DedispersionTuning printCode printShifts
