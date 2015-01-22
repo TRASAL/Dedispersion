@@ -6,8 +6,8 @@ OPENCL := $(HOME)/src/OpenCL
 # https://github.com/isazi/AstroData
 ASTRODATA := $(HOME)/src/AstroData
 
-CL_INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include" -I"$(OPENCL)/include"
-CPU_INCLUDES := -I"include" -I"$(UTILS)/include"
+CPU_INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include"
+CL_INCLUDES := $(CPU_INCLUDES) -I"$(OPENCL)/include"
 CL_LIBS := -L"$(OPENCL_LIB)"
 
 CFLAGS := -std=c++11 -Wall
@@ -17,8 +17,8 @@ else
 	CFLAGS += -O0 -3g
 endif
 
-CL_LDFLAGS := -lm -lOpenCL
 CPU_LDFLAGS := -lm
+CL_LDFLAGS := $(CPU_LDFLAGS) -lOpenCL
 
 CC := g++
 
