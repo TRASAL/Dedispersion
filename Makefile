@@ -14,7 +14,7 @@ CFLAGS := -std=c++11 -Wall
 ifneq ($(debug), 1)
 	CFLAGS += -O3 -g0
 else
-	CFLAGS += -O0 -3g
+	CFLAGS += -O0 -g3
 endif
 
 LDFLAGS := -lm
