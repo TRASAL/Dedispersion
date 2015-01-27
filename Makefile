@@ -27,26 +27,26 @@ DEPS := $(ASTRODATA)/bin/Observation.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o 
 
 
-all: Shifts.o Dedispersion.o DedispersionTest DedispersionTuning printCode printShifts
+all: bin/Shifts.o bin/Dedispersion.o bin/DedispersionTest bin/DedispersionTuning bin/printCode bin/printShifts
 
-Shifts.o: $(ASTRODATA)/bin/Observation.o include/Shifts.hpp src/Shifts.cpp
+bin/Shifts.o: $(ASTRODATA)/bin/Observation.o include/Shifts.hpp src/Shifts.cpp
 	$(CC) -o bin/Shifts.o -c src/Shifts.cpp $(INCLUDES) $(CFLAGS)
 
-Dedispersion.o: $(UTILS)/bin/utils.o bin/Shifts.o include/Dedispersion.hpp src/Dedispersion.cpp
+bin/Dedispersion.o: $(UTILS)/bin/utils.o bin/Shifts.o include/Dedispersion.hpp src/Dedispersion.cpp
 	$(CC) -o bin/Dedispersion.o -c src/Dedispersion.cpp $(INCLUDES) $(CFLAGS)
 
-DedispersionTest: $(CL_DEPS) src/DedispersionTest.cpp
+bin/DedispersionTest: $(CL_DEPS) src/DedispersionTest.cpp
 	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(CL_LDFLAGS) $(CFLAGS)
 
-DedispersionTuning: $(CL_DEPS) src/DedispersionTuning.cpp
+bin/DedispersionTuning: $(CL_DEPS) src/DedispersionTuning.cpp
 	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(CL_LDFLAGS) $(CFLAGS)
 
-printCode: $(DEPS) src/printCode.cpp
+bin/printCode: $(DEPS) src/printCode.cpp
 	$(CC) -o bin/printCode src/printCode.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
 
-printShifts: $(DEPS) src/printShifts.cpp
+bin/printShifts: $(DEPS) src/printShifts.cpp
 	$(CC) -o bin/printShifts src/printShifts.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
 
 clean:
-	rm bin/*
+	-@rm bin/*
 
