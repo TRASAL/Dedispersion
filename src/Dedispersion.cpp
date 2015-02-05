@@ -21,7 +21,7 @@ DedispersionConf::DedispersionConf() {}
 DedispersionConf::~DedispersionConf() {}
 
 std::string DedispersionConf::print() const {
-  return std::string(isa::utils::toString(local) + " " + isa::utils::toString(unroll) + " " + isa::utils::toString(nrSamplesPerBlock) + " " + isa::utils::toString(nrSamplesPerThread) + " " + isa::utils::toString(nrDMsPerBlock) + " " + isa::utils::toString(nrDMsPerThread));
+  return std::string(isa::utils::toString(local) + " " + isa::utils::toString(unroll) + " " + isa::utils::toString(nrSamplesPerBlock) + " " + isa::utils::toString(nrDMsPerBlock) + " " + isa::utils::toString(nrSamplesPerThread) + " " + isa::utils::toString(nrDMsPerThread));
 }
 
 std::string * getDedispersionOpenCL(const DedispersionConf & conf, const std::string & dataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
