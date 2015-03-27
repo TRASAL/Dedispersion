@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <fstream>
 
 #include <Observation.hpp>
 #include <utils.hpp>
@@ -55,10 +56,14 @@ private:
   unsigned int unroll;
 };
 
+typedef std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf > > tunedDedispersionConf;
+
 // Sequential dedispersion
 template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< float > & shifts);
 // OpenCL dedispersion algorithm
 std::string * getDedispersionOpenCL(const DedispersionConf & conf, const std::string & dataType, const AstroData::Observation & observation, std::vector< float > & shifts);
+// Read configuration files
+void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string & dedispersionFilename);
 
 
 // Implementations

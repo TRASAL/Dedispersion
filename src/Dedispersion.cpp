@@ -16,6 +16,55 @@
 
 namespace PulsarSearch {
 
+void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string  & dedispersionFilename) {
+	std::string temp;
+	std::ifstream dedispersionFile(dedispersionFilename);
+
+	while ( ! dedispersionFile.eof() ) {
+		unsigned int splitPoint = 0;
+
+		std::getline(dedispersionFile, temp);
+		if ( ! std::isalpha(temp[0]) ) {
+			continue;
+		}
+		std::string deviceName;
+		unsigned int nrDMs = 0;
+    PulsarSearch::DedispersionConf conf;
+
+		splitPoint = temp.find(" ");
+		deviceName = temp.substr(0, splitPoint);
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		nrDMs = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		conf.setLocalMem(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		conf.setUnroll(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		conf.setNrSamplesPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		conf.setNrDMsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
+		conf.setNrSamplesPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		temp = temp.substr(splitPoint + 1);
+		conf.setNrDMsPerThread(isa::utils::castToType< std::string, unsigned int >(temp));
+
+		if ( tunedDedispersion.count(deviceName) == 0 ) {
+      std::map< unsigned int, PulsarSearch::DedispersionConf > container;
+
+			container.insert(std::make_pair(nrDMs, conf));
+			tunedDedispersion.insert(std::make_pair(deviceName, container));
+		} else {
+			tunedDedispersion[deviceName].insert(std::make_pair(nrDMs, conf));
+		}
+	}
+}
+
 DedispersionConf::DedispersionConf() {}
 
 DedispersionConf::~DedispersionConf() {}
