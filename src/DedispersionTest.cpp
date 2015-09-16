@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
   isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
   std::vector< float > * shifts = PulsarSearch::getShifts(observation);
 
-  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >((shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))) * observation.getNrSamplesPerSecond()));
 
 	// Allocate memory
   cl::Buffer shifts_d;
