@@ -83,7 +83,7 @@ int main(int argc, char * argv[]) {
 
   // Allocate host memory
   std::vector< float > * shifts = PulsarSearch::getShifts(observation);
-  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >((shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))) * observation.getNrSamplesPerSecond()));
+  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
 
 	// Initialize OpenCL
 	cl::Context clContext;
