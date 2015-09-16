@@ -118,9 +118,9 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const std::st
       "\n"
       "<%STORES%>"
       "}";
-    unrolled_sTemplate = "minShift = convert_int_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + isa::utils::toString(observation.getDMStep()) + "f)));\n"
+    unrolled_sTemplate = "minShift = convert_int_rtz((shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + isa::utils::toString(observation.getDMStep()) + "f))) / " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ".0f);\n"
       "<%SHIFTS%>"
-      "diffShift = convert_int_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((conf.getNrDMsPerBlock() * conf.getNrDMsPerThread()) - 1) + ") * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n"
+      "diffShift = convert_int_rtz((shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((conf.getNrDMsPerBlock() * conf.getNrDMsPerThread()) - 1) + ") * " + isa::utils::toString(observation.getDMStep()) + "f))) / " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ".0f) - minShift;\n"
       "\n"
       "inShMem = (get_local_id(1) * " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ") + get_local_id(0);\n"
       "inGlMem = ((get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem) + minShift;\n"
@@ -163,7 +163,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const std::st
   std::string defsShiftTemplate = "int shiftDM<%DM_NUM%> = 0;\n";
   std::string shiftsTemplate;
   if ( conf.getLocalMem() ) {
-    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_int_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n";
+    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_int_rtz((shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f))) / " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ".0f) - minShift;\n";
   } else {
     shiftsTemplate = "shiftDM<%DM_NUM%> = convert_int_rtz((shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f))) / " + isa::utils::toString(observation.getNrSamplesPerSecond())  + ".0f);\n";
   }
