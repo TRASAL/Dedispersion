@@ -165,7 +165,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const std::st
   if ( conf.getLocalMem() ) {
     shiftsTemplate = "shiftDM<%DM_NUM%> = convert_int_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n";
   } else {
-    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_int_rtz((shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f))) * " + isa::utils::toString(observation.getNrSamplesPerSecond())  + ".0f);\n";
+    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_int_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f)));\n";
   }
 	std::string store_sTemplate = "output[((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond()) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
 	// End kernel's template
