@@ -61,7 +61,7 @@ typedef std::map< std::string, std::map< unsigned int, PulsarSearch::Dedispersio
 // Sequential dedispersion
 template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< float > & shifts);
 // OpenCL dedispersion algorithm
-std::string * getDedispersionOpenCL(const DedispersionConf & conf, const std::string & dataType, const AstroData::Observation & observation, std::vector< float > & shifts);
+std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
 // Read configuration files
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string & dedispersionFilename);
 
