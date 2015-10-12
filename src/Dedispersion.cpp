@@ -108,7 +108,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       "inShMem = (get_local_id(1) * " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ") + get_local_id(0);\n"
       "inGlMem = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem;\n"
       "while ( inShMem < " + nrTotalSamplesPerBlock_s + " ) {\n";
-    if ( inputDataType == intermediateDataTyep ) {
+    if ( inputDataType == intermediateDataType ) {
       *code += "buffer[inShMem] = input[(" + isa::utils::toString(observation.getNrChannels() - 1) + " * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + inGlMem];\n";
     } else {
       *code += "buffer[inShMem] = convert_" + intermediateDataType + "(input[(" + isa::utils::toString(observation.getNrChannels() - 1) + " * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + inGlMem]);\n";
