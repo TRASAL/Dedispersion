@@ -19,6 +19,7 @@
 
 #include <Observation.hpp>
 #include <utils.hpp>
+#include <Bits.hpp>
 
 #ifndef DEDISPERSION_HPP
 #define DEDISPERSION_HPP

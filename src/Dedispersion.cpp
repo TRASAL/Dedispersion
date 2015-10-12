@@ -155,8 +155,12 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(conf.getUnroll()) + " ) {\n"
       "<%DEFS_SHIFT%>"
       "<%UNROLLED_LOOP%>"
-      "}\n"
-      "<%SUM0%>"
+      "}\n";
+    if ( inputBits < 8 ) {
+      *code += "char bitsBuffer;\n"
+        "unsigned int interBuffer;\n";
+    }
+    *code += "<%SUM0%>"
       "\n"
       "<%STORES%>"
       "}";
@@ -164,9 +168,20 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       "\n"
       "<%SUMS%>"
       "\n";
-    if ( inputDataType == intermediateDataType ) {
-      sum0_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(" + isa::utils::toString(static_cast< long long unsigned int >(observation.getNrChannels() - 1) * observation.getNrSamplesPerDispersedChannel()) + ") + sample + <%OFFSET%>];\n";
-      sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
+    if ( (inputDataType == intermediateDataType) && (inputBits >= 8) ) {
+      sum0_sTemplate = "interBuffer = 0;\n"
+        "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(" + isa::utils::toString(static_cast< long long unsigned int >(observation.getNrChannels() - 1) * observation.getNrSamplesPerDispersedChannel()) + ") + sample + <%OFFSET%>];\n";
+      sum_sTemplate = "interBuffer = 0;\n"
+        "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
+    } else if ( (inputBits == 2) || (inputBits == 4) ) {
+      sum0_sTemplate = "bitsBuffer = input[(" + isa::utils::toString(static_cast< long long unsigned int >(observation.getNrChannels() - 1) * (observation.getNrSamplesPerDispersedChannel() / (8 / inputBits))) + ") + ((sample + <%OFFSET%>) / " + isa::utils::toString(8 / inputBits) + ")];\n";
+      sum_sTemplate = "bitsBuffer = input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits)) + ") + ((sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + isa::utils::toString(8 / inputBits) + ")];\n";
+      for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
+        sum0_sTemplate += isa::OpenCL::setBit("interBuffer", isa::utils::getBit("bitsBuffer", "(((sample + <%OFFSET%>) % " + isa::utils::toString(8 / inputBits) + ") * " + isa::utils::toString(inputBits) + ") + " + isa::utils::toString(bit)), "((sample + <%OFFSET%>) / " + isa::utils::toString(8 / inputBits) + ")");
+        sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::utils::getBit("bitsBuffer", "(((sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + isa::utils::toString(8 / inputBits) + ") * " + isa::utils::toString(inputBits) + ") + " + isa::utils::toString(bit)), "((sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + isa::utils::toString(8 / inputBits) + ")");
+      }
+      sum0_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(interBuffer);\n";
+      sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(interBuffer);\n";
     } else {
       sum0_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[(" + isa::utils::toString(static_cast< long long unsigned int >(observation.getNrChannels() - 1) * observation.getNrSamplesPerDispersedChannel()) + ") + sample + <%OFFSET%>]);\n";
       sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)]);\n";
