@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 		conf.setNrSamplesPerThread(args.getSwitchArgument< unsigned int >("-st"));
 		conf.setNrDMsPerThread(args.getSwitchArgument< unsigned int >("-dt"));
     conf.setUnroll(args.getSwitchArgument< unsigned int >("-unroll"));
-    inputBits = args.getSwitchArgument< uint8_t >("-input_bits");
+    inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
     inputTypeName = args.getSwitchArgument< std::string >("-input_type");
     intermediateTypeName = args.getSwitchArgument< std::string >("-intermediate_type");
     outputTypeName = args.getSwitchArgument< std::string >("-output_type");
