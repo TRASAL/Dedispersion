@@ -150,17 +150,17 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
     *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts) {\n"
       "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
-      "<%DEFS%>"
-      "\n"
-      "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(conf.getUnroll()) + " ) {\n"
-      "<%DEFS_SHIFT%>"
-      "<%UNROLLED_LOOP%>"
-      "}\n";
+      "<%DEFS%>";
     if ( inputBits < 8 ) {
       *code += "char bitsBuffer;\n"
         "unsigned int interBuffer;\n";
     }
-    *code += "<%SUM0%>"
+    *code += "\n"
+      "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(conf.getUnroll()) + " ) {\n"
+      "<%DEFS_SHIFT%>"
+      "<%UNROLLED_LOOP%>"
+      "}\n"
+      "<%SUM0%>"
       "\n"
       "<%STORES%>"
       "}";
