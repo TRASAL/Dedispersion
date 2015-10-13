@@ -42,6 +42,7 @@ void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue,
 int main(int argc, char * argv[]) {
   bool reInit = false;
   uint8_t inputBits = 0;
+  unsigned int splitSeconds = 0;
 	unsigned int nrIterations = 0;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
@@ -90,7 +91,15 @@ int main(int argc, char * argv[]) {
 
   // Allocate host memory
   std::vector< float > * shifts = PulsarSearch::getShifts(observation);
-  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+  if ( conf.getSplitSeconds() ) {
+    if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
+      splitSeconds = (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond();
+    } else {
+      splitSeconds = ((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond()) + 1;
+    }
+  } else {
+    observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+  }
 
 	// Initialize OpenCL
 	cl::Context clContext;
@@ -105,8 +114,13 @@ int main(int argc, char * argv[]) {
   cl::Buffer dedispersedData_d;
 
   try {
-  initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+    if ( conf.getSplitSeconds() ) {
+      initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, splitSeconds * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+    } else {
+      initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+    }
   } catch ( cl::Error & err ) {
+    std::cerr << err.what() << std::endl;
     return -1;
   }
 
@@ -125,7 +139,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	std::cout << std::fixed << std::endl;
-	std::cout << "# nrDMs nrChannels nrSamples local unroll samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread GFLOP/s time stdDeviation COV" << std::endl << std::endl;
+	std::cout << "# nrDMs nrChannels nrSamples splitSeconds local unroll samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread GFLOP/s time stdDeviation COV" << std::endl << std::endl;
 
 	for ( std::vector< unsigned int >::iterator samples = samplesPerBlock.begin(); samples != samplesPerBlock.end(); ++samples ) {
     conf.setNrSamplesPerBlock(*samples);
