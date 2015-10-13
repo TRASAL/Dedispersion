@@ -134,7 +134,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
     } else {
       unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + inGlMem]);\n";
     }
-    *code += "inShMem += " + nrTotalThreads_s + ";\n"
+    unrolled_sTemplate += "inShMem += " + nrTotalThreads_s + ";\n"
       "inGlMem += " + nrTotalThreads_s + ";\n"
       "}\n"
       "barrier(CLK_LOCAL_MEM_FENCE);\n"
