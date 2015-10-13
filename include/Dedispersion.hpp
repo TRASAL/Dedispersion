@@ -32,6 +32,7 @@ public:
   ~DedispersionConf();
 
   // Get
+  bool getSplitSeconds() const;
   bool getLocalMem() const;
   unsigned int getNrSamplesPerBlock() const;
   unsigned int getNrSamplesPerThread() const;
@@ -39,6 +40,7 @@ public:
   unsigned int getNrDMsPerThread() const;
   unsigned int getUnroll() const;
   // Set
+  void setSplitSeconds(bool split);
   void setLocalMem(bool local);
   void setNrSamplesPerBlock(unsigned int samples);
   void setNrSamplesPerThread(unsigned int samples);
@@ -49,6 +51,7 @@ public:
   std::string print() const;
 
 private:
+  bool splitSeconds;
   bool local;
   unsigned int nrSamplesPerBlock;
   unsigned int nrSamplesPerThread;
@@ -84,6 +87,10 @@ template< typename T > void dedispersion(AstroData::Observation & observation, c
 	}
 }
 
+inline bool DedispersionConf::getSplitSeconds() const {
+  return splitSeconds;
+}
+
 inline bool DedispersionConf::getLocalMem() const {
   return local;
 }
@@ -106,6 +113,10 @@ inline unsigned int DedispersionConf::getNrDMsPerThread() const {
 
 inline unsigned int DedispersionConf::getUnroll() const {
   return unroll;
+}
+
+inline void DedispersionConf::setSplitSeconds(bool split) {
+  splitSeconds = split;
 }
 
 inline void DedispersionConf::setLocalMem(bool local) {
