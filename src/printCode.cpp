@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
   try {
     isa::utils::ArgumentList args(argc, argv);
     observation.setPadding(args.getSwitchArgument< unsigned int >("-padding"));
+    conf.setSplitSeconds(args.getSwitch("-split_seconds"));
     conf.setLocalMem(args.getSwitch("-local"));
     conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
 		conf.setNrDMsPerBlock(args.getSwitchArgument< unsigned int >("-db"));
@@ -56,7 +57,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " -padding ... [-local] -sb ... -db ... -st ... -dt ... -unroll ... -input_bits ... -input_type ... -intermediate_type ... -output_type ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " -padding ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -input_bits ... -input_type ... -intermediate_type ... -output_type ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
