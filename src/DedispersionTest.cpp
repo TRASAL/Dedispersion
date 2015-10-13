@@ -39,6 +39,7 @@ std::string outputTypeName("float");
 
 int main(int argc, char *argv[]) {
   uint8_t inputBits = 0;
+  unsigned int splitSeconds = 0;
   bool print = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
@@ -80,11 +81,24 @@ int main(int argc, char *argv[]) {
   isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
   std::vector< float > * shifts = PulsarSearch::getShifts(observation);
 
-  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+  if ( conf.getSplitSeconds() ) {
+    if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
+      splitSeconds = (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond();
+    } else {
+      splitSeconds = ((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond()) + 1;
+    }
+  } else {
+    observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+  }
 
 	// Allocate memory
   cl::Buffer shifts_d;
-  std::vector< inputDataType > dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
+  std::vector< inputDataType > dispersedData;
+  if ( conf.getSplitSeconds() ) {
+    dispersedData = std::vector< inputDataType >(splitSeconds * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
+  } else {
+    dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
+  }
   cl::Buffer dispersedData_d;
   std::vector< outputDataType > dedispersedData = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
   cl::Buffer dedispersedData_d;
