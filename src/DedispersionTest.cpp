@@ -29,11 +29,16 @@
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
 
-typedef float dataType;
-std::string typeName("float");
+// Define the data types
+typedef float inputDataType;
+std::string inputTypeName("float");
+std::string intermediateTypeName("float");
+typedef float outputDataType;
+std::string outputTypeName("float");
 
 
 int main(int argc, char *argv[]) {
+  uint8_t inputBits = 0;
   bool print = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
@@ -46,8 +51,10 @@ int main(int argc, char *argv[]) {
     print = args.getSwitch("-print");
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
+    inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
     observation.setPadding(args.getSwitchArgument< unsigned int >("-padding"));
     conf.setLocalMem(args.getSwitch("-local"));
+    conf.setSplitSeconds(args.getSwitch("-split_seconds"));
     conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
 		conf.setNrDMsPerBlock(args.getSwitchArgument< unsigned int >("-db"));
 		conf.setNrSamplesPerThread(args.getSwitchArgument< unsigned int >("-st"));
@@ -60,7 +67,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print] -opencl_platform ... -opencl_device ... -padding ... [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
@@ -77,15 +84,15 @@ int main(int argc, char *argv[]) {
 
 	// Allocate memory
   cl::Buffer shifts_d;
-  std::vector< dataType > dispersedData = std::vector< dataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
+  std::vector< inputDataType > dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
   cl::Buffer dispersedData_d;
-  std::vector< dataType > dedispersedData = std::vector< dataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+  std::vector< outputDataType > dedispersedData = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
   cl::Buffer dedispersedData_d;
-  std::vector< dataType > controlData = std::vector< dataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+  std::vector< outputDataType > controlData = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
-    dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(dataType), 0, 0);
-    dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(dataType), 0, 0);
+    dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(inputDataType), 0, 0);
+    dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(outputDataType), 0, 0);
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error allocating memory: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
@@ -94,21 +101,21 @@ int main(int argc, char *argv[]) {
 	srand(time(0));
 	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedChannel(); sample++ ) {
-      dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< dataType >(rand() % 10);
+      dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
 		}
 	}
 
   // Copy data structures to device
   try {
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()), 0, 0);
-    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dispersedData.data()), 0, 0);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, 0);
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
   }
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getDedispersionOpenCL(conf, typeName, observation, *shifts);
+  std::string * code = PulsarSearch::getDedispersionOpenCL(conf, inputBits, inputTypeName, intermediateTypeName, outputTypeName, observation, *shifts);
   cl::Kernel * kernel;
   if ( print ) {
     std::cout << *code << std::endl;
@@ -129,8 +136,8 @@ int main(int argc, char *argv[]) {
     kernel->setArg(1, dedispersedData_d);
     kernel->setArg(2, shifts_d);
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
-    PulsarSearch::dedispersion< dataType >(observation, dispersedData, controlData, *shifts);
-    clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(dataType), reinterpret_cast< void * >(dedispersedData.data()));
+    PulsarSearch::dedispersion< inputDataType >(observation, dispersedData, controlData, *shifts);
+    clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()));
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error kernel execution: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
     return 1;
