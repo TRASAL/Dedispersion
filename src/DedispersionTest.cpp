@@ -32,6 +32,7 @@
 // Define the data types
 typedef float inputDataType;
 std::string inputTypeName("float");
+typedef float intermediateDataType;
 std::string intermediateTypeName("float");
 typedef float outputDataType;
 std::string outputTypeName("float");
@@ -87,22 +88,23 @@ int main(int argc, char *argv[]) {
     } else {
       splitSeconds = ((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond()) + 1;
     }
-  } else {
-    observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
   }
+  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
 
 	// Allocate memory
   cl::Buffer shifts_d;
   std::vector< inputDataType > dispersedData;
+  std::vector< inputDataType > dispersedData_control;
   if ( conf.getSplitSeconds() ) {
     dispersedData = std::vector< inputDataType >(splitSeconds * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
+    dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
   } else {
     dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
   }
   cl::Buffer dispersedData_d;
   std::vector< outputDataType > dedispersedData = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
   cl::Buffer dedispersedData_d;
-  std::vector< outputDataType > controlData = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+  std::vector< outputDataType > dedispersedData_control = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
     dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(inputDataType), 0, 0);
@@ -116,6 +118,9 @@ int main(int argc, char *argv[]) {
 	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedChannel(); sample++ ) {
       dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
+      if ( conf.getSplitSeconds() ) {
+        dispersedData_control[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond()) + (channel * observation.getNrSamplesPerPaddedSecond()) + (sample % observation.getNrSamplesPerSecond())] = dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample];
+      }
 		}
 	}
 
@@ -157,7 +162,11 @@ int main(int argc, char *argv[]) {
       kernel->setArg(2, shifts_d);
     }
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
-    PulsarSearch::dedispersion< inputDataType >(observation, dispersedData, controlData, *shifts);
+    if ( conf.getSplitSeconds() ) {
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, dispersedData_control, dedispersedData_control, *shifts, inputBits);
+    } else {
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, dispersedData, dedispersedData_control, *shifts, inputBits);
+    }
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()));
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error kernel execution: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
@@ -166,7 +175,7 @@ int main(int argc, char *argv[]) {
 
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-      if ( !isa::utils::same(controlData[(dm * observation.getNrSamplesPerPaddedSecond()) + sample], dedispersedData[(dm * observation.getNrSamplesPerPaddedSecond()) + sample]) ) {
+      if ( !isa::utils::same(dedispersedData_control[(dm * observation.getNrSamplesPerPaddedSecond()) + sample], dedispersedData[(dm * observation.getNrSamplesPerPaddedSecond()) + sample]) ) {
         wrongSamples++;
 			}
 		}
