@@ -62,27 +62,37 @@ private:
 
 typedef std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf > > tunedDedispersionConf;
 
-// Sequential dedispersion
-template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< float > & shifts);
-// OpenCL dedispersion algorithm
+// Sequential
+template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const uint8_t inputBits);
+// OpenCL
 std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
-// Read configuration files
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string & dedispersionFilename);
 
 
 // Implementations
-template< typename T > void dedispersion(AstroData::Observation & observation, const std::vector< T > & input, std::vector< T > & output, const std::vector< float > & shifts) {
+template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const uint8_t inputBits) {
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-			T dedispersedSample = static_cast< T >(0);
+			L dedispersedSample = static_cast< L >(0);
 
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 				unsigned int shift = static_cast< unsigned int >((observation.getFirstDM() + (dm * observation.getDMStep())) * shifts[channel]);
 
-				dedispersedSample += input[(channel * observation.getNrSamplesPerDispersedChannel()) + (sample + shift)];
+        if ( inputBits >= 8 ) {
+          dedispersedSample += static_cast< L >(input[(channel * observation.getNrSamplesPerDispersedChannel()) + (sample + shift)]);
+        } else {
+          char bitsBuffer = 0;
+          unsigned int interBuffer = 0;
+
+          bitsBuffer = input[(channel * (observation.getNrSamplesPerDispersedChannel() / (8 / inputBits))) + ((sample + shift) / (8 / inputBits))];
+          for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
+            isa::utils::setBit(interBuffer, isa::utils::getBit(bitsBuffer, bit), bit);
+          }
+          dedispersedSsample += static_cast< L >(interBuffer);
+        }
 			}
 
-			output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] = dedispersedSample;
+			output[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] = static_cast< O >(dedispersedSample);
 		}
 	}
 }
