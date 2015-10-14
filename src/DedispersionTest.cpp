@@ -117,9 +117,11 @@ int main(int argc, char *argv[]) {
 	srand(time(0));
 	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedChannel(); sample++ ) {
-      dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
       if ( conf.getSplitSeconds() ) {
-        dispersedData_control[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond()) + (channel * observation.getNrSamplesPerPaddedSecond()) + (sample % observation.getNrSamplesPerSecond())] = dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample];
+        dispersedData_control[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
+        dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond()) + (channel * observation.getNrSamplesPerPaddedSecond()) + (sample % observation.getNrSamplesPerSecond())] = dispersedData_control[(channel * observation.getNrSamplesPerDispersedChannel()) + sample];
+      } else {
+        dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
       }
 		}
 	}
