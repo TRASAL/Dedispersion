@@ -88,7 +88,7 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
           for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
             isa::utils::setBit(interBuffer, isa::utils::getBit(bitsBuffer, bit), bit);
           }
-          dedispersedSsample += static_cast< L >(interBuffer);
+          dedispersedSample += static_cast< L >(interBuffer);
         }
 			}
 
