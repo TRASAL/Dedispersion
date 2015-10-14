@@ -167,14 +167,14 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
     unrolled_sTemplate += "while ( inShMem < (" + nrTotalSamplesPerBlock_s + " + diffShift) ) {\n";
     if ( (inputDataType == intermediateDataType) && (inputBits >= 8) ) {
       if ( conf.getSplitSeconds() ) {
-        unrolled_sTemplate += "buffer[inShMem] = input[(secondOffset * " + isa::utils::toString(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedSecond()) + ") + ((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond()) + ") + inGlMem];\n";
+        unrolled_sTemplate += "buffer[inShMem] = input[(((inGlMem / " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ") % " + isa::utils::toString(observation.getNrDelaySeconds()) + ") * " + isa::utils::toString(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedSecond()) + ") + ((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond()) + ") + (inGlMem % " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ")];\n";
       } else {
         unrolled_sTemplate += "buffer[inShMem] = input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + inGlMem];\n";
       }
     } else if ( inputBits < 8 ) {
       if ( conf.getSplitSeconds() ) {
         unrolled_sTemplate += "interbuffer = 0;\n"
-          "bitsBuffer = input[(secondOffset * " + isa::utils::toString(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedSecond() / (8 / inputBits)) + ") + ((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond() / (8 / inputBits)) + ") + (inGlMem / " + isa::utils::toString(8 / inputBits) + ")];\n";
+          "bitsBuffer = input[(((inGlMem / " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ") % " + isa::utils::toString(observation.getNrDelaySeconds()) + ") * " + isa::utils::toString(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedSecond() / (8 / inputBits)) + ") + ((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond() / (8 / inputBits)) + ") + (inGlMem % " + isa::utils::toString(observation.getNrSamplesPerSecond() / (8 / inputBits)) + ")];\n";
       } else {
         unrolled_sTemplate += "interbuffer = 0;\n"
           "bitsBuffer = input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits)) + ") + (inGlMem / " + isa::utils::toString(8 / inputBits) + ")];\n";
@@ -185,7 +185,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(interBuffer);\n";
     } else {
       if ( conf.getSplitSeconds() ) {
-        unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(input[(secondOffset * " + isa::utils::toString(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedSecond()) + ") + ((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond()) + ") + inGlMem]);\n";
+        unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(input[(((inGlMem / " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ") % " + isa::utils::toString(observation.getNrDelaySeconds()) + ") * " + isa::utils::toString(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedSecond()) + ") + ((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerPaddedSecond()) + ") + (inGlMem % " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ")]);\n";
       } else {
         unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(input[((channel + <%UNROLL%>) * " + isa::utils::toString(observation.getNrSamplesPerDispersedChannel()) + ") + inGlMem]);\n";
       }
