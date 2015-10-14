@@ -40,7 +40,6 @@ std::string outputTypeName("float");
 
 int main(int argc, char *argv[]) {
   uint8_t inputBits = 0;
-  unsigned int splitSeconds = 0;
   bool print = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
@@ -84,9 +83,9 @@ int main(int argc, char *argv[]) {
 
   if ( conf.getSplitSeconds() ) {
     if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
-      splitSeconds = (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond();
+      observation.setNrDelaySeconds((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond());
     } else {
-      splitSeconds = ((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond()) + 1;
+      observation.setNrDelaySeconds(((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond()) + 1);
     }
   }
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
@@ -96,7 +95,7 @@ int main(int argc, char *argv[]) {
   std::vector< inputDataType > dispersedData;
   std::vector< inputDataType > dispersedData_control;
   if ( conf.getSplitSeconds() ) {
-    dispersedData = std::vector< inputDataType >(splitSeconds * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
+    dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
     dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
   } else {
     dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
