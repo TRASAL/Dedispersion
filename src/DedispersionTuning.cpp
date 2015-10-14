@@ -208,9 +208,16 @@ int main(int argc, char * argv[]) {
             cl::NDRange global(nrThreads, observation.getNrDMs() / conf.getNrDMsPerThread());
             cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
 
-            kernel->setArg(0, dispersedData_d);
-            kernel->setArg(1, dedispersedData_d);
-            kernel->setArg(2, shifts_d);
+            if ( conf.getSplitSeconds() ) {
+              kernel->setArg(0, 0);
+              kernel->setArg(1, dispersedData_d);
+              kernel->setArg(2, dedispersedData_d);
+              kernel->setArg(3, shifts_d);
+            } else {
+              kernel->setArg(0, dispersedData_d);
+              kernel->setArg(1, dedispersedData_d);
+              kernel->setArg(2, shifts_d);
+            }
 
             try {
               // Warm-up run
