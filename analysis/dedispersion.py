@@ -32,16 +32,13 @@ DB_CONN = pymysql.connect(host=config.HOST, port=config.PORT, user=config.USER, 
 QUEUE = DB_CONN.cursor()
 
 if COMMAND == "create":
-    if len(sys.argv) < 3 or len(sys.argv) > 4:
-        print("Usage: " + sys.argv[0] + " create <table> [opencl]")
+    if len(sys.argv) != 3:
+        print("Usage: " + sys.argv[0] + " create <table>")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
-        if 'opencl' in sys.argv:
-            manage.create_table(QUEUE, sys.argv[2], True)
-        else:
-            manage.create_table(QUEUE, sys.argv[2], False)
+        manage.create_table(QUEUE, sys.argv[2])
     except pymysql.err.InternalError:
         pass
 elif COMMAND == "list":
@@ -65,87 +62,76 @@ elif COMMAND == "delete":
     except pymysql.err.InternalError:
         pass
 elif COMMAND == "load":
-    if len(sys.argv) < 4 or len(sys.argv) > 5:
-        print("Usage: " + sys.argv[0] + " load <table> <input_file> [opencl]")
+    if len(sys.argv) != 4:
+        print("Usage: " + sys.argv[0] + " load <table> <input_file>")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     INPUT_FILE = open(sys.argv[3])
     try:
-        if "opencl" in sys.argv:
-            manage.load_file(QUEUE, sys.argv[2], INPUT_FILE, True)
-        else:
-            manage.load_file(QUEUE, sys.argv[2], INPUT_FILE, False)
+        manage.load_file(QUEUE, sys.argv[2], INPUT_FILE)
     except:
         print(sys.exc_info())
 elif COMMAND == "tune":
-    if len(sys.argv) < 6 or len(sys.argv) > 8:
-        print("Usage: " + sys.argv[0] + " tune <table> <operator> <channels> <samples> [opencl] [all|local]")
+    if len(sys.argv) < 6 or len(sys.argv) > 7:
+        print("Usage: " + sys.argv[0] + " tune <table> <operator> <channels> <samples> [local|cache]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
-        FLAGS = [False, False, False]
-        if "opencl" in sys.argv:
+        FLAGS = [False, False]
+        if "local" in sys.argv:
             FLAGS[0] = True
-            if "all" in sys.argv:
-                FLAGS[1] = True
-            elif "local" in sys.argv:
-                FLAGS[2] = True
+        elif "cache" in sys.argv:
+            FLAGS[1] = True
         CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], FLAGS)
         manage.print_results(CONFS)
     except:
         print(sys.exc_info())
 elif COMMAND == "tuneNoReuse":
-    if len(sys.argv) < 6 or len(sys.argv) > 8:
-        print("Usage: " + sys.argv[0] + " tuneNoReuse <table> <operator> <channels> <samples> [opencl] [all|local]")
+    if len(sys.argv) < 6 or len(sys.argv) > 7:
+        print("Usage: " + sys.argv[0] + " tuneNoReuse <table> <operator> <channels> <samples> [local|cache]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
-        FLAGS = [False, False, False]
-        if "opencl" in sys.argv:
+        FLAGS = [False, False]
+        if "local" in sys.argv:
             FLAGS[0] = True
-            if "all" in sys.argv:
-                FLAGS[1] = True
-            elif "local" in sys.argv:
-                FLAGS[2] = True
+        elif "cache" in sys.argv:
+            FLAGS[1] = True
         CONFS = export.tune_no_reuse(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], FLAGS)
         manage.print_results(CONFS)
     except:
         print(sys.exc_info())
 elif COMMAND == "statistics":
     if len(sys.argv) < 5 or len(sys.argv) > 6:
-        print("Usage: " + sys.argv[0] + " statistics <table> <channels> <samples> [local|nolocal]")
+        print("Usage: " + sys.argv[0] + " statistics <table> <channels> <samples> [local|cache]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
         FLAGS = [False, False]
         if "local" in sys.argv:
-            FLAGS[1] = True
-        elif "nolocal" in sys.argv:
-            FLAGS[1] = False
-        else:
             FLAGS[0] = True
+        elif "cache" in sys.argv:
+            FLAGS[1] = False
         CONFS = analysis.statistics(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], FLAGS)
         manage.print_results(CONFS)
     except:
         print(sys.exc_info())
 elif COMMAND == "histogram":
     if len(sys.argv) < 5 or len(sys.argv) > 6:
-        print("Usage: " + sys.argv[0] + " histogram <table> <channels> <samples> [local|nolocal]")
+        print("Usage: " + sys.argv[0] + " histogram <table> <channels> <samples> [local|cache]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
         FLAGS = [False, False]
         if "local" in sys.argv:
-            FLAGS[1] = True
-        elif "nolocal" in sys.argv:
-            FLAGS[1] = False
-        else:
             FLAGS[0] = True
+        elif "cache" in sys.argv:
+            FLAGS[1] = False
         HISTS = analysis.histogram(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], FLAGS)
         for hist in HISTS:
             i = 0
@@ -156,35 +142,33 @@ elif COMMAND == "histogram":
     except:
         print(sys.exc_info())
 elif COMMAND == "optimizationSpace":
-    if len(sys.argv) < 5 or len(sys.argv) > 7:
-        print("Usage: " + sys.argv[0] + " optimizationSpace <table> <channels> <samples> [opencl] [all|local]")
+    if len(sys.argv) < 5 or len(sys.argv) > 6:
+        print("Usage: " + sys.argv[0] + " optimizationSpace <table> <channels> <samples> [local|cache]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
-        FLAGS = [False, False, False]
-        if "opencl" in sys.argv:
+        FLAGS = [False, False]
+        if "local" in sys.argv:
             FLAGS[0] = True
-            if "all" in sys.argv:
-                FLAGS[1] = True
-            elif "local" in sys.argv:
-                FLAGS[2] = True
+        elif "cache" in sys.argv:
+            FLAGS[1] = True
         CONFS = analysis.optimization_space(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], FLAGS)
         manage.print_results(CONFS)
     except:
         print(sys.exc_info())
 elif COMMAND == "singleParameterOptimizationSpace":
-    if len(sys.argv) < 6 or len(sys.argv) > 8:
-        print("Usage: " + sys.argv[0] + " singleParameterOptimizationSpace <table> <parameter> <channels> <samples> [all|local]")
+    if len(sys.argv) < 6 or len(sys.argv) > 7:
+        print("Usage: " + sys.argv[0] + " singleParameterOptimizationSpace <table> <parameter> <channels> <samples> [local|cache]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
-        FLAGS = [False, False, False]
-        if "all" in sys.argv:
+        FLAGS = [False, False]
+        if "local" in sys.argv:
+            FLAGS[0] = True
+        elif "cache" in sys.argv:
             FLAGS[1] = True
-        elif "local" in sys.argv:
-            FLAGS[2] = True
         CONFS = analysis.single_parameter_space(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], FLAGS)
         for row in CONFS:
             for item in row:
