@@ -94,11 +94,20 @@ int main(int argc, char *argv[]) {
   cl::Buffer shifts_d;
   std::vector< inputDataType > dispersedData;
   std::vector< inputDataType > dispersedData_control;
-  if ( conf.getSplitSeconds() ) {
-    dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
-    dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
+  if ( inputBits >= 8 ) {
+    if ( conf.getSplitSeconds() ) {
+      dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
+      dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
+    } else {
+      dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
+    }
   } else {
-    dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
+    if ( conf.getSplitSeconds() ) {
+      dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding()));
+      dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding()));
+    } else {
+      dispersedData = std::vector< inputDataType >(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding()));
+    }
   }
   cl::Buffer dispersedData_d;
   std::vector< outputDataType > dedispersedData = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
@@ -116,11 +125,23 @@ int main(int argc, char *argv[]) {
 	srand(time(0));
 	for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedChannel(); sample++ ) {
-      if ( conf.getSplitSeconds() ) {
-        dispersedData_control[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
-        dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond()) + (channel * observation.getNrSamplesPerPaddedSecond()) + (sample % observation.getNrSamplesPerSecond())] = dispersedData_control[(channel * observation.getNrSamplesPerDispersedChannel()) + sample];
+      if ( inputBits >= 8 ) {
+        if ( conf.getSplitSeconds() ) {
+          dispersedData_control[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
+          dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond()) + (channel * observation.getNrSamplesPerPaddedSecond()) + (sample % observation.getNrSamplesPerSecond())] = dispersedData_control[(channel * observation.getNrSamplesPerDispersedChannel()) + sample];
+        } else {
+          dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
+        }
       } else {
-        dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
+        uint8_t tempValue = rand() % 4;
+        for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
+          if ( conf.getSplitSeconds() ) {
+            isa::utils::setBit(dispersedData_control[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + sample], isa::utils::getBit(tempValue, bit), bit);
+            isa::utils::setBit(dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + (channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + (sample % observation.getNrSamplesPerSecond())], isa::utils::getBit(tempValue, bit), bit);
+          } else {
+            isa::utils::setBit(dispersedData[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + sample], isa::utils::getBit(tempValue, bit), bit);
+          }
+        }
       }
 		}
 	}
