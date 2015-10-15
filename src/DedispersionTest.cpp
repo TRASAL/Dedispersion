@@ -136,10 +136,10 @@ int main(int argc, char *argv[]) {
         uint8_t tempValue = rand() % 4;
         for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
           if ( conf.getSplitSeconds() ) {
-            isa::utils::setBit(dispersedData_control[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + sample], isa::utils::getBit(tempValue, bit), bit);
-            isa::utils::setBit(dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + (channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + (sample % observation.getNrSamplesPerSecond())], isa::utils::getBit(tempValue, bit), bit);
+            isa::utils::setBit(static_cast< uint8_t >(dispersedData_control[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + sample]), isa::utils::getBit(tempValue, bit), bit);
+            isa::utils::setBit(static_cast< uint8_t >(dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + (channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + (sample % observation.getNrSamplesPerSecond())]), isa::utils::getBit(tempValue, bit), bit);
           } else {
-            isa::utils::setBit(dispersedData[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + sample], isa::utils::getBit(tempValue, bit), bit);
+            isa::utils::setBit(static_cast< uint8_t >(dispersedData[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + sample]), isa::utils::getBit(tempValue, bit), bit);
           }
         }
       }
