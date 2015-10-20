@@ -193,6 +193,8 @@ int main(int argc, char * argv[]) {
               try {
                 initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
               } catch ( cl::Error & err ) {
+                std::cerr << "Error in memory allocation: ";
+                std::cerr << isa::utils::toString(err.err()) << "." << std::endl;
                 return -1;
               }
               reInit = false;
