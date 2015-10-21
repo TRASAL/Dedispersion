@@ -191,7 +191,19 @@ int main(int argc, char * argv[]) {
               clQueues = new std::vector< std::vector < cl::CommandQueue > >();
               isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
               try {
-                initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+                if ( inputBits >= 8 ) {
+                  if ( conf.getSplitSeconds() ) {
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+                  } else {
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+                  }
+                } else {
+                  if ( conf.getSplitSeconds() ) {
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding()), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+                  } else {
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding()), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+                  }
+                }
               } catch ( cl::Error & err ) {
                 std::cerr << "Error in memory allocation: ";
                 std::cerr << isa::utils::toString(err.err()) << "." << std::endl;
