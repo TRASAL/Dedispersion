@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
   if ( inputBits >= 8 ) {
     if ( conf.getSplitSeconds() ) {
       dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
-      dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
+      dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel());
     } else {
       dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
     }
@@ -127,10 +127,10 @@ int main(int argc, char *argv[]) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedChannel(); sample++ ) {
       if ( inputBits >= 8 ) {
         if ( conf.getSplitSeconds() ) {
-          dispersedData_control[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
-          dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond()) + (channel * observation.getNrSamplesPerPaddedSecond()) + (sample % observation.getNrSamplesPerSecond())] = dispersedData_control[(channel * observation.getNrSamplesPerDispersedChannel()) + sample];
+          dispersedData_control[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
+          dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond()) + (channel * observation.getNrSamplesPerPaddedSecond()) + (sample % observation.getNrSamplesPerSecond())] = dispersedData_control[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + sample];
         } else {
-          dispersedData[(channel * observation.getNrSamplesPerDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
+          dispersedData[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
         }
       } else {
         char bitsBuffer;

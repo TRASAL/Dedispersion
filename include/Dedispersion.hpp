@@ -79,7 +79,7 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
 				unsigned int shift = static_cast< unsigned int >((observation.getFirstDM() + (dm * observation.getDMStep())) * shifts[channel]);
 
         if ( inputBits >= 8 ) {
-          dedispersedSample += static_cast< L >(input[(channel * observation.getNrSamplesPerDispersedChannel()) + (sample + shift)]);
+          dedispersedSample += static_cast< L >(input[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + (sample + shift)]);
         } else {
           char bitsBuffer = 0;
           unsigned int interBuffer = 0;

@@ -117,7 +117,7 @@ int main(int argc, char * argv[]) {
       if ( conf.getSplitSeconds() ) {
         initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
       } else {
-        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
       }
     } else {
       if ( conf.getSplitSeconds() ) {
@@ -195,7 +195,7 @@ int main(int argc, char * argv[]) {
                   if ( conf.getSplitSeconds() ) {
                     initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
                   } else {
-                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond());
                   }
                 } else {
                   if ( conf.getSplitSeconds() ) {
