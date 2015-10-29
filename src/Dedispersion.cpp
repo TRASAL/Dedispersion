@@ -140,7 +140,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
           "firstBit = ((inGlMem % " + isa::utils::toString(8 / inputBits) + ") * " + isa::utils::toString(static_cast< unsigned int >(inputBits)) + ");\n"
           "bitsBuffer = input[(" + isa::utils::toString(static_cast< uint64_t >(observation.getNrChannels() - 1) * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + ") + byte];\n";
       }
-      for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
+      for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
         *code += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(bit)), "byte");
       }
       *code += "buffer[inShMem] = convert_" + intermediateDataType + "(interBuffer);\n";
