@@ -140,8 +140,8 @@ int main(int argc, char *argv[]) {
         uint8_t firstBit = 0;
         uint8_t firstBit_control = 0;
         uint8_t value = rand() % inputBits;
-        inputDataType buffer = 0;
-        inputDataType buffer_control = 0;
+        uint8_t buffer = 0;
+        uint8_t buffer_control = 0;
 
         if ( conf.getSplitSeconds() ) {
           byte = (sample % observation.getNrSamplesPerSecond()) / (8 / inputBits);
