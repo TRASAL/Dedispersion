@@ -107,9 +107,9 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       "__local " + intermediateDataType + " buffer[" + isa::utils::toString((conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrDMsPerBlock() * conf.getNrDMsPerThread()) - 1) * observation.getDMStep())))) + "];\n";
     if ( inputBits < 8 ) {
       *code += "uchar bitsBuffer;\n"
-        "uchar byte = 0;\n"
+        "unsigned int byte = 0;\n"
         "uchar firstBit = 0;\n"
-        "unsigned int interBuffer;\n";
+        "uchar interBuffer;\n";
     }
     *code += "\n"
       "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(conf.getUnroll()) + " ) {\n"
@@ -224,9 +224,9 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       "<%DEFS%>";
     if ( inputBits < 8 ) {
       *code += "uchar bitsBuffer;\n"
-        "uchar byte = 0;\n"
+        "unsigned int byte = 0;\n"
         "uchar firstBit = 0;\n"
-        "unsigned int interBuffer;\n";
+        "uchar interBuffer;\n";
     }
     *code += "\n"
       "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(conf.getUnroll()) + " ) {\n"
