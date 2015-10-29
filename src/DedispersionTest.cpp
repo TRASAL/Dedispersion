@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
       dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond());
       dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel());
     } else {
-      dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerDispersedChannel());
+      dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel());
     }
   } else {
     if ( conf.getSplitSeconds() ) {
