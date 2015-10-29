@@ -182,7 +182,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
         unrolled_sTemplate += "interBuffer = 0;\n"
           "byte = inGlMem % " + isa::utils::toString(observation.getNrSamplesPerSecond() / (8 / inputBits)) + ";\n"
           "firstBit = ((inGlMem % " + isa::utils::toString(8 / inputBits) + ") * " + isa::utils::toString(static_cast< unsigned int >(inputBits)) + ");\n"
-          "bitsBuffer = input[(((inGlMem / " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ") % " + isa::utils::toString(observation.getNrDelaySeconds()) + ") * " + isa::utils::toString(static_cast< uint64_t >(observation.getNrChannels()) * isa::utils::pad(observation.getNrSamplesPerPaddedSecond() / (8 / inputBits), observation.getPadding())) + ") + ((channel + <%UNROLL%>) * " + isa::utils::toString(isa::utils::pad(observation.getNrSamplesPerPaddedSecond() / (8 / inputBits), observation.getPadding())) + ") + "byte"];\n";
+          "bitsBuffer = input[(((inGlMem / " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ") % " + isa::utils::toString(observation.getNrDelaySeconds()) + ") * " + isa::utils::toString(static_cast< uint64_t >(observation.getNrChannels()) * isa::utils::pad(observation.getNrSamplesPerPaddedSecond() / (8 / inputBits), observation.getPadding())) + ") + ((channel + <%UNROLL%>) * " + isa::utils::toString(isa::utils::pad(observation.getNrSamplesPerPaddedSecond() / (8 / inputBits), observation.getPadding())) + ") + byte];\n";
       } else {
         unrolled_sTemplate += "interBuffer = 0;\n"
           "byte = (inGlMem / " + isa::utils::toString(8 / inputBits) + ");\n"
