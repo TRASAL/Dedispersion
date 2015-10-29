@@ -40,7 +40,8 @@ std::string outputTypeName("float");
 
 int main(int argc, char *argv[]) {
   uint8_t inputBits = 0;
-  bool print = false;
+  bool printCode = false;
+  bool printResults = false;
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
   long long unsigned int wrongSamples = 0;
@@ -49,7 +50,8 @@ int main(int argc, char *argv[]) {
 
   try {
     isa::utils::ArgumentList args(argc, argv);
-    print = args.getSwitch("-print");
+    printCode = args.getSwitch("-print_code");
+    printResults = args.getSwitch("-print_results");
 		clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
@@ -68,7 +70,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
@@ -162,7 +164,7 @@ int main(int argc, char *argv[]) {
 	// Generate kernel
   std::string * code = PulsarSearch::getDedispersionOpenCL(conf, inputBits, inputTypeName, intermediateTypeName, outputTypeName, observation, *shifts);
   cl::Kernel * kernel;
-  if ( print ) {
+  if ( printCode ) {
     std::cout << *code << std::endl;
   }
 	try {
@@ -206,6 +208,24 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	}
+  if ( printResults ) {
+    for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+      std::cout << dm << ": ";
+      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
+        std::cout << dedispersedData_control[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << " ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+      std::cout << dm << ": ";
+      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
+        std::cout << dedispersedData[(dm * observation.getNrSamplesPerPaddedSecond()) + sample] << " ";
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+  }
 
   if ( wrongSamples > 0 ) {
     std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond()) << "%)." << std::endl;
