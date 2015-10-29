@@ -135,18 +135,41 @@ int main(int argc, char *argv[]) {
           dispersedData[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + sample] = static_cast< inputDataType >(rand() % 10);
         }
       } else {
-        char bitsBuffer;
-        uint8_t tempValue = rand() % 4;
+        unsigned int byte = 0;
+        unsigned int byte_control = 0;
+        uint8_t firstBit = 0;
+        uint8_t firstBit_control = 0;
+        uint8_t value = rand() % inputBits;
+        inputDataType buffer = 0;
+        inputDataType buffer_control = 0;
+
+        if ( conf.getSplitSeconds() ) {
+          byte = (sample % observation.getNrSamplesPerSecond()) / (8 / inputBits);
+          firstBit = ((sample % observation.getNrSamplesPerDispersedChannel()) % (8 / inputBits)) * inputBits;
+          buffer = dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + (channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + byte];
+          byte_control = sample / (8 / inputBits);
+          firstBit_control = (sample % (8 / inputBits)) * inputBits;
+          buffer_control = dispersedData_control[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + byte_control];
+        } else {
+          byte = sample / (8 / inputBits);
+          firstBit = (sample % (8 / inputBits)) * inputBits;
+          buffer = dispersedData[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + byte];
+        }
+
         for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
           if ( conf.getSplitSeconds() ) {
-            bitsBuffer = dispersedData_control[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + (sample / (8 / inputBits))];
-            isa::utils::setBit(bitsBuffer, isa::utils::getBit(tempValue, ((sample % (8 / inputBits)) * inputBits) + bit), ((sample % (8 / inputBits)) * inputBits) + bit);
-                bitsBuffer = dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + (channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + ((sample % observation.getNrSamplesPerSecond()) / (8 / inputBits))];
-            isa::utils::setBit(bitsBuffer, isa::utils::getBit(tempValue, (((sample % observation.getNrSamplesPerSecond()) % (8 / inputBits)) * inputBits) + bit), (((sample % observation.getNrSamplesPerSecond()) % (8 / inputBits)) * inputBits) + bit);
+            isa::utils::setBit(buffer, isa::utils::getBit(value, bit), firstBit + bit);
+            isa::utils::setBit(buffer_control, isa::utils::getBit(value, bit), firstBit_control + bit);
           } else {
-            bitsBuffer = dispersedData[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + (sample / (8 / inputBits))];
-            isa::utils::setBit(bitsBuffer, isa::utils::getBit(tempValue, ((sample % (8 / inputBits)) * inputBits) + bit), ((sample % (8 / inputBits)) * inputBits) + bit);
+            isa::utils::setBit(buffer, isa::utils::getBit(value, bit), firstBit + bit);
           }
+        }
+
+        if ( conf.getSplitSeconds() ) {
+          dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + (channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())) + byte] = buffer;
+          dispersedData_control[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + byte_control] = buffer_control;
+        } else {
+          dispersedData[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + byte] = buffer;
         }
       }
 		}
