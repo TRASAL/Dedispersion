@@ -73,33 +73,41 @@ elif COMMAND == "load":
     except:
         print(sys.exc_info())
 elif COMMAND == "tune":
-    if len(sys.argv) < 6 or len(sys.argv) > 7:
-        print("Usage: " + sys.argv[0] + " tune <table> <operator> <channels> <samples> [local|cache]")
+    if len(sys.argv) < 6 or len(sys.argv) > 8:
+        print("Usage: " + sys.argv[0] + " tune <table> <operator> <channels> <samples> [local|cache] [split|cont]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
-        FLAGS = [False, False]
+        FLAGS = [0, 0]
         if "local" in sys.argv:
-            FLAGS[0] = True
+            FLAGS[0] = 1
         elif "cache" in sys.argv:
-            FLAGS[1] = True
+            FLAGS[1] = 2
+        if "split" in sys.argv:
+            FLAGS[1] = 1
+        elif "cont" in sys.argv:
+            FLAGS[1] = 2
         CONFS = export.tune(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], FLAGS)
         manage.print_results(CONFS)
     except:
         print(sys.exc_info())
 elif COMMAND == "tuneNoReuse":
-    if len(sys.argv) < 6 or len(sys.argv) > 7:
-        print("Usage: " + sys.argv[0] + " tuneNoReuse <table> <operator> <channels> <samples> [local|cache]")
+    if len(sys.argv) < 6 or len(sys.argv) > 8:
+        print("Usage: " + sys.argv[0] + " tuneNoReuse <table> <operator> <channels> <samples> [local|cache] [split|cont]")
         QUEUE.close()
         DB_CONN.close()
         sys.exit(1)
     try:
-        FLAGS = [False, False]
+        FLAGS = [0, 0]
         if "local" in sys.argv:
-            FLAGS[0] = True
+            FLAGS[0] = 1
         elif "cache" in sys.argv:
-            FLAGS[1] = True
+            FLAGS[1] = 2
+        if "split" in sys.argv:
+            FLAGS[1] = 1
+        elif "cont" in sys.argv:
+            FLAGS[1] = 2
         CONFS = export.tune_no_reuse(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], FLAGS)
         manage.print_results(CONFS)
     except:
