@@ -83,7 +83,7 @@ elif COMMAND == "tune":
         if "local" in sys.argv:
             FLAGS[0] = 1
         elif "cache" in sys.argv:
-            FLAGS[1] = 2
+            FLAGS[0] = 2
         if "split" in sys.argv:
             FLAGS[1] = 1
         elif "cont" in sys.argv:
@@ -103,7 +103,7 @@ elif COMMAND == "tuneNoReuse":
         if "local" in sys.argv:
             FLAGS[0] = 1
         elif "cache" in sys.argv:
-            FLAGS[1] = 2
+            FLAGS[0] = 2
         if "split" in sys.argv:
             FLAGS[1] = 1
         elif "cont" in sys.argv:

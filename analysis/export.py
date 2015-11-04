@@ -20,19 +20,19 @@ def tune(queue, table, operator, channels, samples, flags):
     if operator.casefold() == "max" or operator.casefold() == "min":
         condition = str()
         if flags[0] == 1:
-            condition = "local == 1"
+            condition = "local = 1"
         elif flags[0] == 2:
-            condition = "local == 0"
+            condition = "local = 0"
         if flags[1] == 1:
             if flags[0] != 0:
-                condition += "AND splitSeconds == 1"
+                condition += " AND splitSeconds = 1"
             else:
-                condition = "splitSeconds == 1"
+                condition = "splitSeconds = 1"
         elif flags[1] == 2:
             if flags[0] != 0:
-                condition += "AND splitSeconds == 0"
+                condition += " AND splitSeconds = 0"
             else:
-                condition = "splitSeconds == 0"
+                condition = "splitSeconds = 0"
         dms_range = manage.get_dm_range(queue, table, channels, samples)
         for dm in dms_range:
             if flags[0] == 0 and flags[1] == 0:
@@ -48,19 +48,19 @@ def tune_no_reuse(queue, table, operator, channels, samples, flags):
     if operator.casefold() == "max" or operator.casefold() == "min":
         condition = str()
         if flags[0] == 1:
-            condition = "local == 1"
+            condition = "local = 1"
         elif flags[0] == 2:
-            condition = "local == 0"
+            condition = "local = 0"
         if flags[1] == 1:
             if flags[0] != 0:
-                condition += "AND splitSeconds == 1"
+                condition += " AND splitSeconds = 1"
             else:
-                condition = "splitSeconds == 1"
+                condition = "splitSeconds = 1"
         elif flags[1] == 2:
             if flags[0] != 0:
-                condition += "AND splitSeconds == 0"
+                condition += " AND splitSeconds = 0"
             else:
-                condition = "splitSeconds == 0"
+                condition = "splitSeconds = 0"
         dms_range = manage.get_dm_range(queue, table, channels, samples)
         no_reuse = "(DMsPerBlock = 1 AND DMsPerThread = 1)"
         for dm in dms_range:
