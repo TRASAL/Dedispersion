@@ -106,10 +106,10 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       "<%DEFS%>"
       "__local " + intermediateDataType + " buffer[" + isa::utils::toString((conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrDMsPerBlock() * conf.getNrDMsPerThread()) - 1) * observation.getDMStep())))) + "];\n";
     if ( inputBits < 8 ) {
-      *code += "uchar bitsBuffer;\n"
+      *code += inputDataType + " bitsBuffer;\n"
         "unsigned int byte = 0;\n"
         "uchar firstBit = 0;\n"
-        "uchar interBuffer;\n";
+        + inputDataType + " interBuffer;\n";
     }
     *code += "\n"
       "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(conf.getUnroll()) + " ) {\n"
@@ -223,10 +223,10 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
       "<%DEFS%>";
     if ( inputBits < 8 ) {
-      *code += "uchar bitsBuffer;\n"
+      *code += inputDataType + " bitsBuffer;\n"
         "unsigned int byte = 0;\n"
         "uchar firstBit = 0;\n"
-        "uchar interBuffer;\n";
+        + inputDataType + " interBuffer;\n";
     }
     *code += "\n"
       "for ( unsigned int channel = 0; channel < " + isa::utils::toString(observation.getNrChannels() - 1) + "; channel += " + isa::utils::toString(conf.getUnroll()) + " ) {\n"
