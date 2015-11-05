@@ -32,7 +32,7 @@ all: bin/Shifts.o bin/Dedispersion.o bin/DedispersionTest bin/DedispersionTuning
 bin/Shifts.o: $(ASTRODATA)/bin/Observation.o include/Shifts.hpp src/Shifts.cpp
 	$(CC) -o bin/Shifts.o -c src/Shifts.cpp $(INCLUDES) $(CFLAGS)
 
-bin/Dedispersion.o: $(UTILS)/bin/utils.o bin/Shifts.o include/Dedispersion.hpp src/Dedispersion.cpp
+bin/Dedispersion.o: $(UTILS)/bin/utils.o bin/Shifts.o $(OPENCL)/include/Bits.hpp include/Dedispersion.hpp src/Dedispersion.cpp
 	$(CC) -o bin/Dedispersion.o -c src/Dedispersion.cpp $(CL_INCLUDES) $(CFLAGS)
 
 bin/DedispersionTest: $(CL_DEPS) src/DedispersionTest.cpp
