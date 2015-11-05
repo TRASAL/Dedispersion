@@ -143,6 +143,11 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
         *code += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(bit)), isa::utils::toString(bit));
       }
+      if ( inputDataType == "char" ) {
+        for ( unsigned int bit = inputBits; bit < 8 - inputBits; bit++ ) {
+          *code += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(inputBits - 1)), isa::utils::toString(bit));
+        }
+      }
       *code += "buffer[inShMem] = convert_" + intermediateDataType + "(interBuffer);\n";
     } else {
       if ( conf.getSplitSeconds() ) {
@@ -191,6 +196,11 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       }
       for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
         unrolled_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(bit)), isa::utils::toString(bit));
+      }
+      if ( inputDataType == "char" ) {
+        for ( unsigned int bit = inputBits; bit < 8 - inputBits; bit++ ) {
+          unrolled_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(inputBits - 1)), isa::utils::toString(bit));
+        }
       }
       unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(interBuffer);\n";
     } else {
@@ -272,6 +282,12 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
       for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
         sum0_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(bit)), isa::utils::toString(bit));
         sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(bit)), isa::utils::toString(bit));
+      }
+      if ( inputDataType == "char" ) {
+        for ( unsigned int bit = inputBits; bit < 8 - inputBits; bit++ ) {
+          sum0_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(inputBits - 1)), isa::utils::toString(bit));
+          sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(inputBits - 1)), isa::utils::toString(bit));
+        }
       }
       sum0_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(interBuffer);\n";
       sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(interBuffer);\n";
