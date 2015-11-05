@@ -144,7 +144,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
         *code += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(bit)), isa::utils::toString(bit));
       }
       if ( inputDataType == "char" ) {
-        for ( unsigned int bit = inputBits; bit < 8 - inputBits; bit++ ) {
+        for ( unsigned int bit = inputBits; bit < 8; bit++ ) {
           *code += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(inputBits - 1)), isa::utils::toString(bit));
         }
       }
@@ -198,7 +198,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
         unrolled_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(bit)), isa::utils::toString(bit));
       }
       if ( inputDataType == "char" ) {
-        for ( unsigned int bit = inputBits; bit < 8 - inputBits; bit++ ) {
+        for ( unsigned int bit = inputBits; bit < 8; bit++ ) {
           unrolled_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(inputBits - 1)), isa::utils::toString(bit));
         }
       }
@@ -284,7 +284,7 @@ std::string * getDedispersionOpenCL(const DedispersionConf & conf, const uint8_t
         sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(bit)), isa::utils::toString(bit));
       }
       if ( inputDataType == "char" ) {
-        for ( unsigned int bit = inputBits; bit < 8 - inputBits; bit++ ) {
+        for ( unsigned int bit = inputBits; bit < 8; bit++ ) {
           sum0_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(inputBits - 1)), isa::utils::toString(bit));
           sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + isa::utils::toString(inputBits - 1)), isa::utils::toString(bit));
         }
