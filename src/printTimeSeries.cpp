@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <iomanip>
 
@@ -23,10 +24,11 @@
 #include <ArgumentList.hpp>
 #include <Observation.hpp>
 #include <ReadData.hpp>
+#include <Shifts.hpp>
 #include <Dedispersion.hpp>
 
 
-int main(int argc, char * arv[]) {
+int main(int argc, char * argv[]) {
   // Command line arguments
   isa::utils::ArgumentList args(argc, argv);
   // Observation
@@ -105,12 +107,7 @@ int main(int argc, char * arv[]) {
     dada_hdu_set_key(ringBuffer, dadaKey);
     dada_hdu_connect(ringBuffer);
     dada_hdu_lock_read(ringBuffer);
-	} else {
-    for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
-      input[beam] = new std::vector< std::vector< inputDataType > * >(observation.getNrSeconds());
-      AstroData::generateSinglePulse(width, DM, obs, *(input[beam]), inputBits, random);
-    }
-  }
+	}
   output = std::vector< std::ofstream >(observation.getNrBeams());
   std::cout << "Padding: " << observation.getPadding() << std::endl;
   std::cout << std::endl;
@@ -122,7 +119,7 @@ int main(int argc, char * arv[]) {
   std::cout << std::endl;
 
 	// Host memory allocation
-  std::vector< float > * shifts = PulsarSearch::getShifts(obs);
+  std::vector< float > * shifts = PulsarSearch::getShifts(observation);
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * observation.getFirstDM()));
   observation.setNrDelaySeconds(static_cast< unsigned int >(std::ceil(static_cast< double >(observation.getNrSamplesPerDispersedChannel()) / observation.getNrSamplesPerSecond())));
   std::vector< std::vector< inputDataType > > dispersedData(observation.getNrBeams());
@@ -137,39 +134,51 @@ int main(int argc, char * arv[]) {
     dedispersedData[beam] = std::vector< outputDataType >(observation.getNrSamplesPerPaddedSecond());
   }
 
+  // Open output files
   for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
     output[beam].open(outputFile + "_B" + isa::utils::toString(beam) + ".tim");
     output[beam] << std::fixed << std::setprecision(6);
   }
+
+  // Dedispersion loop
   for ( unsigned int second = 0; second < observation.getNrSeconds() - observation.getNrDelaySeconds(); second++ ) {
     for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
         for ( unsigned int chunk = 0; chunk < observation.getNrDelaySeconds() - 1; chunk++ ) {
           if ( inputBits >= 8 ) {
-            memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + (chunk * observation.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * observation.getNrSamplesPerPaddedSecond()))), observation.getNrSamplesPerSecond() * sizeof(inputDataType));
+            std::memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + (chunk * observation.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * observation.getNrSamplesPerPaddedSecond()))), observation.getNrSamplesPerSecond() * sizeof(inputDataType));
           } else {
-            memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + (chunk * (observation.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())))), (observation.getNrSamplesPerSecond() / (8 / inputBits)) * sizeof(inputDataType));
+            std::memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + (chunk * (observation.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + chunk))->at(channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())))), (observation.getNrSamplesPerSecond() / (8 / inputBits)) * sizeof(inputDataType));
           }
         }
         if ( observation.getNrSamplesPerDispersedChannel() % observation.getNrSamplesPerSecond() == 0 ) {
           if ( inputBits >= 8 ) {
-            memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + ((observation.getNrDelaySeconds() - 1) * observation.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (observation.getNrDelaySeconds() - 1)))->at(channel * observation.getNrSamplesPerPaddedSecond()))), observation.getNrSamplesPerDispersedChannel() * sizeof(inputDataType));
+            std::memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + ((observation.getNrDelaySeconds() - 1) * observation.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (observation.getNrDelaySeconds() - 1)))->at(channel * observation.getNrSamplesPerPaddedSecond()))), observation.getNrSamplesPerDispersedChannel() * sizeof(inputDataType));
           } else {
-            memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + ((observation.getNrDelaySeconds() - 1) * (observation.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (observation.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())))), (observation.getNrSamplesPerDispersedChannel() / (8 / inputBits)) * sizeof(inputDataType));
+            std::memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + ((observation.getNrDelaySeconds() - 1) * (observation.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (observation.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())))), (observation.getNrSamplesPerDispersedChannel() / (8 / inputBits)) * sizeof(inputDataType));
           }
         } else {
           if ( inputBits >= 8 ) {
-            memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + ((observation.getNrDelaySeconds() - 1) * observation.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (observation.getNrDelaySeconds() - 1)))->at(channel * observation.getNrSamplesPerPaddedSecond()))), (observation.getNrSamplesPerDispersedChannel() % observation.getNrSamplesPerSecond()) * sizeof(inputDataType));
+            std::memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * observation.getNrSamplesPerPaddedDispersedChannel()) + ((observation.getNrDelaySeconds() - 1) * observation.getNrSamplesPerSecond())])), reinterpret_cast< void * >(&((input[beam]->at(second + (observation.getNrDelaySeconds() - 1)))->at(channel * observation.getNrSamplesPerPaddedSecond()))), (observation.getNrSamplesPerDispersedChannel() % observation.getNrSamplesPerSecond()) * sizeof(inputDataType));
           } else {
-            memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + ((observation.getNrDelaySeconds() - 1) * (observation.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (observation.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())))), ((observation.getNrSamplesPerDispersedChannel() % observation.getNrSamplesPerSecond()) / (8 / inputBits)) * sizeof(inputDataType));
+            std::memcpy(reinterpret_cast< void * >(&(dispersedData[beam].data()[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), observation.getPadding())) + ((observation.getNrDelaySeconds() - 1) * (observation.getNrSamplesPerSecond() / (8 / inputBits)))])), reinterpret_cast< void * >(&((input[beam]->at(second + (observation.getNrDelaySeconds() - 1)))->at(channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), observation.getPadding())))), ((observation.getNrSamplesPerDispersedChannel() % observation.getNrSamplesPerSecond()) / (8 / inputBits)) * sizeof(inputDataType));
           }
         }
       }
-      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, dispersedData, dedispersedData, *shifts, inputBits);
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, dispersedData[beam], dedispersedData[beam], *shifts, inputBits);
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-        output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerSecond()) + sample) * observation.getSamplingRate() << dedispersedData[sample] << std::endl;
+        output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerSecond()) + sample) * observation.getSamplingRate() << dedispersedData[beam][sample] << std::endl;
       }
     }
+  }
+  if ( dataPSRDada ) {
+    dada_hdu_unlock_read(ringBuffer);
+    dada_hdu_disconnect(ringBuffer);
+  }
+
+  // Close output files
+  for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
+    output[beam].close();
   }
 
   return 0;
