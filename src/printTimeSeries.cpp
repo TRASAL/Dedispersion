@@ -52,6 +52,9 @@ int main(int argc, char * argv[]) {
 
   try {
     observation.setPadding(args.getSwitchArgument< unsigned int >("-padding"));
+    dataLOFAR = args.getSwitch("-lofar");
+    dataSIGPROC = args.getSwitch("-sigproc");
+    dataPSRDada = args.getSwitch("-dada");
 		if ( !((((!(dataLOFAR && dataSIGPROC) && dataPSRDada) || (!(dataLOFAR && dataPSRDada) && dataSIGPROC)) || (!(dataSIGPROC && dataPSRDada) && dataLOFAR)) || ((!dataLOFAR && !dataSIGPROC) && !dataPSRDada)) ) {
 			std::cerr << "-lofar -sigproc and -dada are mutually exclusive." << std::endl;
 			throw std::exception();
