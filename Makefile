@@ -5,10 +5,15 @@ UTILS := $(HOME)/src/utils
 OPENCL := $(HOME)/src/OpenCL
 # https://github.com/isazi/AstroData
 ASTRODATA := $(HOME)/src/AstroData
+# HDF5
+HDF5 := $(HOME)/src/hdf5
+# http://psrdada.sourceforge.net/
+PSRDADA  := $(HOME)/src/psrdada
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 CL_LIBS := -L"$(OPENCL_LIB)"
+HDF5_LIBS := -L"$(HDF5)/lib"
 
 CFLAGS := -std=c++11 -Wall
 ifneq ($(debug), 1)
@@ -19,12 +24,14 @@ endif
 
 LDFLAGS := -lm
 CL_LDFLAGS := $(LDFLAGS) -lOpenCL
+HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp
 
 CC := g++
 
 # Dependencies
 DEPS := $(ASTRODATA)/bin/Observation.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o bin/Shifts.o bin/Dedispersion.o
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o
+DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o
 
 
 all: bin/Shifts.o bin/Dedispersion.o bin/DedispersionTest bin/DedispersionTuning bin/printCode bin/printShifts bin/printTimeSeries
@@ -47,8 +54,8 @@ bin/printCode: $(DEPS) src/printCode.cpp
 bin/printShifts: $(DEPS) src/printShifts.cpp
 	$(CC) -o bin/printShifts src/printShifts.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
 
-bin/printTimeSeries: $(DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printTimeSeries.cpp
-	$(CC) -o bin/printTimeSeries src/printTimeSeries.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
+bin/printTimeSeries: $(DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printTimeSeries.cpp
+	$(CC) -o bin/printTimeSeries src/printTimeSeries.cpp $(DEPS) $(DADA_DEPS) $(INCLUDES) -I"$(HDF%)/include" $(HDF5_LIBS) $(LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
