@@ -95,13 +95,13 @@ int main(int argc, char * argv[]) {
 	if ( dataLOFAR ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrSeconds());
     if ( limit ) {
-      AstroData::readLOFAR(headerFile, dataFile, obs, *(input[0]), observation.getNrSeconds());
+      AstroData::readLOFAR(headerFile, dataFile, observation, *(input[0]), observation.getNrSeconds());
     } else {
-      AstroData::readLOFAR(headerFile, dataFile, obs, *(input[0]));
+      AstroData::readLOFAR(headerFile, dataFile, observation, *(input[0]));
     }
 	} else if ( dataSIGPROC ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrSeconds());
-    AstroData::readSIGPROC(obs, inputBits, bytesToSkip, dataFile, *(input[0]));
+    AstroData::readSIGPROC(observation, inputBits, bytesToSkip, dataFile, *(input[0]));
   } else if ( dataPSRDada ) {
     ringBuffer = dada_hdu_create(0);
     dada_hdu_set_key(ringBuffer, dadaKey);
