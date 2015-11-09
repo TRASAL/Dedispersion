@@ -83,8 +83,8 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
         } else {
           unsigned int byte = (sample + shift) / (8 / inputBits);
           uint8_t firstBit = ((sample + shift) % (8 / inputBits)) * inputBits;
-          I value = 0;
-          I buffer = input[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(I))) + byte];
+          char value = 0;
+          char buffer = input[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(I))) + byte];
 
           for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
             isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
