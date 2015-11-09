@@ -42,13 +42,13 @@ bin/Shifts.o: $(ASTRODATA)/bin/Observation.o include/Shifts.hpp src/Shifts.cpp
 bin/Dedispersion.o: $(UTILS)/bin/utils.o bin/Shifts.o $(OPENCL)/include/Bits.hpp include/Dedispersion.hpp src/Dedispersion.cpp
 	$(CC) -o bin/Dedispersion.o -c src/Dedispersion.cpp $(CL_INCLUDES) $(CFLAGS)
 
-bin/DedispersionTest: $(CL_DEPS) src/DedispersionTest.cpp
+bin/DedispersionTest: $(CL_DEPS) include/configuration.hpp src/DedispersionTest.cpp
 	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(CL_LDFLAGS) $(CFLAGS)
 
-bin/DedispersionTuning: $(CL_DEPS) src/DedispersionTuning.cpp
+bin/DedispersionTuning: $(CL_DEPS) include/configuration.hpp src/DedispersionTuning.cpp
 	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(CL_LDFLAGS) $(CFLAGS)
 
-bin/printCode: $(DEPS) src/printCode.cpp
+bin/printCode: $(DEPS) include/configuration.hpp src/printCode.cpp
 	$(CC) -o bin/printCode src/printCode.cpp $(DEPS) $(CL_INCLUDES) $(LDFLAGS) $(CFLAGS)
 
 bin/printShifts: $(DEPS) src/printShifts.cpp
