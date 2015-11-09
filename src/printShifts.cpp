@@ -28,10 +28,12 @@
 
 
 int main(int argc, char *argv[]) {
+  unsigned int padding = 0;
   AstroData::Observation observation;
 
   try {
     isa::utils::ArgumentList args(argc, argv);
+    padding = args.getSwitchArgument< unsigned int >("-padding");
     observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
     observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
@@ -39,11 +41,11 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception &err ) {
-    std::cerr << "Usage: " << argv[0] << " -min_freq ... -channel_bandwidth ... -channels ... -samples ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " -padding ... -min_freq ... -channel_bandwidth ... -channels ... -samples ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
-  std::vector< float > * shifts = PulsarSearch::getShifts(observation);
+  std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
 
   for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
     std::cout << shifts->at(channel) << " ";

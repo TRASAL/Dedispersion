@@ -23,7 +23,7 @@
 
 namespace PulsarSearch {
 
-std::vector< float > * getShifts(AstroData::Observation & observation);
+std::vector< float > * getShifts(AstroData::Observation & observation, const unsigned int padding);
 
 } // PulsarSearch
 

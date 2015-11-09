@@ -16,9 +16,9 @@
 
 namespace PulsarSearch {
 
-std::vector< float > * getShifts(AstroData::Observation & observation) {
+std::vector< float > * getShifts(AstroData::Observation & observation, const unsigned int padding) {
   float inverseHighFreq = 1.0f / std::pow(observation.getMaxFreq(), 2.0f);
-  std::vector< float > * shifts = new std::vector< float >(observation.getNrPaddedChannels());
+  std::vector< float > * shifts = new std::vector< float >(observation.getNrPaddedChannels(padding / sizeof(float)));
 
   for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
     float channelFreq = observation.getMinFreq() + (channel * observation.getChannelBandwidth());
