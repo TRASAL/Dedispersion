@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-  std::vector< float > * shifts = PulsarSearch::getShifts(observation);
+  std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
   if ( conf.getSplitSeconds() ) {
     if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
       observation.setNrDelaySeconds((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond());
