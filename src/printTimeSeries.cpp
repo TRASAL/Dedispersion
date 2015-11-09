@@ -161,7 +161,7 @@ int main(int argc, char * argv[]) {
           }
         }
       }
-      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, dispersedData[beam], dedispersedData[beam], *shifts, inputBits);
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, dispersedData[beam], dedispersedData[beam], *shifts, padding, inputBits);
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
         output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerSecond()) + sample) * observation.getSamplingRate() << " " << dedispersedData[beam][sample] << std::endl;
       }
