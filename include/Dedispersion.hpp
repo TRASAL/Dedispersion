@@ -154,7 +154,7 @@ inline void DedispersionConf::setUnroll(unsigned int unroll) {
   this->unroll = unroll;
 }
 
-std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
+template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
   std::string * code = new std::string();
   std::string sum0_sTemplate = std::string();
   std::string sum_sTemplate = std::string();
