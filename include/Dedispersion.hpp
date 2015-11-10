@@ -63,14 +63,14 @@ private:
 typedef std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf > > tunedDedispersionConf;
 
 // Sequential
-template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
+template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< bool > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
 // OpenCL
 template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string & dedispersionFilename);
 
 
 // Implementations
-template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
+template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< bool > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
 			L dedispersedSample = static_cast< L >(0);
@@ -78,6 +78,10 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 				unsigned int shift = static_cast< unsigned int >((observation.getFirstDM() + (dm * observation.getDMStep())) * shifts[channel]);
 
+        if ( zappedChannels[channel] ) {
+          // If a channel is zapped, skip it
+          continue;
+        }
         if ( inputBits >= 8 ) {
           dedispersedSample += static_cast< L >(input[(channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(I))) + (sample + shift)]);
         } else {

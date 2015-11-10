@@ -77,6 +77,7 @@ int main(int argc, char *argv[]) {
 
   isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
   std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
+  std::vector< bool > zappedChannels(observation.getNrChannels());
 
   if ( conf.getSplitSeconds() ) {
     if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
@@ -169,6 +170,10 @@ int main(int argc, char *argv[]) {
       }
 		}
 	}
+  // All channels are good
+  for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+    zappedChannels[channel] = false;
+  }
 
   // Copy data structures to device
   try {
@@ -209,9 +214,9 @@ int main(int argc, char *argv[]) {
     }
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
     if ( conf.getSplitSeconds() ) {
-      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, dispersedData_control, dedispersedData_control, *shifts, padding, inputBits);
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData_control, dedispersedData_control, *shifts, padding, inputBits);
     } else {
-      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, dispersedData, dedispersedData_control, *shifts, padding, inputBits);
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData, dedispersedData_control, *shifts, padding, inputBits);
     }
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()));
   } catch ( cl::Error & err ) {

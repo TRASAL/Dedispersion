@@ -39,6 +39,7 @@ int main(int argc, char * argv[]) {
 	std::string dataFile;
 	std::string headerFile;
 	std::string outputFile;
+  std::string channelsFile;
   std::vector< std::ofstream > output;
   // LOFAR
   bool dataLOFAR = false;
@@ -71,6 +72,7 @@ int main(int argc, char * argv[]) {
       observation.setNrBeams(1);
 			bytesToSkip = args.getSwitchArgument< unsigned int >("-header");
 			dataFile = args.getSwitchArgument< std::string >("-data");
+      channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
 			observation.setNrSeconds(args.getSwitchArgument< unsigned int >("-seconds"));
       observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 			observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
@@ -86,7 +88,7 @@ int main(int argc, char * argv[]) {
     std::cerr <<  args.getName() << " -padding ... [-lofar] [-sigproc] [-dada] -input_bits ... -output ... -dm ..." << std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
-    std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "\t -sigproc -header ... -data ... -zapped_channels ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     std::cerr << "\t -dada -dada_key ... -beams ... -seconds ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
@@ -96,6 +98,7 @@ int main(int argc, char * argv[]) {
 
 	// Load observation data
   std::vector< std::vector< std::vector< inputDataType > * > * > input(observation.getNrBeams());
+  std::vector< bool > zappedChannels(observation.getNrChannels());
 	if ( dataLOFAR ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrSeconds());
     if ( limit ) {
@@ -106,6 +109,7 @@ int main(int argc, char * argv[]) {
 	} else if ( dataSIGPROC ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrSeconds());
     AstroData::readSIGPROC(observation, padding, inputBits, bytesToSkip, dataFile, *(input[0]));
+    AstroData::readZappedChannels(observation, padding, channelsFile, zappedChannels);
   } else if ( dataPSRDada ) {
     ringBuffer = dada_hdu_create(0);
     dada_hdu_set_key(ringBuffer, dadaKey);
@@ -161,7 +165,7 @@ int main(int argc, char * argv[]) {
           }
         }
       }
-      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, dispersedData[beam], dedispersedData[beam], *shifts, padding, inputBits);
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData[beam], dedispersedData[beam], *shifts, padding, inputBits);
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
         output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerSecond()) + sample) * observation.getSamplingRate() << " " << dedispersedData[beam][sample] << std::endl;
       }
