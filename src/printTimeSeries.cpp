@@ -115,7 +115,7 @@ int main(int argc, char * argv[]) {
   output = std::vector< std::ofstream >(observation.getNrBeams());
 
 	// Host memory allocation
-  std::vector< float > * shifts = PulsarSearch::getShifts(observation);
+  std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * observation.getFirstDM()));
   observation.setNrDelaySeconds(static_cast< unsigned int >(std::ceil(static_cast< double >(observation.getNrSamplesPerDispersedChannel()) / observation.getNrSamplesPerSecond())));
   std::vector< std::vector< inputDataType > > dispersedData(observation.getNrBeams());
