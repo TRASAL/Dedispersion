@@ -23,9 +23,10 @@
 
 #include <configuration.hpp>
 
+#include <utils.hpp>
 #include <ArgumentList.hpp>
 #include <Observation.hpp>
-#include <utils.hpp>
+#include <ReadData.hpp>
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
 
@@ -33,12 +34,14 @@
 int main(int argc, char *argv[]) {
   unsigned int padding = 0;
   uint8_t inputBits = 0;
+  std::string channelsFile;
   PulsarSearch::DedispersionConf conf;
   AstroData::Observation observation;
 
   try {
     isa::utils::ArgumentList args(argc, argv);
     padding = args.getSwitchArgument< unsigned int >("-padding");
+    channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     conf.setSplitSeconds(args.getSwitch("-split_seconds"));
     conf.setLocalMem(args.getSwitch("-local"));
     conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
@@ -54,11 +57,13 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " -padding ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -input_bits ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " -padding ... -zapped_channels ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -input_bits ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
   std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
+  std::vector< bool > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(bool)));
+  AstroData::readZappedChannels(channelsFile, zappedChannels);
   if ( conf.getSplitSeconds() ) {
     if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
       observation.setNrDelaySeconds((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond());
@@ -69,7 +74,7 @@ int main(int argc, char *argv[]) {
   observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shifts);
+  std::string * code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shifts, zappedChannels);
   std::cout << *code << std::endl;
 
 	return 0;
