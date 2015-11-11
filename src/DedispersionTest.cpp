@@ -25,6 +25,7 @@
 
 #include <ArgumentList.hpp>
 #include <Observation.hpp>
+#include <ReadData.hpp>
 #include <InitializeOpenCL.hpp>
 #include <Kernel.hpp>
 #include <utils.hpp>
