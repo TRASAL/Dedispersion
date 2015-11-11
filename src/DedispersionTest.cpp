@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
 	unsigned int clPlatformID = 0;
 	unsigned int clDeviceID = 0;
   long long unsigned int wrongSamples = 0;
+  std::string channelsFile;
   PulsarSearch::DedispersionConf conf;
   AstroData::Observation observation;
 
@@ -51,6 +52,7 @@ int main(int argc, char *argv[]) {
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
     padding = args.getSwitchArgument< unsigned int >("-padding");
+    channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     conf.setLocalMem(args.getSwitch("-local"));
     conf.setSplitSeconds(args.getSwitch("-split_seconds"));
     conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... -zapped_channels ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
@@ -77,8 +79,9 @@ int main(int argc, char *argv[]) {
 
   isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, clContext, clDevices, clQueues);
   std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
-  std::vector< bool > zappedChannels(observation.getNrChannels());
+  std::vector< bool > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(bool)));
 
+  AstroData::readZappedChannels(channelsFile, zappedChannels);
   if ( conf.getSplitSeconds() ) {
     if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
       observation.setNrDelaySeconds((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond());
@@ -90,6 +93,7 @@ int main(int argc, char *argv[]) {
 
 	// Allocate memory
   cl::Buffer shifts_d;
+  cl::Buffer zappedChannels_d;
   std::vector< inputDataType > dispersedData;
   std::vector< inputDataType > dispersedData_control;
   if ( inputBits >= 8 ) {
@@ -113,6 +117,7 @@ int main(int argc, char *argv[]) {
   std::vector< outputDataType > dedispersedData_control = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
+    zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(bool), 0, 0);
     dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(inputDataType), 0, 0);
     dedispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_WRITE, dedispersedData.size() * sizeof(outputDataType), 0, 0);
   } catch ( cl::Error & err ) {
@@ -170,14 +175,11 @@ int main(int argc, char *argv[]) {
       }
 		}
 	}
-  // All channels are good
-  for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-    zappedChannels[channel] = false;
-  }
 
   // Copy data structures to device
   try {
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shifts_d, CL_FALSE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()), 0, 0);
+    clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(bool), reinterpret_cast< void * >(zappedChannels.data()), 0, 0);
     clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, 0);
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
@@ -185,7 +187,7 @@ int main(int argc, char *argv[]) {
   }
 
 	// Generate kernel
-  std::string * code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shifts);
+  std::string * code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shifts, zappedChannels);
   cl::Kernel * kernel;
   if ( printCode ) {
     std::cout << *code << std::endl;
@@ -207,10 +209,12 @@ int main(int argc, char *argv[]) {
       kernel->setArg(1, dispersedData_d);
       kernel->setArg(2, dedispersedData_d);
       kernel->setArg(3, shifts_d);
+      kernel->setArg(4, zappedChannels_d);
     } else {
       kernel->setArg(0, dispersedData_d);
       kernel->setArg(1, dedispersedData_d);
       kernel->setArg(2, shifts_d);
+      kernel->setArg(3, zappedChannels_d);
     }
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
     if ( conf.getSplitSeconds() ) {
