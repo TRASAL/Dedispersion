@@ -98,7 +98,7 @@ int main(int argc, char * argv[]) {
 
 	// Load observation data
   std::vector< std::vector< std::vector< inputDataType > * > * > input(observation.getNrBeams());
-  std::vector< bool > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(bool)));
+  std::vector< uint8_t > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
 	if ( dataLOFAR ) {
     input[0] = new std::vector< std::vector< inputDataType > * >(observation.getNrSeconds());
     if ( limit ) {

@@ -33,7 +33,7 @@
 #include <Timer.hpp>
 #include <Stats.hpp>
 
-void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< bool > & zappedChannels, cl::Buffer * zappedChannels_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size);
+void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size);
 
 int main(int argc, char * argv[]) {
   bool reInit = false;
@@ -89,7 +89,7 @@ int main(int argc, char * argv[]) {
 
   // Allocate host memory
   std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
-  std::vector< bool > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(bool)));
+  std::vector< uint8_t > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
 
   AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
   if ( conf.getSplitSeconds() ) {
@@ -288,14 +288,14 @@ int main(int argc, char * argv[]) {
 	return 0;
 }
 
-void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< bool > & zappedChannels, cl::Buffer * zappedChannels_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size) {
+void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size) {
   try {
     *shifts_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
-    *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(bool), 0, 0);
+    *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
     *dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
     *dedispersedData_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, dedispersedData_size * sizeof(outputDataType), 0, 0);
     clQueue->enqueueWriteBuffer(*shifts_d, CL_FALSE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()));
-    clQueue->enqueueWriteBuffer(*zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(bool), reinterpret_cast< void * >(zappedChannels.data()));
+    clQueue->enqueueWriteBuffer(*zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
     clQueue->finish();
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error: " << isa::utils::toString(err.err()) << "." << std::endl;

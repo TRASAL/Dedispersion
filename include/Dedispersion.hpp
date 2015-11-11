@@ -63,14 +63,14 @@ private:
 typedef std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf > > tunedDedispersionConf;
 
 // Sequential
-template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< bool > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
+template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
 // OpenCL
-template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< bool > & zappedChannels);
+template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels);
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string & dedispersionFilename);
 
 
 // Implementations
-template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< bool > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
+template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
 		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
 			L dedispersedSample = static_cast< L >(0);
@@ -78,7 +78,7 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
 				unsigned int shift = static_cast< unsigned int >((observation.getFirstDM() + (dm * observation.getDMStep())) * shifts[channel]);
 
-        if ( zappedChannels[channel] ) {
+        if ( zappedChannels[channel] != 0 ) {
           // If a channel is zapped, skip it
           continue;
         }
@@ -158,7 +158,7 @@ inline void DedispersionConf::setUnroll(unsigned int unroll) {
   this->unroll = unroll;
 }
 
-template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< bool > & zappedChannels) {
+template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels) {
   std::string * code = new std::string();
   std::string sum0_sTemplate = std::string();
   std::string sum_sTemplate = std::string();
@@ -176,10 +176,10 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   // Begin kernel's template
   if ( conf.getLocalMem() ) {
     if ( conf.getSplitSeconds() ) {
-      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const bool * restrict const zappedChannels) {\n"
+      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n"
         "unsigned int sampleOffset = secondOffset * " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const bool * restrict const zappedChannels) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n";
     }
     *code +=  "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
@@ -201,7 +201,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       "\n"
       "<%UNROLLED_LOOP%>"
       "}\n";
-      if ( !zappedChannels[observation.getNrChannels() - 1] ) {
+      if ( zappedChannels[observation.getNrChannels() - 1] == 0 ) {
         *code += "inShMem = (get_local_id(1) * " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ") + get_local_id(0);\n"
         "inGlMem = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem;\n"
         "while ( inShMem < " + nrTotalSamplesPerBlock_s + " ) {\n";
@@ -249,7 +249,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       }
       *code += "<%STORES%>"
       "}";
-    unrolled_sTemplate = "if ( !zappedChannels[channel + <%UNROLL%>] ) {\n"
+    unrolled_sTemplate = "if ( zappedChannels[channel + <%UNROLL%>] == 0 ) {\n"
       "minShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + isa::utils::toString(observation.getDMStep()) + "f)));\n"
       "<%SHIFTS%>"
       "diffShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((conf.getNrDMsPerBlock() * conf.getNrDMsPerThread()) - 1) + ") * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n"
@@ -310,10 +310,10 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
   } else {
     if ( conf.getSplitSeconds() ) {
-      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const bool * restrict const zappedChannels) {\n"
+      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n"
         "unsigned int sampleOffset = secondOffset * " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const bool * restrict const zappedChannels) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n";
     }
     *code += "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
@@ -329,13 +329,13 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       "<%DEFS_SHIFT%>"
       "<%UNROLLED_LOOP%>"
       "}\n";
-    if ( !zappedChannels[observation.getNrChannels() - 1] ) {
+    if ( zappedChannels[observation.getNrChannels() - 1] == 0 ) {
       *code += "<%SUM0%>"
       "\n";
     }
     *code += "<%STORES%>"
       "}";
-    unrolled_sTemplate = "if ( !zappedChannels[channel + <%UNROLL%>] ) {\n"
+    unrolled_sTemplate = "if ( zappedChannels[channel + <%UNROLL%>] == 0 ) {\n"
       "<%SHIFTS%>"
       "\n"
       "<%SUMS%>"
