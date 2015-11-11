@@ -22,17 +22,18 @@
 
 #include <configuration.hpp>
 
+#include <utils.hpp>
 #include <ArgumentList.hpp>
 #include <Observation.hpp>
+#include <ReadData.hpp>
 #include <InitializeOpenCL.hpp>
 #include <Kernel.hpp>
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
-#include <utils.hpp>
 #include <Timer.hpp>
 #include <Stats.hpp>
 
-void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size);
+void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< bool > & zappedChannels, cl::Buffer * zappedChannels_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size);
 
 int main(int argc, char * argv[]) {
   bool reInit = false;
@@ -50,6 +51,7 @@ int main(int argc, char * argv[]) {
   unsigned int maxItems = 0;
   unsigned int maxUnroll = 0;
   unsigned int maxLoopBodySize = 0;
+  std::string channelsFile;
   AstroData::Observation observation;
   PulsarSearch::DedispersionConf conf;
   cl::Event event;
@@ -64,6 +66,7 @@ int main(int argc, char * argv[]) {
     conf.setLocalMem(args.getSwitch("-local"));
 		padding = args.getSwitchArgument< unsigned int >("-padding");
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
+    channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     threadUnit = args.getSwitchArgument< unsigned int >("-thread_unit");
 		minThreads = args.getSwitchArgument< unsigned int >("-min_threads");
 		maxThreads = args.getSwitchArgument< unsigned int >("-max_threads");
@@ -77,7 +80,7 @@ int main(int argc, char * argv[]) {
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-split_seconds] [-local] -input_bits ... -padding ... -thread_unit ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_loopsize ... -max_columns ... -max_rows ... -thread_increment ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-split_seconds] [-local] -input_bits ... -padding ... -zapped_channels ... -thread_unit ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_loopsize ... -max_columns ... -max_rows ... -thread_increment ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	} catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -86,6 +89,9 @@ int main(int argc, char * argv[]) {
 
   // Allocate host memory
   std::vector< float > * shifts = PulsarSearch::getShifts(observation, padding);
+  std::vector< bool > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(bool)));
+
+  AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
   if ( conf.getSplitSeconds() ) {
     if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
       observation.setNrDelaySeconds((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond());
@@ -105,21 +111,22 @@ int main(int argc, char * argv[]) {
 
 	// Allocate device memory
   cl::Buffer shifts_d;
+  cl::Buffer zappedChannels_d;
   cl::Buffer dispersedData_d;
   cl::Buffer dedispersedData_d;
 
   try {
     if ( inputBits >= 8 ) {
       if ( conf.getSplitSeconds() ) {
-        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
       } else {
-        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
       }
     } else {
       if ( conf.getSplitSeconds() ) {
-        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
       } else {
-        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
       }
     }
   } catch ( cl::Error & err ) {
@@ -142,7 +149,7 @@ int main(int argc, char * argv[]) {
 	}
 
 	std::cout << std::fixed << std::endl;
-	std::cout << "# nrDMs nrChannels nrSamples splitSeconds local unroll samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread GFLOP/s time stdDeviation COV" << std::endl << std::endl;
+	std::cout << "# nrDMs nrChannels nrZappedChannels nrSamples splitSeconds local unroll samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread GFLOP/s time stdDeviation COV" << std::endl << std::endl;
 
 	for ( std::vector< unsigned int >::iterator samples = samplesPerBlock.begin(); samples != samplesPerBlock.end(); ++samples ) {
     conf.setNrSamplesPerBlock(*samples);
@@ -177,10 +184,10 @@ int main(int argc, char * argv[]) {
               break;
             }
             // Generate kernel
-            double gflops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrChannels() * observation.getNrSamplesPerSecond());
+            double gflops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerSecond());
             isa::utils::Timer timer;
             cl::Kernel * kernel;
-            std::string * code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shifts);
+            std::string * code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shifts, zappedChannels);
 
             if ( reInit ) {
               delete clQueues;
@@ -189,15 +196,15 @@ int main(int argc, char * argv[]) {
               try {
                 if ( inputBits >= 8 ) {
                   if ( conf.getSplitSeconds() ) {
-                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
                   } else {
-                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
                   }
                 } else {
                   if ( conf.getSplitSeconds() ) {
-                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
                   } else {
-                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, &dispersedData_d, observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
                   }
                 }
               } catch ( cl::Error & err ) {
@@ -230,10 +237,12 @@ int main(int argc, char * argv[]) {
               kernel->setArg(1, dispersedData_d);
               kernel->setArg(2, dedispersedData_d);
               kernel->setArg(3, shifts_d);
+              kernel->setArg(4, zappedChannels_d);
             } else {
               kernel->setArg(0, dispersedData_d);
               kernel->setArg(1, dedispersedData_d);
               kernel->setArg(2, shifts_d);
+              kernel->setArg(3, zappedChannels_d);
             }
 
             try {
@@ -261,7 +270,7 @@ int main(int argc, char * argv[]) {
             }
             delete kernel;
 
-            std::cout << observation.getNrDMs() << " " << observation.getNrChannels() << " " << observation.getNrSamplesPerSecond() << " ";
+            std::cout << observation.getNrDMs() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " " << observation.getNrSamplesPerSecond() << " ";
             std::cout << conf.print() << " ";
             std::cout << std::setprecision(3);
             std::cout << gflops / timer.getAverageTime() << " ";
@@ -279,12 +288,14 @@ int main(int argc, char * argv[]) {
 	return 0;
 }
 
-void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size) {
+void initializeDeviceMemory(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< bool > & zappedChannels, cl::Buffer * zappedChannels_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size) {
   try {
     *shifts_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
+    *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(bool), 0, 0);
     *dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
     *dedispersedData_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, dedispersedData_size * sizeof(outputDataType), 0, 0);
     clQueue->enqueueWriteBuffer(*shifts_d, CL_FALSE, 0, shifts->size() * sizeof(float), reinterpret_cast< void * >(shifts->data()));
+    clQueue->enqueueWriteBuffer(*zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(bool), reinterpret_cast< void * >(zappedChannels.data()));
     clQueue->finish();
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error: " << isa::utils::toString(err.err()) << "." << std::endl;
