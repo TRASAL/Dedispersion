@@ -48,8 +48,8 @@ bin/DedispersionTest: $(CL_DEPS) include/configuration.hpp src/DedispersionTest.
 bin/DedispersionTuning: $(CL_DEPS) include/configuration.hpp src/DedispersionTuning.cpp
 	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp $(CL_DEPS) $(CL_INCLUDES) $(CL_LIBS) $(CL_LDFLAGS) $(CFLAGS)
 
-bin/printCode: $(DEPS) include/configuration.hpp src/printCode.cpp
-	$(CC) -o bin/printCode src/printCode.cpp $(DEPS) $(CL_INCLUDES) $(LDFLAGS) $(CFLAGS)
+bin/printCode: $(DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printCode.cpp
+	$(CC) -o bin/printCode src/printCode.cpp $(DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
 
 bin/printShifts: $(DEPS) src/printShifts.cpp
 	$(CC) -o bin/printShifts src/printShifts.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
