@@ -115,7 +115,7 @@ int main(int argc, char * argv[]) {
     dada_hdu_connect(ringBuffer);
     dada_hdu_lock_read(ringBuffer);
 	}
-  AstroData::readZappedChannels(observation, padding, channelsFile, zappedChannels);
+  AstroData::readZappedChannels(channelsFile, zappedChannels);
   output = std::vector< std::ofstream >(observation.getNrBeams());
 
 	// Host memory allocation
