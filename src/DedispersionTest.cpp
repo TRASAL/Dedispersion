@@ -202,7 +202,7 @@ int main(int argc, char *argv[]) {
 
   // Run OpenCL kernel and CPU control
   try {
-    cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
+    cl::NDRange global(observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
     cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
 
     std::cout << std::endl;
