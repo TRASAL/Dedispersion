@@ -35,7 +35,6 @@
 
 int main(int argc, char *argv[]) {
   unsigned int padding = 0;
-  unsigned int vectorWidth = 0;
   uint8_t inputBits = 0;
   bool printCode = false;
   bool printResults = false;
@@ -54,7 +53,6 @@ int main(int argc, char *argv[]) {
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
     padding = args.getSwitchArgument< unsigned int >("-padding");
-    vectorWidth = args.getSwitchArgument< unsigned int >("-vector");
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     conf.setLocalMem(args.getSwitch("-local"));
     conf.setSplitSeconds(args.getSwitch("-split_seconds"));
@@ -204,7 +202,7 @@ int main(int argc, char *argv[]) {
 
   // Run OpenCL kernel and CPU control
   try {
-    cl::NDRange global(observation.getNrSamplesPerPaddedSecond(vectorWidth) / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
+    cl::NDRange global(observation.getNrSamplesPerPaddedSecond(conf.getNrSamplesPerBlock()) / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
     cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
 
     if ( conf.getSplitSeconds() ) {
