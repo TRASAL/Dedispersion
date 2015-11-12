@@ -46,7 +46,7 @@ int main(int argc, char * argv[]) {
   unsigned int maxThreads = 0;
 	unsigned int maxRows = 0;
 	unsigned int maxColumns = 0;
-  unsigned int threadUnit = 0;
+  unsigned int vectorWidth = 0;
   unsigned int threadIncrement = 0;
   unsigned int maxItems = 0;
   unsigned int maxUnroll = 0;
@@ -67,7 +67,7 @@ int main(int argc, char * argv[]) {
 		padding = args.getSwitchArgument< unsigned int >("-padding");
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
-    threadUnit = args.getSwitchArgument< unsigned int >("-thread_unit");
+    vectorWidth = args.getSwitchArgument< unsigned int >("-vector");
 		minThreads = args.getSwitchArgument< unsigned int >("-min_threads");
 		maxThreads = args.getSwitchArgument< unsigned int >("-max_threads");
 		maxRows = args.getSwitchArgument< unsigned int >("-max_rows");
@@ -158,7 +158,7 @@ int main(int argc, char * argv[]) {
       conf.setNrDMsPerBlock(*DMs);
 			if ( conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock() > maxThreads ) {
 				break;
-			} else if ( (conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock()) % threadUnit != 0 ) {
+			} else if ( (conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock()) % vectorWidth != 0 ) {
         continue;
       }
 
