@@ -137,7 +137,7 @@ int main(int argc, char * argv[]) {
 	// Find the parameters
 	std::vector< unsigned int > samplesPerBlock;
 	for ( unsigned int samples = minThreads; samples <= maxColumns; samples += threadIncrement ) {
-		if ( (observation.getNrSamplesPerSecond() % samples) == 0 || (observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) % samples) == 0 ) {
+		if ( (observation.getNrSamplesPerSecond() % samples) == 0 ) {
 			samplesPerBlock.push_back(samples);
 		}
 	}
@@ -164,7 +164,7 @@ int main(int argc, char * argv[]) {
 
 			for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItems; samplesPerThread++ ) {
         conf.setNrSamplesPerThread(samplesPerThread);
-				if ( (observation.getNrSamplesPerSecond() % (conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread())) != 0 && (observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) % (conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread())) != 0 ) {
+				if ( (observation.getNrSamplesPerSecond() % (conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread())) != 0 ) {
 					continue;
 				}
 
@@ -184,7 +184,7 @@ int main(int argc, char * argv[]) {
               break;
             }
             // Generate kernel
-            double gflops = isa::utils::giga(static_cast< long long unsigned int >(observation.getNrDMs()) * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerSecond());
+            double gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMs()) * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerSecond());
             isa::utils::Timer timer;
             cl::Kernel * kernel;
             std::string * code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shifts, zappedChannels);
@@ -223,13 +223,7 @@ int main(int argc, char * argv[]) {
             }
             delete code;
 
-            unsigned int nrThreads = 0;
-            if ( observation.getNrSamplesPerSecond() % (conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread()) == 0 ) {
-              nrThreads = observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread();
-            } else {
-              nrThreads = observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) / conf.getNrSamplesPerThread();
-            }
-            cl::NDRange global(nrThreads, observation.getNrDMs() / conf.getNrDMsPerThread());
+            cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
             cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
 
             if ( conf.getSplitSeconds() ) {
