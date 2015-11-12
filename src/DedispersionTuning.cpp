@@ -137,7 +137,7 @@ int main(int argc, char * argv[]) {
 	// Find the parameters
 	std::vector< unsigned int > samplesPerBlock;
 	for ( unsigned int samples = minThreads; samples <= maxColumns; samples += threadIncrement ) {
-		if ( (observation.getNrSamplesPerSecond() % samples) == 0 ) {
+		if ( (observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) % samples) == 0 ) {
 			samplesPerBlock.push_back(samples);
 		}
 	}
@@ -164,7 +164,7 @@ int main(int argc, char * argv[]) {
 
 			for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItems; samplesPerThread++ ) {
         conf.setNrSamplesPerThread(samplesPerThread);
-				if ( (observation.getNrSamplesPerSecond() % (conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread())) != 0 ) {
+				if ( (observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) % (conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread())) != 0 ) {
 					continue;
 				}
 
@@ -223,7 +223,7 @@ int main(int argc, char * argv[]) {
             }
             delete code;
 
-            cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
+            cl::NDRange global(observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
             cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
 
             if ( conf.getSplitSeconds() ) {
