@@ -35,6 +35,7 @@
 
 int main(int argc, char *argv[]) {
   unsigned int padding = 0;
+  unsigned int vectorWidth = 0;
   uint8_t inputBits = 0;
   bool printCode = false;
   bool printResults = false;
@@ -53,6 +54,7 @@ int main(int argc, char *argv[]) {
 		clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
     padding = args.getSwitchArgument< unsigned int >("-padding");
+    vectorWidth = args.getSwitchArgument< unsigned int >("-vector");
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     conf.setLocalMem(args.getSwitch("-local"));
     conf.setSplitSeconds(args.getSwitch("-split_seconds"));
@@ -68,7 +70,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... -zapped_channels ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... -vector ... -zapped_channels ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
@@ -202,7 +204,7 @@ int main(int argc, char *argv[]) {
 
   // Run OpenCL kernel and CPU control
   try {
-    cl::NDRange global(observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
+    cl::NDRange global(observation.getNrSamplesPerPaddedSecond(vectorWidth) / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
     cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
 
     if ( conf.getSplitSeconds() ) {
