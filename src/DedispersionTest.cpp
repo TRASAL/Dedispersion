@@ -205,8 +205,10 @@ int main(int argc, char *argv[]) {
     cl::NDRange global(observation.getNrSamplesPerPaddedSecond(conf.getNrSamplesPerBlock()) / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
     cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
 
+    std::cout << std::endl;
     std::cout << observation.getNrSamplesPerPaddedSecond(conf.getNrSamplesPerBlock()) / conf.getNrSamplesPerThread() << " " << observation.getNrDMs() / conf.getNrDMsPerThread() << std::endl;
     std::cout << conf.getNrSamplesPerBlock() << " " << conf.getNrDMsPerBlock() << std::endl;
+    std::cout << std::endl;
 
     if ( conf.getSplitSeconds() ) {
       kernel->setArg(0, 0);
