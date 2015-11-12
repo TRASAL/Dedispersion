@@ -169,6 +169,12 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   } else {
     firstDM_s.append("f");
   }
+  std::string DMStep_s = isa::utils::toString(observation.getDMStep());
+  if ( DMStep_s.find(".") == std::string::npos ) {
+    DMStep_s.append(".0f");
+  } else {
+    DMStep_s.append("f");
+  }
   std::string nrTotalSamplesPerBlock_s = isa::utils::toString(conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread());
   std::string nrTotalDMsPerBlock_s = isa::utils::toString(conf.getNrDMsPerBlock() * conf.getNrDMsPerThread());
   std::string nrTotalThreads_s = isa::utils::toString(conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock());
@@ -250,9 +256,9 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       *code += "<%STORES%>"
       "}";
     unrolled_sTemplate = "if ( zappedChannels[channel + <%UNROLL%>] == 0 ) {\n"
-      "minShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + isa::utils::toString(observation.getDMStep()) + "f)));\n"
+      "minShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + DMStep_s + ")));\n"
       "<%SHIFTS%>"
-      "diffShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((conf.getNrDMsPerBlock() * conf.getNrDMsPerThread()) - 1) + ") * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n"
+      "diffShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((conf.getNrDMsPerBlock() * conf.getNrDMsPerThread()) - 1) + ") * " + DMStep_s + "))) - minShift;\n"
       "\n"
       "inShMem = (get_local_id(1) * " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ") + get_local_id(0);\n";
     if ( conf.getSplitSeconds() ) {
@@ -395,9 +401,9 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   std::string defsShiftTemplate = "unsigned int shiftDM<%DM_NUM%> = 0;\n";
   std::string shiftsTemplate;
   if ( conf.getLocalMem() ) {
-    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f))) - minShift;\n";
+    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + DMStep_s + "))) - minShift;\n";
   } else {
-    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + isa::utils::toString(observation.getDMStep()) + "f)));\n";
+    shiftsTemplate = "shiftDM<%DM_NUM%> = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + DMStep_s + ")));\n";
   }
   std::string store_sTemplate;
   if ( intermediateDataType == outputDataType ) {
