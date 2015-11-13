@@ -169,7 +169,7 @@ int main(int argc, char * argv[]) {
       }
       PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData[beam], dedispersedData[beam], *shifts, padding, inputBits);
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample += outputIntegration ) {
-        unsigned int counter integratedElements = 0;
+        unsigned int integratedElements = 0;
         outputDataType integratedSample = 0;
 
         for ( unsigned int integration = 0; integration < outputIntegration; integration++ ) {
