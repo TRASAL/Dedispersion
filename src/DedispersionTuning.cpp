@@ -139,7 +139,7 @@ int main(int argc, char * argv[]) {
     conf.setNrSamplesPerBlock(samples);
 
 		for ( unsigned int DMs = 1; DMs <= maxRows; DMs++ ) {
-      conf.setNrDMsPerBlock(*DMs);
+      conf.setNrDMsPerBlock(DMs);
 			if ( conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock() > maxThreads ) {
 				break;
 			} else if ( (conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock()) % vectorWidth != 0 ) {
