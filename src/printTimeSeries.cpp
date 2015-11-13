@@ -34,6 +34,7 @@ int main(int argc, char * argv[]) {
   // Observation
   AstroData::Observation observation;
   unsigned int padding = 0;
+  unsigned int outputIntegration = 0;
   uint8_t inputBits = 0;
   // Files
 	std::string dataFile;
@@ -82,10 +83,11 @@ int main(int argc, char * argv[]) {
 		}
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
+    outputIntegration = args.getSwitchArgument< unsigned int >("-output_integration");
 		outputFile = args.getSwitchArgument< std::string >("-output");
     observation.setDMRange(1, args.getSwitchArgument< float >("-dm"), 0.0f);
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr <<  args.getName() << " -padding ... [-lofar] [-sigproc] [-dada] -zapped_channels ... -input_bits ... -output ... -dm ..." << std::endl;
+    std::cerr <<  args.getName() << " -padding ... [-lofar] [-sigproc] [-dada] -zapped_channels ... -input_bits ... -output_integration ... -output ... -dm ..." << std::endl;
     std::cerr << "\t -lofar -header ... -data ... [-limit]" << std::endl;
     std::cerr << "\t\t -limit -seconds ..." << std::endl;
     std::cerr << "\t -sigproc -header ... -data ... -seconds ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
@@ -166,8 +168,17 @@ int main(int argc, char * argv[]) {
         }
       }
       PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData[beam], dedispersedData[beam], *shifts, padding, inputBits);
-      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-        output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerSecond()) + sample) * observation.getSamplingRate() << " " << dedispersedData[beam][sample] << std::endl;
+      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample += outputIntegration ) {
+        unsigned int counter integratedElements = 0;
+        outputDataType integratedSample = 0;
+
+        for ( unsigned int integration = 0; integration < outputIntegration; integration++ ) {
+          if ( sample + integration < observation.getNrSamplesPerSecond() ) {
+            integratedElements++;
+            integratedSample += dedispersedData[beam][sample + integration];
+          }
+        }
+        output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerSecond()) + sample) * (observation.getSamplingRate() * outputIntegration) << " " << integratedSample / integratedElements << std::endl;
       }
     }
   }
