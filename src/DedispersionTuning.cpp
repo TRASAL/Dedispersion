@@ -47,7 +47,6 @@ int main(int argc, char * argv[]) {
 	unsigned int maxRows = 0;
 	unsigned int maxColumns = 0;
   unsigned int vectorWidth = 0;
-  unsigned int threadIncrement = 0;
   unsigned int maxItems = 0;
   unsigned int maxUnroll = 0;
   unsigned int maxLoopBodySize = 0;
@@ -72,7 +71,6 @@ int main(int argc, char * argv[]) {
 		maxThreads = args.getSwitchArgument< unsigned int >("-max_threads");
 		maxRows = args.getSwitchArgument< unsigned int >("-max_rows");
 		maxColumns = args.getSwitchArgument< unsigned int >("-max_columns");
-    threadIncrement = args.getSwitchArgument< unsigned int >("-thread_increment");
 		maxItems = args.getSwitchArgument< unsigned int >("-max_items");
     maxUnroll = args.getSwitchArgument< unsigned int >("-max_unroll");
     maxLoopBodySize = args.getSwitchArgument< unsigned int >("-max_loopsize");
@@ -80,7 +78,7 @@ int main(int argc, char * argv[]) {
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-split_seconds] [-local] -input_bits ... -padding ... -zapped_channels ... -vector ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_loopsize ... -max_columns ... -max_rows ... -thread_increment ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-split_seconds] [-local] -input_bits ... -padding ... -zapped_channels ... -vector ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_loopsize ... -max_columns ... -max_rows ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	} catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -134,27 +132,13 @@ int main(int argc, char * argv[]) {
     return -1;
   }
 
-	// Find the parameters
-	std::vector< unsigned int > samplesPerBlock;
-	for ( unsigned int samples = minThreads; samples <= maxColumns; samples += threadIncrement ) {
-		if ( (observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) % samples) == 0 ) {
-			samplesPerBlock.push_back(samples);
-		}
-	}
-	std::vector< unsigned int > DMsPerBlock;
-	for ( unsigned int DMs = 1; DMs <= maxRows; DMs++ ) {
-		if ( (observation.getNrDMs() % DMs) == 0 ) {
-			DMsPerBlock.push_back(DMs);
-		}
-	}
-
 	std::cout << std::fixed << std::endl;
 	std::cout << "# nrDMs nrChannels nrZappedChannels nrSamples splitSeconds local unroll samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread GFLOP/s time stdDeviation COV" << std::endl << std::endl;
 
-	for ( std::vector< unsigned int >::iterator samples = samplesPerBlock.begin(); samples != samplesPerBlock.end(); ++samples ) {
-    conf.setNrSamplesPerBlock(*samples);
+	for ( unsigned int samples = minThreads; samples <= maxColumns; samples++) {
+    conf.setNrSamplesPerBlock(samples);
 
-		for ( std::vector< unsigned int >::iterator DMs = DMsPerBlock.begin(); DMs != DMsPerBlock.end(); ++DMs ) {
+		for ( unsigned int DMs = 1; DMs <= maxRows; DMs++ ) {
       conf.setNrDMsPerBlock(*DMs);
 			if ( conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock() > maxThreads ) {
 				break;
@@ -164,7 +148,7 @@ int main(int argc, char * argv[]) {
 
 			for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItems; samplesPerThread++ ) {
         conf.setNrSamplesPerThread(samplesPerThread);
-				if ( (observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) % (conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread())) != 0 ) {
+				if ( (observation.getNrSamplesPerSecond() % (conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread())) != 0 ) {
 					continue;
 				}
 
@@ -223,7 +207,7 @@ int main(int argc, char * argv[]) {
             }
             delete code;
 
-            cl::NDRange global(observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)) / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
+            cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
             cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
 
             if ( conf.getSplitSeconds() ) {
