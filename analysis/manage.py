@@ -20,7 +20,7 @@ def get_tables(queue):
 
 def create_table(queue, table):
     """Create a table to store auto-tuning results for dedispersion."""
-    queue.execute("CREATE table " + table + "(id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT, DMs INTEGER NOT NULL, channels INTEGER NOT NULL, samples INTEGER NOT NULL, splitSeconds TINYINT NOT NULL, local TINYINT NOT NULL, unroll INTEGER NOT NULL, samplesPerBlock INTEGER NOT NULL, DMsPerBlock INTEGER NOT NULL, samplesPerThread INTEGER NOT NULL, DMsPerThread INTEGER NOT NULL, GFLOPs FLOAT UNSIGNED NOT NULL, time FLOAT UNSIGNED NOT NULL, time_err FLOAT UNSIGNED NOT NULL, cov FLOAT UNSIGNED NOT NULL)")
+    queue.execute("CREATE table " + table + "(id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT, DMs INTEGER NOT NULL, channels INTEGER NOT NULL, zappedChannels INTEGER NOT NULL, samples INTEGER NOT NULL, splitSeconds TINYINT NOT NULL, local TINYINT NOT NULL, unroll INTEGER NOT NULL, samplesPerBlock INTEGER NOT NULL, DMsPerBlock INTEGER NOT NULL, samplesPerThread INTEGER NOT NULL, DMsPerThread INTEGER NOT NULL, GFLOPs FLOAT UNSIGNED NOT NULL, time FLOAT UNSIGNED NOT NULL, time_err FLOAT UNSIGNED NOT NULL, cov FLOAT UNSIGNED NOT NULL)")
 
 def delete_table(queue, table):
     """Delete table."""
@@ -31,7 +31,7 @@ def load_file(queue, table, input_file):
     for line in input_file:
         if (line[0] != "#") and (line[0] != "\n"):
             items = line.split(sep=" ")
-            queue.execute("INSERT INTO " + table + " VALUES (NULL, " + items[0] + ", " + items[1] + ", " + items[2] + ", " + items[3] + ", " + items[4] + ", " + items[5] + ", " + items[6] + ", " + items[7] + ", " + items[8] + ", " + items[9] + ", " + items[10] + ", " + items[11] + ", " + items[12] + ", " + items[13].rstrip("\n") + ")")
+            queue.execute("INSERT INTO " + table + " VALUES (NULL, " + items[0] + ", " + items[1] + ", " + items[2] + ", " + items[3] + ", " + items[4] + ", " + items[5] + ", " + items[6] + ", " + items[7] + ", " + items[8] + ", " + items[9] + ", " + items[10] + ", " + items[11] + ", " + items[12] + ", " + items[13] + ", " + items[14].rstrip("\n") + ")")
 
 def print_results(confs):
     """Print the result tuples."""
