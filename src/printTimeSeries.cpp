@@ -178,7 +178,7 @@ int main(int argc, char * argv[]) {
             integratedSample += dedispersedData[beam][sample + integration];
           }
         }
-        output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerSecond()) + sample) * (observation.getSamplingRate() * outputIntegration) << " " << integratedSample / integratedElements << std::endl;
+        output[beam] << static_cast< uint64_t >((second * observation.getNrSamplesPerSecond()) + (sample / outputIntegration)) * (observation.getSamplingRate() * outputIntegration) << " " << integratedSample / integratedElements << std::endl;
       }
     }
   }
