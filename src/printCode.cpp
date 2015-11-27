@@ -44,10 +44,10 @@ int main(int argc, char *argv[]) {
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     conf.setSplitSeconds(args.getSwitch("-split_seconds"));
     conf.setLocalMem(args.getSwitch("-local"));
-    conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
-		conf.setNrDMsPerBlock(args.getSwitchArgument< unsigned int >("-db"));
-		conf.setNrSamplesPerThread(args.getSwitchArgument< unsigned int >("-st"));
-		conf.setNrDMsPerThread(args.getSwitchArgument< unsigned int >("-dt"));
+    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-threads0"));
+		conf.setNrThreadsD1(args.getSwitchArgument< unsigned int >("-threads1"));
+		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-items0"));
+		conf.setNrItemsD1(args.getSwitchArgument< unsigned int >("-items1"));
     conf.setUnroll(args.getSwitchArgument< unsigned int >("-unroll"));
     inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
     observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " -padding ... -zapped_channels ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -input_bits ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " -padding ... -zapped_channels ... [-split_seconds] [-local] -threads0 ... -threads1 ... -items0 ... -items1 ... -unroll ... -input_bits ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 

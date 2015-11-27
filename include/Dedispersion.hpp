@@ -34,18 +34,18 @@ public:
   // Get
   bool getSplitSeconds() const;
   bool getLocalMem() const;
-  unsigned int getNrSamplesPerBlock() const;
-  unsigned int getNrSamplesPerThread() const;
-  unsigned int getNrDMsPerBlock() const;
-  unsigned int getNrDMsPerThread() const;
+  unsigned int getNrThreadsD0() const;
+  unsigned int getNrItemsD0() const;
+  unsigned int getNrThreadsD1() const;
+  unsigned int getNrItemsD1() const;
   unsigned int getUnroll() const;
   // Set
   void setSplitSeconds(bool split);
   void setLocalMem(bool local);
-  void setNrSamplesPerBlock(unsigned int samples);
-  void setNrSamplesPerThread(unsigned int samples);
-  void setNrDMsPerBlock(unsigned int dms);
-  void setNrDMsPerThread(unsigned int dms);
+  void setNrThreadsD0(unsigned int threads);
+  void setNrItemsD0(unsigned int items);
+  void setNrThreadsD1(unsigned int threads);
+  void setNrItemsD1(unsigned int items);
   void setUnroll(unsigned int unroll);
   // Utils
   std::string print() const;
@@ -53,14 +53,14 @@ public:
 private:
   bool splitSeconds;
   bool local;
-  unsigned int nrSamplesPerBlock;
-  unsigned int nrSamplesPerThread;
-  unsigned int nrDMsPerBlock;
-  unsigned int nrDMsPerThread;
+  unsigned int nrThreadsD0;
+  unsigned int nrItemsD0;
+  unsigned int nrThreadsD1;
+  unsigned int nrItemsD1;
   unsigned int unroll;
 };
 
-typedef std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf > > tunedDedispersionConf;
+typedef std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf * > * > tunedDedispersionConf;
 
 // Sequential
 template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
@@ -110,20 +110,20 @@ inline bool DedispersionConf::getLocalMem() const {
   return local;
 }
 
-inline unsigned int DedispersionConf::getNrSamplesPerBlock() const {
-  return nrSamplesPerBlock;
+inline unsigned int DedispersionConf::getNrThreadsD0() const {
+  return nrThreadsD0;
 }
 
-inline unsigned int DedispersionConf::getNrSamplesPerThread() const {
-  return nrSamplesPerThread;
+inline unsigned int DedispersionConf::getNrItemsD0() const {
+  return nrItemsD0;
 }
 
-inline unsigned int DedispersionConf::getNrDMsPerBlock() const {
-  return nrDMsPerBlock;
+inline unsigned int DedispersionConf::getNrThreadsD1() const {
+  return nrThreadsD1;
 }
 
-inline unsigned int DedispersionConf::getNrDMsPerThread() const {
-  return nrDMsPerThread;
+inline unsigned int DedispersionConf::getNrItemsD1() const {
+  return nrItemsD1;
 }
 
 inline unsigned int DedispersionConf::getUnroll() const {
@@ -138,20 +138,20 @@ inline void DedispersionConf::setLocalMem(bool local) {
   this->local = local;
 }
 
-inline void DedispersionConf::setNrSamplesPerBlock(unsigned int samples) {
-  nrSamplesPerBlock = samples;
+inline void DedispersionConf::setNrThreadsD0(unsigned int threads) {
+  nrThreadsD0 = threads;
 }
 
-inline void DedispersionConf::setNrSamplesPerThread(unsigned int samples) {
-  nrSamplesPerThread = samples;
+inline void DedispersionConf::setNrItemsD0(unsigned int items) {
+  nrItemsD0 = items;
 }
 
-inline void DedispersionConf::setNrDMsPerBlock(unsigned int dms) {
-  nrDMsPerBlock = dms;
+inline void DedispersionConf::setNrThreadsD1(unsigned int threads) {
+  nrThreadsD1 = threads;
 }
 
-inline void DedispersionConf::setNrDMsPerThread(unsigned int dms) {
-  nrDMsPerThread = dms;
+inline void DedispersionConf::setNrItemsD1(unsigned int items) {
+  nrItemsD1 = items;
 }
 
 inline void DedispersionConf::setUnroll(unsigned int unroll) {
@@ -175,9 +175,9 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   } else {
     DMStep_s.append("f");
   }
-  std::string nrTotalSamplesPerBlock_s = isa::utils::toString(conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread());
-  std::string nrTotalDMsPerBlock_s = isa::utils::toString(conf.getNrDMsPerBlock() * conf.getNrDMsPerThread());
-  std::string nrTotalThreads_s = isa::utils::toString(conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock());
+  std::string nrTotalSamplesPerBlock_s = isa::utils::toString(conf.getNrThreadsD0() * conf.getNrItemsD0());
+  std::string nrTotalDMsPerBlock_s = isa::utils::toString(conf.getNrThreadsD1() * conf.getNrItemsD1());
+  std::string nrTotalThreads_s = isa::utils::toString(conf.getNrThreadsD0() * conf.getNrThreadsD1());
 
   // Begin kernel's template
   if ( conf.getLocalMem() ) {
@@ -192,7 +192,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       "unsigned int inShMem = 0;\n"
       "unsigned int inGlMem = 0;\n"
       "<%DEFS%>"
-      "__local " + intermediateDataType + " buffer[" + isa::utils::toString((conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrDMsPerBlock() * conf.getNrDMsPerThread()) - 1) * observation.getDMStep())))) + "];\n";
+      "__local " + intermediateDataType + " buffer[" + isa::utils::toString((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep())))) + "];\n";
     if ( inputBits < 8 ) {
       *code += inputDataType + " bitsBuffer;\n"
         "unsigned int byte = 0;\n"
@@ -208,7 +208,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       "<%UNROLLED_LOOP%>"
       "}\n";
       if ( zappedChannels[observation.getNrChannels() - 1] == 0 ) {
-        *code += "inShMem = (get_local_id(1) * " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ") + get_local_id(0);\n"
+        *code += "inShMem = (get_local_id(1) * " + isa::utils::toString(conf.getNrThreadsD0()) + ") + get_local_id(0);\n"
         "inGlMem = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem;\n"
         "while ( inShMem < " + nrTotalSamplesPerBlock_s + " ) {\n";
       if ( (inputDataType == intermediateDataType) && (inputBits >= 8) ) {
@@ -258,9 +258,9 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     unrolled_sTemplate = "if ( zappedChannels[channel + <%UNROLL%>] == 0 ) {\n"
       "minShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + DMStep_s + ")));\n"
       "<%SHIFTS%>"
-      "diffShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((conf.getNrDMsPerBlock() * conf.getNrDMsPerThread()) - 1) + ") * " + DMStep_s + "))) - minShift;\n"
+      "diffShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + isa::utils::toString((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) + ") * " + DMStep_s + "))) - minShift;\n"
       "\n"
-      "inShMem = (get_local_id(1) * " + isa::utils::toString(conf.getNrSamplesPerBlock()) + ") + get_local_id(0);\n";
+      "inShMem = (get_local_id(1) * " + isa::utils::toString(conf.getNrThreadsD0()) + ") + get_local_id(0);\n";
     if ( conf.getSplitSeconds() ) {
       unrolled_sTemplate += "inGlMem = sampleOffset + ((get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem) + minShift;\n";
     } else {
@@ -419,7 +419,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   std::string * unrolled_s = new std::string();
   std::string * store_s =  new std::string();
 
-  for ( unsigned int dm = 0; dm < conf.getNrDMsPerThread(); dm++ ) {
+  for ( unsigned int dm = 0; dm < conf.getNrItemsD1(); dm++ ) {
     std::string dm_s = isa::utils::toString(dm);
     std::string * temp_s = 0;
 
@@ -427,13 +427,13 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     defsShift_s->append(*temp_s);
     delete temp_s;
   }
-  for ( unsigned int sample = 0; sample < conf.getNrSamplesPerThread(); sample++ ) {
+  for ( unsigned int sample = 0; sample < conf.getNrItemsD0(); sample++ ) {
     std::string sample_s = isa::utils::toString(sample);
-    std::string offset_s = isa::utils::toString(sample * conf.getNrSamplesPerBlock());
+    std::string offset_s = isa::utils::toString(sample * conf.getNrThreadsD0());
     std::string * def_sDM =  new std::string();
     std::string * store_sDM =  new std::string();
 
-    for ( unsigned int dm = 0; dm < conf.getNrDMsPerThread(); dm++ ) {
+    for ( unsigned int dm = 0; dm < conf.getNrItemsD1(); dm++ ) {
       std::string dm_s = isa::utils::toString(dm);
       std::string * temp_s = 0;
 
@@ -448,7 +448,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
         std::string empty_s;
         temp_s = isa::utils::replace(temp_s, " + <%DM_OFFSET%>", empty_s, true);
       } else {
-        std::string offset_s = isa::utils::toString(dm * conf.getNrDMsPerBlock());
+        std::string offset_s = isa::utils::toString(dm * conf.getNrThreadsD1());
         temp_s = isa::utils::replace(temp_s, "<%DM_OFFSET%>", offset_s, true);
       }
       store_sDM->append(*temp_s);
@@ -458,14 +458,14 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     def_s->append(*def_sDM);
     delete def_sDM;
     sum0_s = isa::utils::replace(sum0_s, "<%NUM%>", sample_s, true);
-    if ( sample * conf.getNrSamplesPerBlock() == 0 ) {
+    if ( sample * conf.getNrThreadsD0() == 0 ) {
       std::string empty_s;
       sum0_s = isa::utils::replace(sum0_s, " + <%OFFSET%>", empty_s, true);
     } else {
       sum0_s = isa::utils::replace(sum0_s, "<%OFFSET%>", offset_s, true);
     }
     store_sDM = isa::utils::replace(store_sDM, "<%NUM%>", sample_s, true);
-    if ( sample * conf.getNrSamplesPerBlock() == 0 ) {
+    if ( sample * conf.getNrThreadsD0() == 0 ) {
       std::string empty_s;
       store_sDM = isa::utils::replace(store_sDM, " + <%OFFSET%>", empty_s, true);
     } else {
@@ -488,7 +488,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     }
     unrolled_s->append(*temp_s);
     delete temp_s;
-    for ( unsigned int dm = 0; dm < conf.getNrDMsPerThread(); dm++ ) {
+    for ( unsigned int dm = 0; dm < conf.getNrItemsD1(); dm++ ) {
       std::string dm_s = isa::utils::toString(dm);
 
       temp_s = isa::utils::replace(&shiftsTemplate, "<%DM_NUM%>", dm_s);
@@ -496,7 +496,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
         std::string empty_s;
         temp_s = isa::utils::replace(temp_s, " + <%DM_OFFSET%>", empty_s, true);
       } else {
-        std::string offset_s = isa::utils::toString(dm * conf.getNrDMsPerBlock());
+        std::string offset_s = isa::utils::toString(dm * conf.getNrThreadsD1());
         temp_s = isa::utils::replace(temp_s, "<%DM_OFFSET%>", offset_s, true);
       }
       if ( loop == 0 ) {
@@ -510,12 +510,12 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     }
     unrolled_s = isa::utils::replace(unrolled_s, "<%SHIFTS%>", *shifts_s, true);
     delete shifts_s;
-    for ( unsigned int sample = 0; sample < conf.getNrSamplesPerThread(); sample++ ) {
+    for ( unsigned int sample = 0; sample < conf.getNrItemsD0(); sample++ ) {
       std::string sample_s = isa::utils::toString(sample);
-      std::string offset_s = isa::utils::toString(sample * conf.getNrSamplesPerBlock());
+      std::string offset_s = isa::utils::toString(sample * conf.getNrThreadsD0());
       std::string * sumsDM_s = new std::string();
 
-      for ( unsigned int dm = 0; dm < conf.getNrDMsPerThread(); dm++ ) {
+      for ( unsigned int dm = 0; dm < conf.getNrItemsD1(); dm++ ) {
         std::string dm_s = isa::utils::toString(dm);
 
         temp_s = isa::utils::replace(&sum_sTemplate, "<%DM_NUM%>", dm_s);
@@ -529,7 +529,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
         delete temp_s;
       }
       sumsDM_s = isa::utils::replace(sumsDM_s, "<%NUM%>", sample_s, true);
-      if ( sample * conf.getNrSamplesPerBlock() == 0 ) {
+      if ( sample * conf.getNrThreadsD0() == 0 ) {
         std::string empty_s;
         sumsDM_s = isa::utils::replace(sumsDM_s, " + <%OFFSET%>", empty_s, true);
       } else {

@@ -17,20 +17,21 @@
 namespace PulsarSearch {
 
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string  & dedispersionFilename) {
+  unsigned int splitPoint = 0;
+  unsigned int nrDMs = 0;
 	std::string temp;
-	std::ifstream dedispersionFile(dedispersionFilename);
+  std::string deviceName;
+  PulsarSearch::DedispersionConf * conf = 0;
+	std::ifstream dedispersionFile;
 
+  dedispersionFile.open(dedispersionFilename);
 	while ( ! dedispersionFile.eof() ) {
-		unsigned int splitPoint = 0;
-
 		std::getline(dedispersionFile, temp);
 		if ( ! std::isalpha(temp[0]) ) {
 			continue;
 		}
-		std::string deviceName;
-		unsigned int nrDMs = 0;
-    PulsarSearch::DedispersionConf conf;
 
+    conf = new PulsarSearch::DedispersionConf();
 		splitPoint = temp.find(" ");
 		deviceName = temp.substr(0, splitPoint);
 		temp = temp.substr(splitPoint + 1);
@@ -38,34 +39,35 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
 		nrDMs = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		conf.setSplitSeconds(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
+		conf->setSplitSeconds(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		conf.setLocalMem(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
+		conf->setLocalMem(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		conf.setUnroll(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		conf->setUnroll(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		conf.setNrSamplesPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		conf->setNrThreadD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		conf.setNrDMsPerBlock(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		conf->setNrThreadD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		conf.setNrSamplesPerThread(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		conf->setNrItemsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
-		conf.setNrDMsPerThread(isa::utils::castToType< std::string, unsigned int >(temp));
+		conf->setNrItemsD1(isa::utils::castToType< std::string, unsigned int >(temp));
 
 		if ( tunedDedispersion.count(deviceName) == 0 ) {
-      std::map< unsigned int, PulsarSearch::DedispersionConf > container;
+      std::map< unsigned int, PulsarSearch::DedispersionConf * > * container = new std::map< unsigned int, PulsarSearch::DedispersionConf * >();
 
-			container.insert(std::make_pair(nrDMs, conf));
+			container->insert(std::make_pair(nrDMs, conf));
 			tunedDedispersion.insert(std::make_pair(deviceName, container));
 		} else {
-			tunedDedispersion[deviceName].insert(std::make_pair(nrDMs, conf));
+			tunedDedispersion.at(deviceName)->insert(std::make_pair(nrDMs, conf));
 		}
 	}
+  dedispersionFile.close();
 }
 
 DedispersionConf::DedispersionConf() {}
@@ -73,7 +75,7 @@ DedispersionConf::DedispersionConf() {}
 DedispersionConf::~DedispersionConf() {}
 
 std::string DedispersionConf::print() const {
-  return std::string(isa::utils::toString(splitSeconds) + " " + isa::utils::toString(local) + " " + isa::utils::toString(unroll) + " " + isa::utils::toString(nrSamplesPerBlock) + " " + isa::utils::toString(nrDMsPerBlock) + " " + isa::utils::toString(nrSamplesPerThread) + " " + isa::utils::toString(nrDMsPerThread));
+  return std::string(isa::utils::toString(splitSeconds) + " " + isa::utils::toString(local) + " " + isa::utils::toString(unroll) + " " + isa::utils::toString(nrThreadsD0) + " " + isa::utils::toString(nrThreadsD1) + " " + isa::utils::toString(nrItemsD0) + " " + isa::utils::toString(nrItemsD1));
 }
 
 } // PulsarSearch

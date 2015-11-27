@@ -56,10 +56,10 @@ int main(int argc, char *argv[]) {
     channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     conf.setLocalMem(args.getSwitch("-local"));
     conf.setSplitSeconds(args.getSwitch("-split_seconds"));
-    conf.setNrSamplesPerBlock(args.getSwitchArgument< unsigned int >("-sb"));
-		conf.setNrDMsPerBlock(args.getSwitchArgument< unsigned int >("-db"));
-		conf.setNrSamplesPerThread(args.getSwitchArgument< unsigned int >("-st"));
-		conf.setNrDMsPerThread(args.getSwitchArgument< unsigned int >("-dt"));
+    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-threads0"));
+		conf.setNrThreadsD1(args.getSwitchArgument< unsigned int >("-threads1"));
+		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-items0"));
+		conf.setNrItemsD1(args.getSwitchArgument< unsigned int >("-items1"));
     conf.setUnroll(args.getSwitchArgument< unsigned int >("-unroll"));
     observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... -vector ... -zapped_channels ... [-split_seconds] [-local] -sb ... -db ... -st ... -dt ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... -vector ... -zapped_channels ... [-split_seconds] [-local] -threads0 ... -threads1 ... -items0 ... -items1 ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
@@ -202,12 +202,12 @@ int main(int argc, char *argv[]) {
 
   // Run OpenCL kernel and CPU control
   try {
-    cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
-    cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
+    cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1());
+    cl::NDRange local(conf.getNrThreadsD0(), conf.getNrThreadsD1());
 
     std::cout << std::endl;
-    std::cout << observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread() << " " << observation.getNrDMs() / conf.getNrDMsPerThread() << std::endl;
-    std::cout << conf.getNrSamplesPerBlock() << " " << conf.getNrDMsPerBlock() << std::endl;
+    std::cout << observation.getNrSamplesPerSecond() / conf.getNrItemsD0() << " " << observation.getNrDMs() / conf.getNrItemsD1() << std::endl;
+    std::cout << conf.getNrThreadsD0() << " " << conf.getNrThreadsD1() << std::endl;
     std::cout << std::endl;
 
     if ( conf.getSplitSeconds() ) {

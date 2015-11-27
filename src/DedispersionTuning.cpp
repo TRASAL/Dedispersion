@@ -133,30 +133,30 @@ int main(int argc, char * argv[]) {
   }
 
 	std::cout << std::fixed << std::endl;
-	std::cout << "# nrDMs nrChannels nrZappedChannels nrSamples splitSeconds local unroll samplesPerBlock DMsPerBlock samplesPerThread DMsPerThread GFLOP/s time stdDeviation COV" << std::endl << std::endl;
+	std::cout << "# nrDMs nrChannels nrZappedChannels nrSamples splitSeconds local unroll threadsD0 threadsD1 itemsD0 itemdD1 GFLOP/s time stdDeviation COV" << std::endl << std::endl;
 
-	for ( unsigned int samples = minThreads; samples <= maxColumns; samples++) {
-    conf.setNrSamplesPerBlock(samples);
+	for ( unsigned int threads = minThreads; threads <= maxColumns; threads++) {
+    conf.setNrThreadsD0(threads);
 
-		for ( unsigned int DMs = 1; DMs <= maxRows; DMs++ ) {
-      conf.setNrDMsPerBlock(DMs);
-			if ( conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock() > maxThreads ) {
+		for ( unsigned int threads = 1; threads <= maxRows; threads++ ) {
+      conf.setNrThreadsD1(threads);
+			if ( conf.getNrThreadsD0() * conf.getNrThreadsD1() > maxThreads ) {
 				break;
-			} else if ( (conf.getNrSamplesPerBlock() * conf.getNrDMsPerBlock()) % vectorWidth != 0 ) {
+			} else if ( (conf.getNrThreadsD0() * conf.getNrThreadsD1()) % vectorWidth != 0 ) {
         continue;
       }
 
-			for ( unsigned int samplesPerThread = 1; samplesPerThread <= maxItems; samplesPerThread++ ) {
-        conf.setNrSamplesPerThread(samplesPerThread);
-				if ( (observation.getNrSamplesPerSecond() % (conf.getNrSamplesPerBlock() * conf.getNrSamplesPerThread())) != 0 ) {
+			for ( unsigned int items = 1; items <= maxItems; items++ ) {
+        conf.setNrItemsD0(items);
+				if ( (observation.getNrSamplesPerSecond() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
 					continue;
 				}
 
-				for ( unsigned int DMsPerThread = 1; DMsPerThread <= maxItems; DMsPerThread++ ) {
-          conf.setNrDMsPerThread(DMsPerThread);
-					if ( (observation.getNrDMs() % (conf.getNrDMsPerBlock() * conf.getNrDMsPerThread())) != 0 ) {
+				for ( unsigned int items = 1; items <= maxItems; items++ ) {
+          conf.setNrItemsD1(items);
+					if ( (observation.getNrDMs() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
 						continue;
-					} else if ( (conf.getNrSamplesPerThread() * conf.getNrDMsPerThread()) + conf.getNrDMsPerThread() > maxItems ) {
+					} else if ( (conf.getNrItemsD0() * conf.getNrItemsD1()) + conf.getNrItemsD1() > maxItems ) {
 						break;
 					}
 
@@ -164,7 +164,7 @@ int main(int argc, char * argv[]) {
             conf.setUnroll(unroll);
             if ( (observation.getNrChannels() - 1) % conf.getUnroll() != 0 ) {
               continue;
-            } else if ( (conf.getNrSamplesPerThread() * conf.getNrDMsPerThread() * conf.getUnroll()) > maxLoopBodySize ) {
+            } else if ( (conf.getNrItemsD0() * conf.getNrItemsD1() * conf.getUnroll()) > maxLoopBodySize ) {
               break;
             }
             // Generate kernel
@@ -207,8 +207,8 @@ int main(int argc, char * argv[]) {
             }
             delete code;
 
-            cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrSamplesPerThread(), observation.getNrDMs() / conf.getNrDMsPerThread());
-            cl::NDRange local(conf.getNrSamplesPerBlock(), conf.getNrDMsPerBlock());
+            cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1());
+            cl::NDRange local(conf.getNrThreadsD0(), conf.getNrThreadsD1());
 
             if ( conf.getSplitSeconds() ) {
               kernel->setArg(0, 0);
