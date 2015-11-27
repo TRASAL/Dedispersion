@@ -133,7 +133,7 @@ int main(int argc, char * argv[]) {
   }
 
 	std::cout << std::fixed << std::endl;
-	std::cout << "# nrDMs nrChannels nrZappedChannels nrSamples splitSeconds local unroll threadsD0 threadsD1 itemsD0 itemdD1 GFLOP/s time stdDeviation COV" << std::endl << std::endl;
+	std::cout << "# nrDMs nrChannels nrZappedChannels nrSamples splitSeconds local unroll threadsD0 threadsD1 itemsD0 itemsD1 GFLOP/s time stdDeviation COV" << std::endl << std::endl;
 
 	for ( unsigned int threads = minThreads; threads <= maxColumns; threads++) {
     conf.setNrThreadsD0(threads);
