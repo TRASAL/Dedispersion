@@ -32,7 +32,7 @@ def speedupNoReuse(queue, table, channels, samples):
     for dm in dms_range:
         queue.execute("SELECT MIN(time) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
         best = queue.fetchall()[0][0]
-        queue.execute("SELECT MIN(time) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND DMsPerBlock = 1 and DMsPerThread = 1)")
+        queue.execute("SELECT MIN(time) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND nrThreadsD1 = 1 and nrItemsD1 = 1)")
         ref = queue.fetchall()[0][0]
         confs.append([dm[0], ref / best])
     return confs

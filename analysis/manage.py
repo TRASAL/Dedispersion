@@ -20,7 +20,7 @@ def get_tables(queue):
 
 def create_table(queue, table):
     """Create a table to store auto-tuning results for dedispersion."""
-    queue.execute("CREATE table " + table + "(id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT, DMs INTEGER NOT NULL, channels INTEGER NOT NULL, zappedChannels INTEGER NOT NULL, samples INTEGER NOT NULL, splitSeconds TINYINT NOT NULL, local TINYINT NOT NULL, unroll INTEGER NOT NULL, samplesPerBlock INTEGER NOT NULL, DMsPerBlock INTEGER NOT NULL, samplesPerThread INTEGER NOT NULL, DMsPerThread INTEGER NOT NULL, GFLOPs FLOAT UNSIGNED NOT NULL, time FLOAT UNSIGNED NOT NULL, time_err FLOAT UNSIGNED NOT NULL, cov FLOAT UNSIGNED NOT NULL)")
+    queue.execute("CREATE table " + table + "(id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT, DMs INTEGER NOT NULL, channels INTEGER NOT NULL, zappedChannels INTEGER NOT NULL, samples INTEGER NOT NULL, splitSeconds TINYINT NOT NULL, local TINYINT NOT NULL, unroll INTEGER NOT NULL, nrThreadsD0 INTEGER NOT NULL, nrThreadsD1 INTEGER NOT NULL, nrItemsD0 INTEGER NOT NULL, nrItemsD1 INTEGER NOT NULL, GFLOPs FLOAT UNSIGNED NOT NULL, time FLOAT UNSIGNED NOT NULL, time_err FLOAT UNSIGNED NOT NULL, cov FLOAT UNSIGNED NOT NULL)")
 
 def delete_table(queue, table):
     """Delete table."""
