@@ -54,9 +54,6 @@ bin/printCode: $(DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODAT
 bin/printShifts: $(DEPS) src/printShifts.cpp
 	$(CC) -o bin/printShifts src/printShifts.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
 
-bin/printTimeSeries: $(DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printTimeSeries.cpp
-	$(CC) -o bin/printTimeSeries src/printTimeSeries.cpp $(DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
-
 clean:
 	-@rm bin/*
 
