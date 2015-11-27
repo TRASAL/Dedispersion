@@ -48,10 +48,10 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
 		conf->setUnroll(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		conf->setNrThreadD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		conf->setNrThreadsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		conf->setNrThreadD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		conf->setNrThreadsD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
 		conf->setNrItemsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
