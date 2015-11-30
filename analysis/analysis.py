@@ -58,11 +58,11 @@ def optimization_space(queue, table, channels, samples, flags):
     dms_range = manage.get_dm_range(queue, table, channels, samples)
     for dm in dms_range:
         if flags[0]:
-            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPS FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1)")
+            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1)")
         elif flags[1]:
-            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPS FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0)")
+            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0)")
         else:
-            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPS FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
+            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
         best = queue.fetchall()
         confs.append([best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5]])
     return confs
