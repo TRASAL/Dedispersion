@@ -87,3 +87,54 @@ def single_parameter_space(queue, table, parameter, channels, samples, flags):
         confs.append(internalConf)
     return confs
 
+def percentiles(queue, table, channels, samples, flags):
+    results = list()
+    scenario = "(channels = " + channels +" AND samples = " + samples + ")"
+    condition = str()
+    if flags[0] == 1:
+        condition = "local = 1"
+    elif flags[0] == 2:
+        condition = "local = 0"
+    if flags[1] == 1:
+        if flags[0] != 0:
+            condition += " AND splitSeconds = 1"
+        else:
+            condition = "splitSeconds = 1"
+    elif flags[1] == 2:
+        if flags[0] != 0:
+            condition += " AND splitSeconds = 0"
+        else:
+            condition = "splitSeconds = 0"
+    dms_range = manage.get_dm_range(queue, table, channels, samples)
+    for dm in dms_range:
+        internalResults = list()
+        internalResults.append(dm[0])
+        if flags[0] == 0 and flags[1] == 0:
+            queue.execute("SELECT COUNT(id),MIN(GFLOPs),MAX(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ")")
+        else:
+            queue.execute("SELECT COUNT(id),MIN(GFLOPs),MAX(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + condition + ")")
+        items = queue.fetchall()
+        nrItems = items[0][0]
+        internalResults.append(items[0][1])
+        internalResults.append(items[0][2])
+        if flags[0] == 0 and flags[1] == 0:
+            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ") ORDER BY GFLOPs LIMIT " + str(int(nrItems / 4))  + ",1")
+        else:
+            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + condition + ") ORDER BY GFLOPs LIMIT " + str(int(nrItems / 4))  + ",1")
+        items = queue.fetchall()
+        internalResults.append(items[0][0])
+        if flags[0] == 0 and flags[1] == 0:
+            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ") ORDER BY GFLOPs LIMIT " + str((int(nrItems / 4)) * 2)  + ",1")
+        else:
+            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + condition + ") ORDER BY GFLOPs LIMIT " + str((int(nrItems / 4)) * 2)  + ",1")
+        items = queue.fetchall()
+        internalResults.append(items[0][0])
+        if flags[0] == 0 and flags[1] == 0:
+            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ") ORDER BY GFLOPs LIMIT " + str((int(nrItems / 4)) * 3)  + ",1")
+        else:
+            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + condition + ") ORDER BY GFLOPs LIMIT " + str((int(nrItems / 4)) * 3)  + ",1")
+        items = queue.fetchall()
+        internalResults.append(items[0][0])
+        results.append(internalResults)
+    return results
+

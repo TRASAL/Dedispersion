@@ -23,7 +23,7 @@ import analysis
 import speedup
 
 if len(sys.argv) == 1:
-    print("Supported commands are: create, list, delete, load, tune, tuneNoReuse, statistics, histogram, optimizationSpace, singleParameterOptimizationSpace, speedup, speedupNoReuse")
+    print("Supported commands are: create, list, delete, load, tune, tuneNoReuse, statistics, percentiles, histogram, optimizationSpace, singleParameterOptimizationSpace, speedup, speedupNoReuse")
     sys.exit(1)
 
 COMMAND = sys.argv[1]
@@ -128,6 +128,26 @@ elif COMMAND == "statistics":
         manage.print_results(CONFS)
     except:
         print(sys.exc_info())
+elif COMMAND == "percentiles":
+    if len(sys.argv) < 5 or len(sys.argv) > 7:
+        print("Usage: " + sys.argv[0] + " percentiles <table> <channels> <samples> [local|cache] [split|cont]")
+        QUEUE.close()
+        DB_CONN.close()
+        sys.exit(1)
+    try:
+        FLAGS = [0, 0]
+        if "local" in sys.argv:
+            FLAGS[0] = 1
+        elif "cache" in sys.argv:
+            FLAGS[0] = 2
+        if "split" in sys.argv:
+            FLAGS[1] = 1
+        elif "cont" in sys.argv:
+            FLAGS[1] = 2
+        CONFS = analysis.percentiles(QUEUE, sys.argv[2], sys.argv[3], sys.argv[4], FLAGS)
+        manage.print_results(CONFS)
+    except:
+        print(sys.exc_info())
 elif COMMAND == "histogram":
     if len(sys.argv) < 5 or len(sys.argv) > 6:
         print("Usage: " + sys.argv[0] + " histogram <table> <channels> <samples> [local|cache]")
@@ -208,7 +228,7 @@ elif COMMAND == "speedupNoReuse":
         print(sys.exc_info())
 else:
     print("Unknown command.")
-    print("Supported commands are: create, list, delete, load, tune, tuneNoReuse, statistics, histogram, optimizationSpace, singleParameterOptimizationSpace, speedup, speedupNoReuse")
+    print("Supported commands are: create, list, delete, load, tune, tuneNoReuse, statistics, percentiles, histogram, optimizationSpace, singleParameterOptimizationSpace, speedup, speedupNoReuse")
 
 QUEUE.close()
 DB_CONN.commit()
