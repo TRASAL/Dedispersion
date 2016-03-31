@@ -320,7 +320,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n"
         "unsigned int sampleOffset = secondOffset * " + isa::utils::toString(observation.getNrSamplesPerSecond()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global const uchar * restric const beamDriver, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global const uchar * restrict const beamDriver, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n";
     }
     *code += "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
