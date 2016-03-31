@@ -189,7 +189,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     }
     *code +=  "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
-      "unsigned int SBeam = get_group_id(2);\n"
+      "unsigned int sBeam = get_group_id(2);\n"
       "unsigned int inShMem = 0;\n"
       "unsigned int inGlMem = 0;\n"
       "<%DEFS%>"
