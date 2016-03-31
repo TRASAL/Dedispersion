@@ -194,7 +194,7 @@ int main(int argc, char * argv[]) {
                   if ( conf.getSplitSeconds() ) {
                     //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
                   } else {
-                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, beamDriver, &beamDriver_d, &dispersedData_d, observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, nrSBeams * observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
                   }
                 } else {
                   if ( conf.getSplitSeconds() ) {
