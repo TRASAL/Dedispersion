@@ -115,26 +115,26 @@ def percentiles(queue, table, channels, samples, flags):
             queue.execute("SELECT COUNT(id),MIN(GFLOPs),MAX(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + condition + ")")
         items = queue.fetchall()
         nrItems = items[0][0]
-        internalResults.append(items[0][1])
-        internalResults.append(items[0][2])
+        internalResults.append(int(items[0][1]))
+        internalResults.append(int(items[0][2]))
         if flags[0] == 0 and flags[1] == 0:
             queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ") ORDER BY GFLOPs LIMIT " + str(int(nrItems / 4))  + ",1")
         else:
             queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + condition + ") ORDER BY GFLOPs LIMIT " + str(int(nrItems / 4))  + ",1")
         items = queue.fetchall()
-        internalResults.append(items[0][0])
+        internalResults.append(int(items[0][0]))
         if flags[0] == 0 and flags[1] == 0:
             queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ") ORDER BY GFLOPs LIMIT " + str((int(nrItems / 4)) * 2)  + ",1")
         else:
             queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + condition + ") ORDER BY GFLOPs LIMIT " + str((int(nrItems / 4)) * 2)  + ",1")
         items = queue.fetchall()
-        internalResults.append(items[0][0])
+        internalResults.append(int(items[0][0]))
         if flags[0] == 0 and flags[1] == 0:
             queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ") ORDER BY GFLOPs LIMIT " + str((int(nrItems / 4)) * 3)  + ",1")
         else:
             queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + condition + ") ORDER BY GFLOPs LIMIT " + str((int(nrItems / 4)) * 3)  + ",1")
         items = queue.fetchall()
-        internalResults.append(items[0][0])
+        internalResults.append(int(items[0][0]))
         results.append(internalResults)
     return results
 

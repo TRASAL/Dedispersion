@@ -63,6 +63,7 @@ private:
 typedef std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf * > * > tunedDedispersionConf;
 
 // Sequential
+template< typename I, typename L, typename O > void subbandDedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
 template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
 // OpenCL
 template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels);
@@ -70,9 +71,43 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
 
 
 // Implementations
+template< typename I, typename L, typename O > void subbandDedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
+	for ( unsigned int dm = 0; dm < observation.getNrDMsSubbanding(); dm++ ) {
+    for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
+      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatchSubbanding(); sample++ ) {
+        L dedispersedSample = static_cast< L >(0);
+
+        for ( unsigned int channel = subband * observation.getNrChannelsPerSubband(); channel < (subband + 1) * observation.getNrChannelsPerSubband(); channel++ ) {
+          unsigned int shift = static_cast< unsigned int >((observation.getFirstDMSubbanding() + (dm * observation.getDMSubbandingStep())) * shifts[channel]);
+
+          if ( zappedChannels[channel] != 0 ) {
+            // If a channel is zapped, skip it
+            continue;
+          }
+          if ( inputBits >= 8 ) {
+            dedispersedSample += static_cast< L >(input[(channel * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(I))) + (sample + shift)]);
+          } else {
+            unsigned int byte = (sample + shift) / (8 / inputBits);
+            uint8_t firstBit = ((sample + shift) % (8 / inputBits)) * inputBits;
+            char value = 0;
+            char buffer = input[(channel * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(I))) + byte];
+
+            for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
+              isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
+            }
+            dedispersedSample += static_cast< L >(value);
+          }
+        }
+
+        output[(subband * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
+      }
+    }
+	}
+}
+
 template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
+		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
 			L dedispersedSample = static_cast< L >(0);
 
 			for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {

@@ -21,10 +21,9 @@ std::vector< float > * getShifts(AstroData::Observation & observation, const uns
   std::vector< float > * shifts = new std::vector< float >(observation.getNrPaddedChannels(padding / sizeof(float)));
 
   for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-    float channelFreq = observation.getMinFreq() + (channel * observation.getChannelBandwidth());
-    float inverseFreq = 1.0f / std::pow(channelFreq, 2.0f);
+    float inverseFreq = 1.0f / std::pow(observation.getMinFreq() + (channel * observation.getChannelBandwidth()), 2.0f);
 
-    shifts->at(channel) = 4148.808f * (inverseFreq - inverseHighFreq) * observation.getNrSamplesPerSecond();
+    shifts->at(channel) = 4148.808f * (inverseFreq - inverseHighFreq) * observation.getNrSamplesPerBatch();
 	}
 
 	return shifts;
