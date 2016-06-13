@@ -78,7 +78,7 @@ template< typename I, typename L, typename O > void subbandDedispersion(AstroDat
         L dedispersedSample = static_cast< L >(0);
 
         for ( unsigned int channel = subband * observation.getNrChannelsPerSubband(); channel < (subband + 1) * observation.getNrChannelsPerSubband(); channel++ ) {
-          unsigned int shift = static_cast< unsigned int >((observation.getFirstDMSubbanding() + (dm * observation.getDMSubbandingStep())) * shifts[channel]);
+          unsigned int shift = static_cast< unsigned int >((observation.getFirstDMSubbanding() + (dm * observation.getDMSubbandingStep())) * (shifts[channel] - shifts[((subband + 1) * observation.getNrChannelsPerSubband()) - 1]));
 
           if ( zappedChannels[channel] != 0 ) {
             // If a channel is zapped, skip it
@@ -99,7 +99,7 @@ template< typename I, typename L, typename O > void subbandDedispersion(AstroDat
           }
         }
 
-        output[(subband * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
+        output[(subband * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + (dm * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
       }
     }
 	}
