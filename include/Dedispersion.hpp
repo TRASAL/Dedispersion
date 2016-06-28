@@ -63,50 +63,15 @@ private:
 typedef std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf * > * > tunedDedispersionConf;
 
 // Sequential
-template< typename I, typename L, typename O > void subbandDedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
-template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
+template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
+template< typename I, typename L, typename O > void subbandDedispersionStepOne(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
+template< typename I, typename L, typename O > void subbandDedispersionStepTwo(AstroData::Observation & observation, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding);
 // OpenCL
 template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels);
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string & dedispersionFilename);
 
 
 // Implementations
-template< typename I, typename L, typename O > void subbandDedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
-  for ( unsigned int sBeam = 0; sBeam < observation.getNrSyntheticBeams(); sBeam++ ) {
-    for ( unsigned int dm = 0; dm < observation.getNrDMsSubbanding(); dm++ ) {
-      for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatchSubbanding(); sample++ ) {
-          L dedispersedSample = static_cast< L >(0);
-
-          for ( unsigned int channel = subband * observation.getNrChannelsPerSubband(); channel < (subband + 1) * observation.getNrChannelsPerSubband(); channel++ ) {
-            unsigned int shift = static_cast< unsigned int >((observation.getFirstDMSubbanding() + (dm * observation.getDMSubbandingStep())) * (shifts[channel] - shifts[((subband + 1) * observation.getNrChannelsPerSubband()) - 1]));
-
-            if ( zappedChannels[channel] != 0 ) {
-              // If a channel is zapped, skip it
-              continue;
-            }
-            if ( inputBits >= 8 ) {
-              dedispersedSample += static_cast< L >(input[(sBeamDriver[(sBeam * observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel]) + (channel * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(I))) + (sample + shift)]);
-            } else {
-              unsigned int byte = (sample + shift) / (8 / inputBits);
-              uint8_t firstBit = ((sample + shift) % (8 / inputBits)) * inputBits;
-              char value = 0;
-              char buffer = input[(sBeamDriver[(sBeam * observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel]) + (channel * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(I))) + byte];
-
-              for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
-                isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
-              }
-              dedispersedSample += static_cast< L >(value);
-            }
-          }
-
-          output[(subband * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + (dm * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
-        }
-      }
-    }
-  }
-}
-
 template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
   for ( unsigned int sBeam = 0; sBeam < observation.getNrSyntheticBeams(); sBeam++ ) {
     for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
@@ -121,7 +86,7 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
             continue;
           }
           if ( inputBits >= 8 ) {
-            dedispersedSample += static_cast< L >(input[(sBeamDriver[(sBeam * observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel]) + (channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(I))) + (sample + shift)]);
+            dedispersedSample += static_cast< L >(input[(sBeamDriver[(sBeam * observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel] * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(I))) + (channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(I))) + (sample + shift)]);
           } else {
             unsigned int byte = (sample + shift) / (8 / inputBits);
             uint8_t firstBit = ((sample + shift) % (8 / inputBits)) * inputBits;
@@ -136,6 +101,62 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
         }
 
         output[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
+      }
+    }
+  }
+}
+
+template< typename I, typename L, typename O > void subbandDedispersionStepOne(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
+  for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
+    for ( unsigned int dm = 0; dm < observation.getNrDMsSubbanding(); dm++ ) {
+      for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
+        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatchSubbanding(); sample++ ) {
+          L dedispersedSample = static_cast< L >(0);
+
+          for ( unsigned int channel = subband * observation.getNrChannelsPerSubband(); channel < (subband + 1) * observation.getNrChannelsPerSubband(); channel++ ) {
+            unsigned int shift = static_cast< unsigned int >((observation.getFirstDMSubbanding() + (dm * observation.getDMSubbandingStep())) * (shifts[channel] - shifts[((subband + 1) * observation.getNrChannelsPerSubband()) - 1]));
+
+            if ( zappedChannels[channel] != 0 ) {
+              // If a channel is zapped, skip it
+              continue;
+            }
+            if ( inputBits >= 8 ) {
+              dedispersedSample += static_cast< L >(input[(beam * observation.getNrChannels() * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(I))) + (channel * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(I))) + (sample + shift)]);
+            } else {
+              unsigned int byte = (sample + shift) / (8 / inputBits);
+              uint8_t firstBit = ((sample + shift) % (8 / inputBits)) * inputBits;
+              char value = 0;
+              char buffer = input[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(I))) + (channel * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(I))) + byte];
+
+              for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
+                isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
+              }
+              dedispersedSample += static_cast< L >(value);
+            }
+          }
+
+          output[(beam * observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(O))) + (subband * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(O))) + (dm * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
+        }
+      }
+    }
+  }
+}
+
+template< typename I, typename L, typename O > void subbandDedispersionStepTwo(AstroData::Observation & observation, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding) {
+  for ( unsigned int sBeam = 0; sBeam < observation.getNrSyntheticBeams(); sBeam++ ) {
+    for ( unsigned int firstStepDM = 0; firstStepDM < observation.getNrDMsSubbanding(); firstStepDM++ ) {
+      for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
+          L dedispersedSample = static_cast< L >(0);
+
+          for ( unsigned int channel = 0; channel < observation.getNrSubbands(); channel++ ) {
+            unsigned int shift = static_cast< unsigned int >((observation.getFirstDM() + (dm * observation.getDMStep())) * shifts[channel]);
+
+            dedispersedSample += static_cast< L >(input[(sBeamDriver[(sBeam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + channel] * observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + (channel * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + (channel * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + (sample + shift)]);
+          }
+
+          output[(sBeam * (observation.getNrDMsSubbanding() * observation.getNrDMs()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + (((firstStepDM * observation.getNrDMs()) + dm) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
+        }
       }
     }
   }
