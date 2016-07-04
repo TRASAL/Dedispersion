@@ -126,7 +126,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int dm = 0; dm < observation_c.getNrDMs(); dm++ ) {
       for ( unsigned int sample = 0; sample < observation_c.getNrSamplesPerBatch(); sample++ ) {
         if ( inputBits >= 8 ) {
-          if ( !same(dedispersedData[], dedispersedData_c[]) ) {
+          if ( !isa::utils::same(dedispersedData[], dedispersedData_c[]) ) {
             wrongSamples++;
           }
           if ( printResults ) {
