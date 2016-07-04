@@ -45,6 +45,9 @@ bin/Dedispersion.o: $(UTILS)/bin/utils.o bin/Shifts.o $(OPENCL)/include/Bits.hpp
 bin/DedispersionTest: $(CL_DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/DedispersionTest.cpp
 	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp $(CL_DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(CL_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
 
+bin/SubbandDedispersionTest: $(DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/SubbandDedispersionTest.cpp
+	$(CC) -o bin/SubbandDedispersionTest src/SubbandDedispersionTest.cpp $(DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
+
 bin/DedispersionTuning: $(CL_DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/DedispersionTuning.cpp
 	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp $(CL_DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(CL_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
 
