@@ -79,7 +79,7 @@ int main(int argc, char * argv[]) {
     observation.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
     nrSBeams = args.getSwitchArgument< unsigned int >("-synthetic_beams");
     observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
-		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+		observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
 		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-split_seconds] [-local] -input_bits ... -padding ... -zapped_channels ... -vector ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_loopsize ... -max_columns ... -max_rows ... -synthetic_beams ... -beams ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
