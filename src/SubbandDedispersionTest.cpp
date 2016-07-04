@@ -119,8 +119,8 @@ int main(int argc, char * argv[]) {
 
   // Execute dedispersion
   PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation_c, zappedChannels, beamDriver, dispersedData, dedispersedData_c, *shifts, padding, inputBits);
-  PulsarSearch::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, dispersedData, subbandData, *shifts, padding, inputBits);
-  PulsarSearch::subbandDedispersionStepTwo< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, subbandData, dedispersedData, *shifts, padding, inputBits);
+  PulsarSearch::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, dispersedData, subbandedData, *shifts, padding, inputBits);
+  PulsarSearch::subbandDedispersionStepTwo< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, subbandedData, dedispersedData, *shifts, padding, inputBits);
 
   for ( unsigned int beam = 0; beam < observation_c.getNrSyntheticBeams(); beam++ ) {
     for ( unsigned int dm = 0; dm < observation_c.getNrDMs(); dm++ ) {
@@ -138,7 +138,7 @@ int main(int argc, char * argv[]) {
   }
 
   if ( wrongSamples > 0 ) {
-    std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation_c.getNrSyntheticBeams()) observation_c.getNrDMs() * observation_c.getNrSamplesPerBatch()) << "%)." << std::endl;
+    std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation_c.getNrSyntheticBeams()) * observation_c.getNrDMs() * observation_c.getNrSamplesPerBatch()) << "%)." << std::endl;
   } else {
     std::cout << "TEST PASSED." << std::endl;
   }
