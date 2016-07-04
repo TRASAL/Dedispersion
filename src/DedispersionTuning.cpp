@@ -78,11 +78,11 @@ int main(int argc, char * argv[]) {
     maxLoopBodySize = args.getSwitchArgument< unsigned int >("-max_loopsize");
     observation.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
     nrSBeams = args.getSwitchArgument< unsigned int >("-synthetic_beams");
-    observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
+    observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-split_seconds] [-local] -input_bits ... -padding ... -zapped_channels ... -vector ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_loopsize ... -max_columns ... -max_rows ... -synthetic_beams ... -beams ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-split_seconds] [-local] -input_bits ... -padding ... -zapped_channels ... -vector ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_loopsize ... -max_columns ... -max_rows ... -synthetic_beams ... -beams ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	} catch ( std::exception & err ) {
 		std::cerr << err.what() << std::endl;
@@ -96,13 +96,13 @@ int main(int argc, char * argv[]) {
 
   AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
   if ( conf.getSplitSeconds() ) {
-    if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
-      observation.setNrDelaySeconds((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond());
+    if ( (observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerBatch() == 0 ) {
+      observation.setNrDelaySeconds((observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerBatch());
     } else {
-      observation.setNrDelaySeconds(((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond()) + 1);
+      observation.setNrDelaySeconds(((observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerBatch()) + 1);
     }
   } else {
-    observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+    observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
   }
   srand(time(0));
   for ( unsigned int sBeam = 0; sBeam < nrSBeams; sBeam++ ) {
@@ -128,15 +128,15 @@ int main(int argc, char * argv[]) {
   try {
     if ( inputBits >= 8 ) {
       if ( conf.getSplitSeconds() ) {
-        //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+        //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
       } else {
-        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, beamDriver, &beamDriver_d, &dispersedData_d, observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, nrSBeams * observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+        initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, beamDriver, &beamDriver_d, &dispersedData_d, observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, nrSBeams * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
       }
     } else {
       if ( conf.getSplitSeconds() ) {
-        //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+        //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
       } else {
-        //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+        //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
       }
     }
   } catch ( cl::Error & err ) {
@@ -160,7 +160,7 @@ int main(int argc, char * argv[]) {
 
 			for ( unsigned int items = 1; items <= maxItems; items++ ) {
         conf.setNrItemsD0(items);
-				if ( (observation.getNrSamplesPerSecond() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+				if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
 					continue;
 				}
 
@@ -180,7 +180,7 @@ int main(int argc, char * argv[]) {
               break;
             }
             // Generate kernel
-            double gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMs()) * nrSBeams * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerSecond());
+            double gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMs()) * nrSBeams * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch());
             isa::utils::Timer timer;
             cl::Kernel * kernel;
             std::string * code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shifts, zappedChannels);
@@ -192,15 +192,15 @@ int main(int argc, char * argv[]) {
               try {
                 if ( inputBits >= 8 ) {
                   if ( conf.getSplitSeconds() ) {
-                    //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+                    //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
                   } else {
-                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, beamDriver, &beamDriver_d, &dispersedData_d, observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, nrSBeams * observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+                    initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, beamDriver, &beamDriver_d, &dispersedData_d, observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)), &dedispersedData_d, nrSBeams * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
                   }
                 } else {
                   if ( conf.getSplitSeconds() ) {
-                    //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+                    //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
                   } else {
-                    //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+                    //initializeDeviceMemory(clContext, &(clQueues->at(clDeviceID)[0]), shifts, &shifts_d, zappedChannels, &zappedChannels_d, &dispersedData_d, observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)), &dedispersedData_d, observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
                   }
                 }
               } catch ( cl::Error & err ) {
@@ -219,7 +219,7 @@ int main(int argc, char * argv[]) {
             }
             delete code;
 
-            cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), nrSBeams);
+            cl::NDRange global(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), nrSBeams);
             cl::NDRange local(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
 
             if ( conf.getSplitSeconds() ) {
@@ -262,7 +262,7 @@ int main(int argc, char * argv[]) {
             delete kernel;
 
             std::cout << observation.getNrBeams() << " " << nrSBeams << " ";
-            std::cout << observation.getNrDMs() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " " << observation.getNrSamplesPerSecond() << " ";
+            std::cout << observation.getNrDMs() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " " << observation.getNrSamplesPerBatch() << " ";
             std::cout << conf.print() << " ";
             std::cout << std::setprecision(3);
             std::cout << gflops / timer.getAverageTime() << " ";
