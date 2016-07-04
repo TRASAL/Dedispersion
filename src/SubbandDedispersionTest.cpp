@@ -119,7 +119,7 @@ int main(int argc, char * argv[]) {
 
   // Execute dedispersion
   PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation_c, zappedChannels, beamDriver, dispersedData, dedispersedData_c, *shifts, padding, inputBits);
-  PulsarSearch::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, dispersedData, subbandedData, *shifts, padding, inputBits);
+  PulsarSearch::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData, subbandedData, *shifts, padding, inputBits);
   PulsarSearch::subbandDedispersionStepTwo< outputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, subbandedData, dedispersedData, *shifts, padding, inputBits);
 
   for ( unsigned int beam = 0; beam < observation_c.getNrSyntheticBeams(); beam++ ) {
