@@ -61,14 +61,14 @@ int main(int argc, char *argv[]) {
 		conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-items0"));
 		conf.setNrItemsD1(args.getSwitchArgument< unsigned int >("-items1"));
     conf.setUnroll(args.getSwitchArgument< unsigned int >("-unroll"));
-    observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
+    observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
 		observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... -vector ... -zapped_channels ... [-split_seconds] [-local] -threads0 ... -threads1 ... -items0 ... -items1 ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] -opencl_platform ... -opencl_device ... -input_bits ... -padding ... -vector ... -zapped_channels ... [-split_seconds] [-local] -threads0 ... -threads1 ... -items0 ... -items1 ... -unroll ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -dms ... -dm_first ... -dm_step ..." << std::endl;
 		return 1;
 	}
 
@@ -97,6 +97,7 @@ int main(int argc, char *argv[]) {
   cl::Buffer zappedChannels_d;
   std::vector< inputDataType > dispersedData;
   std::vector< inputDataType > dispersedData_control;
+  std::vector< uint8_t > beamDriver(observation.getNrSyntheticBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
   if ( inputBits >= 8 ) {
     if ( conf.getSplitSeconds() ) {
       dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType)));
@@ -224,9 +225,9 @@ int main(int argc, char *argv[]) {
     }
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
     if ( conf.getSplitSeconds() ) {
-      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData_control, dedispersedData_control, *shifts, padding, inputBits);
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, dispersedData_control, dedispersedData_control, *shifts, padding, inputBits);
     } else {
-      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData, dedispersedData_control, *shifts, padding, inputBits);
+      PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, dispersedData, dedispersedData_control, *shifts, padding, inputBits);
     }
     clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()));
   } catch ( cl::Error & err ) {
