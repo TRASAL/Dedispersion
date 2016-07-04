@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 		conf.setNrItemsD1(args.getSwitchArgument< unsigned int >("-items1"));
     conf.setUnroll(args.getSwitchArgument< unsigned int >("-unroll"));
     observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
-		observation.setNrSamplesPerSecond(args.getSwitchArgument< unsigned int >("-samples"));
+		observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
@@ -84,13 +84,13 @@ int main(int argc, char *argv[]) {
 
   AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
   if ( conf.getSplitSeconds() ) {
-    if ( (observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerSecond() == 0 ) {
-      observation.setNrDelaySeconds((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond());
+    if ( (observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) % observation.getNrSamplesPerBatch() == 0 ) {
+      observation.setNrDelaySeconds((observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerBatch());
     } else {
-      observation.setNrDelaySeconds(((observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerSecond()) + 1);
+      observation.setNrDelaySeconds(((observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep())))) / observation.getNrSamplesPerBatch()) + 1);
     }
   }
-  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerSecond() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+  observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
 
 	// Allocate memory
   cl::Buffer shifts_d;
@@ -99,23 +99,23 @@ int main(int argc, char *argv[]) {
   std::vector< inputDataType > dispersedData_control;
   if ( inputBits >= 8 ) {
     if ( conf.getSplitSeconds() ) {
-      dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType)));
+      dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType)));
       dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)));
     } else {
       dispersedData = std::vector< inputDataType >(observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)));
     }
   } else {
     if ( conf.getSplitSeconds() ) {
-      dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType)));
+      dispersedData = std::vector< inputDataType >(observation.getNrDelaySeconds() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(inputDataType)));
       dispersedData_control = std::vector< inputDataType >(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)));
     } else {
       dispersedData = std::vector< inputDataType >(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)));
     }
   }
   cl::Buffer dispersedData_d;
-  std::vector< outputDataType > dedispersedData = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+  std::vector< outputDataType > dedispersedData = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
   cl::Buffer dedispersedData_d;
-  std::vector< outputDataType > dedispersedData_control = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType)));
+  std::vector< outputDataType > dedispersedData_control = std::vector< outputDataType >(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
   try {
     shifts_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
     zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
       if ( inputBits >= 8 ) {
         if ( conf.getSplitSeconds() ) {
           dispersedData_control[(channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(rand() % 10);
-          dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerPaddedSecond(padding / sizeof(inputDataType))) + (sample % observation.getNrSamplesPerSecond())] = dispersedData_control[(channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + sample];
+          dispersedData[((sample / observation.getNrSamplesPerBatch()) * observation.getNrChannels() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType))) + (sample % observation.getNrSamplesPerBatch())] = dispersedData_control[(channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + sample];
         } else {
           dispersedData[(channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(rand() % 10);
         }
@@ -146,9 +146,9 @@ int main(int argc, char *argv[]) {
         uint8_t buffer_control = 0;
 
         if ( conf.getSplitSeconds() ) {
-          byte = (sample % observation.getNrSamplesPerSecond()) / (8 / inputBits);
+          byte = (sample % observation.getNrSamplesPerBatch()) / (8 / inputBits);
           firstBit = ((sample % observation.getNrSamplesPerDispersedChannel()) % (8 / inputBits)) * inputBits;
-          buffer = dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType))) + byte];
+          buffer = dispersedData[((sample / observation.getNrSamplesPerBatch()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(inputDataType))) + byte];
           byte_control = sample / (8 / inputBits);
           firstBit_control = (sample % (8 / inputBits)) * inputBits;
           buffer_control = dispersedData_control[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte_control];
@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
         }
 
         if ( conf.getSplitSeconds() ) {
-          dispersedData[((sample / observation.getNrSamplesPerSecond()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerSecond() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
+          dispersedData[((sample / observation.getNrSamplesPerBatch()) * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
           dispersedData_control[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte_control] = buffer_control;
         } else {
           dispersedData[(channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
@@ -202,11 +202,11 @@ int main(int argc, char *argv[]) {
 
   // Run OpenCL kernel and CPU control
   try {
-    cl::NDRange global(observation.getNrSamplesPerSecond() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1());
+    cl::NDRange global(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1());
     cl::NDRange local(conf.getNrThreadsD0(), conf.getNrThreadsD1());
 
     std::cout << std::endl;
-    std::cout << observation.getNrSamplesPerSecond() / conf.getNrItemsD0() << " " << observation.getNrDMs() / conf.getNrItemsD1() << std::endl;
+    std::cout << observation.getNrSamplesPerBatch() / conf.getNrItemsD0() << " " << observation.getNrDMs() / conf.getNrItemsD1() << std::endl;
     std::cout << conf.getNrThreadsD0() << " " << conf.getNrThreadsD1() << std::endl;
     std::cout << std::endl;
 
@@ -235,8 +235,8 @@ int main(int argc, char *argv[]) {
   }
 
 	for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
-		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-      if ( !isa::utils::same(dedispersedData_control[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType))) + sample], dedispersedData[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType))) + sample]) ) {
+		for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
+      if ( !isa::utils::same(dedispersedData_control[(dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample], dedispersedData[(dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample]) ) {
         wrongSamples++;
 			}
 		}
@@ -244,16 +244,16 @@ int main(int argc, char *argv[]) {
   if ( printResults ) {
     for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
       std::cout << dm << ": ";
-      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-        std::cout << dedispersedData_control[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType))) + sample] << " ";
+      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
+        std::cout << dedispersedData_control[(dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << " ";
       }
       std::cout << std::endl;
     }
     std::cout << std::endl;
     for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
       std::cout << dm << ": ";
-      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSecond(); sample++ ) {
-        std::cout << dedispersedData[(dm * observation.getNrSamplesPerPaddedSecond(padding / sizeof(outputDataType))) + sample] << " ";
+      for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
+        std::cout << dedispersedData[(dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << " ";
       }
       std::cout << std::endl;
     }
@@ -261,7 +261,7 @@ int main(int argc, char *argv[]) {
   }
 
   if ( wrongSamples > 0 ) {
-    std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerSecond()) << "%)." << std::endl;
+    std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< long long unsigned int >(observation.getNrDMs()) * observation.getNrSamplesPerBatch()) << "%)." << std::endl;
   } else {
     std::cout << "TEST PASSED." << std::endl;
   }
