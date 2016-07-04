@@ -118,9 +118,9 @@ int main(int argc, char * argv[]) {
   std::fill(dedispersedData_c.begin(), dedispersedData_c.end(), 0);
 
   // Execute dedispersion
-  PulsarSearch::dedispersion(observation_c, zappedChannels, beamDriver, dispersedData, dedispersedData_c, *shifts, padding, inputBits);
-  PulsarSearch::subbandDedispersionStepOne(observation, zappedChannels, beamDriver, dispersedData, subbandData, *shifts, padding, inputBits);
-  PulsarSearch::subbandDedispersionStepTwo(observation, zappedChannels, beamDriver, subbandData, dedispersedData, *shifts, padding, inputBits);
+  PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation_c, zappedChannels, beamDriver, dispersedData, dedispersedData_c, *shifts, padding, inputBits);
+  PulsarSearch::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, dispersedData, subbandData, *shifts, padding, inputBits);
+  PulsarSearch::subbandDedispersionStepTwo< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriver, subbandData, dedispersedData, *shifts, padding, inputBits);
 
   for ( unsigned int beam = 0; beam < observation_c.getNrSyntheticBeams(); beam++ ) {
     for ( unsigned int dm = 0; dm < observation_c.getNrDMs(); dm++ ) {
