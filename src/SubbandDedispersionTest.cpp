@@ -48,7 +48,9 @@ int main(int argc, char * argv[]) {
     observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
     observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     observation.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"));
-    observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
+    observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0, args.getSwitchArgument< float >("-dm_step"));
+    observation_c = observation;
+    observation_c.setDMRange(observation.getNrDMsSubbanding() * observation.getNrDMs(), args.getSwitchArgument< float >("-dm_first"), observation.getDMStep());
   } catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
@@ -56,8 +58,6 @@ int main(int argc, char * argv[]) {
     std::cerr << "Usage: " << argv[0] << " [-print_results] -input_bits ... -padding ... -zapped_channels ... -beams ... -synthetic_beams ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -subbanding_dms ... -dms ... -subbanding_dm_first ... -dm_first ... -subbanding_dm_step ... -dm_step ..." << std::endl;
     return 1;
   }
-  observation_c = observation;
-  observation_c.setDMRange(observation.getNrDMsSubbanding() * observation.getNrDMs(), observation.getFirstDMSubbanding() + observation.getFirstDM(), observation.getDMStep());
 
   // Allocate memory
   std::vector< inputDataType > dispersedData;
