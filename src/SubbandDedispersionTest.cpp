@@ -50,12 +50,12 @@ int main(int argc, char * argv[]) {
     observation.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), 0.0, args.getSwitchArgument< float >("-dm_step"));
     observation_c = observation;
-    observation_c.setDMRange(observation.getNrDMsSubbanding() * observation.getNrDMs(), args.getSwitchArgument< float >("-dm_first"), observation.getDMStep());
+    observation_c.setDMRange(observation.getNrDMsSubbanding() * observation.getNrDMs(), observation.getFirstDMSubbanding(), observation.getDMStep());
   } catch  ( isa::utils::SwitchNotFound & err ) {
     std::cerr << err.what() << std::endl;
     return 1;
   } catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print_results] -input_bits ... -padding ... -zapped_channels ... -beams ... -synthetic_beams ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -subbanding_dms ... -dms ... -subbanding_dm_first ... -dm_first ... -subbanding_dm_step ... -dm_step ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print_results] -input_bits ... -padding ... -zapped_channels ... -beams ... -synthetic_beams ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -subbanding_dms ... -dms ... -subbanding_dm_first ... -subbanding_dm_step ... -dm_step ..." << std::endl;
     return 1;
   }
 
