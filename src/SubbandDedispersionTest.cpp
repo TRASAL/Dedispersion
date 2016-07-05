@@ -126,7 +126,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int firstStepDM = 0; firstStepDM < observation.getNrDMsSubbanding(); firstStepDM++ ) {
       for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
         if ( printResults ) {
-          std::cout << "sBeam: " << sBeam << " DM: " << (firstStepDM * observation_c.getNrDMs()) + dm << std::endl;
+          std::cout << "sBeam: " << sBeam << " DM: " << (firstStepDM * observation.getNrDMs()) + dm << std::endl;
         }
         for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
           if ( !isa::utils::same(dedispersedData[(sBeam * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (firstStepDM * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample], dedispersedData_c[(sBeam * observation_c.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (((firstStepDM * observation.getNrDMs()) + dm) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample]) ) {
