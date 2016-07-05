@@ -122,16 +122,22 @@ int main(int argc, char * argv[]) {
   PulsarSearch::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData, subbandedData, *shifts, padding, inputBits);
   PulsarSearch::subbandDedispersionStepTwo< outputDataType, intermediateDataType, outputDataType >(observation, beamDriver, subbandedData, dedispersedData, *shifts, padding);
 
-  for ( unsigned int beam = 0; beam < observation_c.getNrSyntheticBeams(); beam++ ) {
-    for ( unsigned int dm = 0; dm < observation_c.getNrDMs(); dm++ ) {
-      for ( unsigned int sample = 0; sample < observation_c.getNrSamplesPerBatch(); sample++ ) {
-        if ( inputBits >= 8 ) {
-          if ( !isa::utils::same(dedispersedData[], dedispersedData_c[]) ) {
+  for ( unsigned int sBeam = 0; sBeam < observation.getNrSyntheticBeams(); sBeam++ ) {
+    for ( unsigned int firstStepDM = 0; firstStepDM < observation.getNrDMsSubbanding(); firstStepDM++ ) {
+      for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
+        if ( printResults ) {
+          std::cout << "sBeam: " << sBeam << " DM: " << (firstStepDM * observation_c.getNrDMs()) + dm << std::endl;
+        }
+        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
+          if ( !isa::utils::same(dedispersedData[(sBeam * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (firstStepDM * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample], dedispersedData_c[(sBeam * observation_c.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (((firstStepDM * observation.getNrDMs()) + dm) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample]) ) {
             wrongSamples++;
           }
           if ( printResults ) {
+            std::cout << dedispersedData[(sBeam * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (firstStepDM * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] "," << dedispersedData_c[(sBeam * observation_c.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (((firstStepDM * observation.getNrDMs()) + dm) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << " ";
           }
-        } else {
+        }
+        if ( printResults ) {
+          std::cout << std::endl;
         }
       }
     }
