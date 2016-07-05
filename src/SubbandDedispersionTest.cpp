@@ -78,7 +78,7 @@ int main(int argc, char * argv[]) {
     dedispersedData.resize(observation.getNrSyntheticBeams() * (observation.getNrDMsSubbanding() * observation.getNrDMs()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType)));
     dedispersedData_c.resize(observation_c.getNrSyntheticBeams() * observation_c.getNrDMs() * observation_c.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType)));
   } else {
-    dispersedData.resize(observation_c.getNrBeams() * observation_c.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerPaddedSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)));
+    dispersedData.resize(observation_c.getNrBeams() * observation_c.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)));
     subbandedData.resize(observation.getNrBeams() * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)));
     dedispersedData.resize(observation.getNrSyntheticBeams() * (observation.getNrDMsSubbanding() * observation.getNrDMs()) * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(inputDataType)));
     dedispersedData_c.resize(observation_c.getNrSyntheticBeams() * observation_c.getNrDMs() * isa::utils::pad(observation_c.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(inputDataType)));
