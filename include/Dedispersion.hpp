@@ -100,7 +100,7 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
           }
         }
 
-        output[(dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
+        output[(sBeam * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
       }
     }
   }
