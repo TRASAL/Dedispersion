@@ -74,7 +74,7 @@ int main(int argc, char * argv[]) {
   observation.setNrSamplesPerSubbandingDispersedChannel(observation.getNrSamplesPerBatchSubbanding() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDMSubbanding() + ((observation.getNrDMsSubbanding() - 1) * observation.getDMSubbandingStep()))));
   if ( inputBits >= 8 ) {
     dispersedData.resize(observation_c.getNrBeams() * observation_c.getNrChannels() * observation_c.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)));
-    subbandedData.resize(observation.getNrBeams() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType)));
+    subbandedData.resize(observation.getNrBeams() * observation.getNrSubbands() * observation.getNrDMsSubbanding()  * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType)));
     dedispersedData.resize(observation.getNrSyntheticBeams() * (observation.getNrDMsSubbanding() * observation.getNrDMs()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType)));
     dedispersedData_c.resize(observation_c.getNrSyntheticBeams() * observation_c.getNrDMs() * observation_c.getNrSamplesPerPaddedBatch(padding / sizeof(inputDataType)));
   } else {
