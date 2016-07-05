@@ -152,7 +152,7 @@ template< typename I, typename L, typename O > void subbandDedispersionStepTwo(A
           for ( unsigned int channel = 0; channel < observation.getNrSubbands(); channel++ ) {
             unsigned int shift = static_cast< unsigned int >((observation.getFirstDM() + (dm * observation.getDMStep())) * shifts[channel]);
 
-            dedispersedSample += static_cast< L >(input[(sBeamDriver[(sBeam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + channel] * observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + (channel * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + (channel * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + (sample + shift)]);
+            dedispersedSample += static_cast< L >(input[(sBeamDriver[(sBeam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + channel] * observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + (channel * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + (firstStepDM * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + (sample + shift)]);
           }
 
           output[(sBeam * (observation.getNrDMsSubbanding() * observation.getNrDMs()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + (((firstStepDM * observation.getNrDMs()) + dm) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);

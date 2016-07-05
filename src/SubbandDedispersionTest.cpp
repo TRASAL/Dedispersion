@@ -108,6 +108,7 @@ int main(int argc, char * argv[]) {
       }
     }
   }
+  // TODO: need a different beamDriver for subbands
   for ( unsigned int beam = 0; beam < observation_c.getNrSyntheticBeams(); beam++ ) {
     for ( unsigned int channel = 0; channel < observation_c.getNrChannels(); channel++ ) {
       beamDriver[(beam * observation_c.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel] = rand() % observation_c.getNrBeams();
