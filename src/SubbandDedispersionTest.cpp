@@ -133,7 +133,7 @@ int main(int argc, char * argv[]) {
             wrongSamples++;
           }
           if ( printResults ) {
-            std::cout << dedispersedData[(sBeam * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (firstStepDM * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] "," << dedispersedData_c[(sBeam * observation_c.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (((firstStepDM * observation.getNrDMs()) + dm) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << " ";
+            std::cout << dedispersedData[(sBeam * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (firstStepDM * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << "," << dedispersedData_c[(sBeam * observation_c.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (((firstStepDM * observation.getNrDMs()) + dm) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << " ";
           }
         }
         if ( printResults ) {
