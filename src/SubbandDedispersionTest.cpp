@@ -70,9 +70,9 @@ int main(int argc, char * argv[]) {
   std::vector< float > * shifts = PulsarSearch::getShifts(observation_c, padding);
 
   AstroData::readZappedChannels(observation_c, channelsFile, zappedChannels);
-  observation_c.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation_c.getFirstDM() + ((observation_c.getNrDMs() - 1) * observation_c.getDMStep()))));
   observation.setNrSamplesPerBatchSubbanding(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
   observation.setNrSamplesPerSubbandingDispersedChannel(observation.getNrSamplesPerBatchSubbanding() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDMSubbanding() + ((observation.getNrDMsSubbanding() - 1) * observation.getDMSubbandingStep()))));
+  observation_c.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerBatchSubbanding() + static_cast< unsigned int >(shifts->at(0) * (observation.getFirstDMSubbanding() + ((observation.getNrDMsSubbanding() - 1) * observation.getDMSubbandingStep()))));
   if ( inputBits >= 8 ) {
     dispersedData.resize(observation_c.getNrBeams() * observation_c.getNrChannels() * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType)));
     subbandedData.resize(observation.getNrBeams() * observation.getNrSubbands() * observation.getNrDMsSubbanding()  * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType)));
