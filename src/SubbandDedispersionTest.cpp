@@ -111,7 +111,7 @@ int main(int argc, char * argv[]) {
   }
   for ( unsigned int beam = 0; beam < observation_c.getNrSyntheticBeams(); beam++ ) {
     for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-      beamDriverSubband[(beam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband] = rand() % observation.getNrSyntheticBeams();
+      beamDriverSubband[(beam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband] = rand() % observation.getNrBeams();
       for ( unsigned int channel = subband * observation.getNrChannelsPerSubband(); channel < (subband + 1) * observation.getNrChannelsPerSubband(); channel++ ) {
         beamDriver[(beam * observation_c.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel] = beamDriverSubband[(beam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband];
       }
