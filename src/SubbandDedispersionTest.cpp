@@ -91,7 +91,7 @@ int main(int argc, char * argv[]) {
     for ( unsigned int channel = 0; channel < observation_c.getNrChannels(); channel++ ) {
       for ( unsigned int sample = 0; sample < observation_c.getNrSamplesPerDispersedChannel(); sample++ ) {
         if ( inputBits >= 8 ) {
-          dispersedData[(beam * observation_c.getNrChannels() * observation_c.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + (channel * observation_c.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + sample] = rand() % observation_c.getNrChannels();
+          dispersedData[(beam * observation_c.getNrChannels() * observation_c.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType))) + (channel * observation_c.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType))) + sample] = rand() % observation_c.getNrChannels();
         } else {
           unsigned int byte = 0;
           uint8_t firstBit = 0;
@@ -100,11 +100,11 @@ int main(int argc, char * argv[]) {
 
           byte = sample / (8 / inputBits);
           firstBit = (sample % (8 / inputBits)) * inputBits;
-          buffer = dispersedData[(beam * observation_c.getNrChannels() * isa::utils::pad(observation_c.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation_c.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte];
+          buffer = dispersedData[(beam * observation_c.getNrChannels() * isa::utils::pad(observation_c.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation_c.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte];
           for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
             isa::utils::setBit(buffer, isa::utils::getBit(value, bit), firstBit + bit);
           }
-          dispersedData[(beam * observation_c.getNrChannels() * isa::utils::pad(observation_c.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation_c.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
+          dispersedData[(beam * observation_c.getNrChannels() * isa::utils::pad(observation_c.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation_c.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
         }
       }
     }
