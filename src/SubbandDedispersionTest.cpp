@@ -66,6 +66,7 @@ int main(int argc, char * argv[]) {
   std::vector< outputDataType > dedispersedData_c;
   std::vector< uint8_t > zappedChannels(observation_c.getNrPaddedChannels(padding / sizeof(uint8_t)));
   std::vector< uint8_t > beamDriver(observation_c.getNrSyntheticBeams() * observation_c.getNrPaddedChannels(padding / sizeof(uint8_t)));
+  std::vector< uint8_t > beamDriverSubband(observation.getNrSyntheticBeams() * observation.getNrPaddedSubbands(padding / sizeof(uint8_t)));
   std::vector< float > * shifts = PulsarSearch::getShifts(observation_c, padding);
 
   AstroData::readZappedChannels(observation_c, channelsFile, zappedChannels);
@@ -108,10 +109,12 @@ int main(int argc, char * argv[]) {
       }
     }
   }
-  // TODO: need a different beamDriver for subbands
   for ( unsigned int beam = 0; beam < observation_c.getNrSyntheticBeams(); beam++ ) {
-    for ( unsigned int channel = 0; channel < observation_c.getNrChannels(); channel++ ) {
-      beamDriver[(beam * observation_c.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel] = rand() % observation_c.getNrBeams();
+    for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
+      beamDriverSubband[(beam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband] = rand() % observation.getNrSyntheticBeams();
+      for ( unsigned int channel = subband * observation.getNrChannelsPerSubband(); channel < (subband + 1) * observation.getNrChannelsPerSubband(); channel++ ) {
+        beamDriver[(beam * observation_c.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel] = beamDriverSubband[(beam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband];
+      }
     }
   }
   std::fill(subbandedData.begin(), subbandedData.end(), 0);
@@ -121,7 +124,7 @@ int main(int argc, char * argv[]) {
   // Execute dedispersion
   PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation_c, zappedChannels, beamDriver, dispersedData, dedispersedData_c, *shifts, padding, inputBits);
   PulsarSearch::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData, subbandedData, *shifts, padding, inputBits);
-  PulsarSearch::subbandDedispersionStepTwo< outputDataType, intermediateDataType, outputDataType >(observation, beamDriver, subbandedData, dedispersedData, *shifts, padding);
+  PulsarSearch::subbandDedispersionStepTwo< outputDataType, intermediateDataType, outputDataType >(observation, beamDriverSubband, subbandedData, dedispersedData, *shifts, padding);
 
   for ( unsigned int sBeam = 0; sBeam < observation.getNrSyntheticBeams(); sBeam++ ) {
     for ( unsigned int firstStepDM = 0; firstStepDM < observation.getNrDMsSubbanding(); firstStepDM++ ) {
