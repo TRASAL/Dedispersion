@@ -70,12 +70,12 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
   dedispersionFile.close();
 }
 
-DedispersionConf::DedispersionConf() {}
+DedispersionConf::DedispersionConf() : KernelConf(), splitSeconds(false), local(false), unroll(1) {}
 
 DedispersionConf::~DedispersionConf() {}
 
 std::string DedispersionConf::print() const {
-  return std::string(isa::utils::toString(splitSeconds) + " " + isa::utils::toString(local) + " " + isa::utils::toString(unroll) + " " + isa::utils::toString(nrThreadsD0) + " " + isa::utils::toString(nrThreadsD1) + " " + isa::utils::toString(nrItemsD0) + " " + isa::utils::toString(nrItemsD1));
+  return std::to_string(splitSeconds) + " " + std::to_string(local) + " " + std::to_string(unroll) + " " isa::OpenCL::KernelConf::print();
 }
 
 } // PulsarSearch
