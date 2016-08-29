@@ -181,6 +181,7 @@ inline void DedispersionConf::setUnroll(unsigned int unroll) {
 // TODO: splitSeconds mode does not use beams
 template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels) {
   std::string * code = new std::string();
+  std::string sum0_sTemplate = std::string();
   std::string sum_sTemplate = std::string();
   std::string unrolled_sTemplate = std::string();
   std::string firstDM_s = isa::utils::toString(observation.getFirstDMSubbanding());
