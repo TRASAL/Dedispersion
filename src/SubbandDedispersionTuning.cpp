@@ -222,8 +222,14 @@ int main(int argc, char * argv[]) {
       }
       for ( unsigned int items = 1; items <= maxItems; items++ ) {
         conf.setNrItemsD0(items);
-        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
-          continue;
+        if ( stepOne ) {
+          if ( (observation.getNrSamplesPerBatchSubbanding() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+            continue;
+          }
+        } else {
+          if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+            continue;
+          }
         }
         for ( unsigned int items = 1; items <= maxItems; items++ ) {
           conf.setNrItemsD1(items);
@@ -253,7 +259,7 @@ int main(int argc, char * argv[]) {
             std::string * code;
 
             if ( stepOne ) {
-              gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMsSubbanding()) * observation.getNrBeams() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch());
+              gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMsSubbanding()) * observation.getNrBeams() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatchSubbanding());
               code = PulsarSearch::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
             } else {
               gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMs()) * observation.getNrSyntheticBeams() * observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerBatch());
@@ -293,7 +299,7 @@ int main(int argc, char * argv[]) {
             cl::NDRange global;
             cl::NDRange local;
             if ( stepOne ) {
-              global = cl::NDRange(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMsSubbanding() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
+              global = cl::NDRange(observation.getNrSamplesPerBatchSubbanding() / conf.getNrItemsD0(), observation.getNrDMsSubbanding() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
               local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
             } else {
               global = cl::NDRange(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrDMsSubbanding());
