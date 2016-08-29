@@ -58,7 +58,7 @@ template< typename I, typename L, typename O > void subbandDedispersionStepTwo(A
 // OpenCL
 template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels);
 template< typename I, typename O > std::string * getSubbandDedispersionStepOneOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
-template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
+template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const std::string & inputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string & dedispersionFilename);
 
 
@@ -913,7 +913,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
 }
 
 // TODO: splitSeconds mode does not use beams
-template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
+template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const std::string & inputDataType, std::vector< float > & shifts) {
   std::string * code = new std::string();
   std::string sum_sTemplate = std::string();
   std::string unrolled_sTemplate = std::string();
@@ -948,14 +948,8 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOp
       "unsigned int inShMem = 0;\n"
       "unsigned int inGlMem = 0;\n"
       "<%DEFS%>"
-      "__local " + intermediateDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep())))) + "];\n";
-    if ( inputBits < 8 ) {
-      *code += inputDataType + " bitsBuffer;\n"
-        "unsigned int byte = 0;\n"
-        "uchar firstBit = 0;\n"
-        + inputDataType + " interBuffer;\n";
-    }
-    *code += "\n"
+      "__local " + inputDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep())))) + "];\n"
+      "\n"
       "for ( unsigned int channel = 0; channel < " + std::to_string(observation.getNrSubbands()) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
       "unsigned int minShift = 0;\n"
       "<%DEFS_SHIFT%>"
@@ -977,39 +971,10 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOp
       unrolled_sTemplate += "inGlMem = ((get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem) + minShift;\n";
     }
     unrolled_sTemplate += "while ( inShMem < (" + nrTotalSamplesPerBlock_s + " + diffShift) ) {\n";
-    if ( (inputDataType == intermediateDataType) && (inputBits >= 8) ) {
-      if ( conf.getSplitSeconds() ) {
-        unrolled_sTemplate += "buffer[inShMem] = input[(((inGlMem / " + std::to_string(observation.getNrSamplesPerBatch()) + ") % " + std::to_string(observation.getNrDelaySeconds()) + ") * " + std::to_string(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (inGlMem % " + std::to_string(observation.getNrSamplesPerBatch()) + ")];\n";
-      } else {
-        unrolled_sTemplate += "buffer[inShMem] = input[(beamDriver[(sBeam * " + std::to_string(observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + inGlMem];\n";
-      }
-    } else if ( inputBits < 8 ) {
-      if ( conf.getSplitSeconds() ) {
-        unrolled_sTemplate += "interBuffer = 0;\n"
-          "byte = inGlMem % " + std::to_string(observation.getNrSamplesPerBatch() / (8 / inputBits)) + ";\n"
-          "firstBit = ((inGlMem % " + std::to_string(8 / inputBits) + ") * " + std::to_string(static_cast< unsigned int >(inputBits)) + ");\n"
-          "bitsBuffer = input[(((inGlMem / " + std::to_string(observation.getNrSamplesPerBatch()) + ") % " + std::to_string(observation.getNrDelaySeconds()) + ") * " + std::to_string(static_cast< uint64_t >(observation.getNrChannels()) * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(I))) + ") + byte];\n";
-      } else {
-        unrolled_sTemplate += "interBuffer = 0;\n"
-          "byte = (inGlMem / " + std::to_string(8 / inputBits) + ");\n"
-          "firstBit = ((inGlMem % " + std::to_string(8 / inputBits) + ") * " + std::to_string(static_cast< unsigned int >(inputBits)) + ");\n"
-          "bitsBuffer = input[(beamDriver[(sBeam * " + std::to_string(observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMsSubbanding() * isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / (8 / inputBits), padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / (8 / inputBits), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / (8 / inputBits), padding / sizeof(I))) + ") + byte];\n";
-      }
-      for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
-        unrolled_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + std::to_string(bit)), std::to_string(bit));
-      }
-      if ( inputDataType == "char" ) {
-        for ( unsigned int bit = inputBits; bit < 8; bit++ ) {
-          unrolled_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + std::to_string(inputBits - 1)), std::to_string(bit));
-        }
-      }
-      unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(interBuffer);\n";
+    if ( conf.getSplitSeconds() ) {
+      unrolled_sTemplate += "buffer[inShMem] = input[(((inGlMem / " + std::to_string(observation.getNrSamplesPerBatch()) + ") % " + std::to_string(observation.getNrDelaySeconds()) + ") * " + std::to_string(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (inGlMem % " + std::to_string(observation.getNrSamplesPerBatch()) + ")];\n";
     } else {
-      if ( conf.getSplitSeconds() ) {
-        unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(input[(((inGlMem / " + std::to_string(observation.getNrSamplesPerBatch()) + ") % " + std::to_string(observation.getNrDelaySeconds()) + ") * " + std::to_string(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (inGlMem % " + std::to_string(observation.getNrSamplesPerBatch()) + ")]);\n";
-      } else {
-        unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(input[(beamDriver[(sBeam * " + std::to_string(observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(I))) + ") + inGlMem]);\n";
-      }
+      unrolled_sTemplate += "buffer[inShMem] = input[(beamDriver[(sBeam * " + std::to_string(observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + inGlMem];\n";
     }
     unrolled_sTemplate += "inShMem += " + nrTotalThreads_s + ";\n"
       "inGlMem += " + nrTotalThreads_s + ";\n"
@@ -1052,42 +1017,13 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOp
       "\n"
       "<%SUMS%>"
       "\n";
-    if ( (inputDataType == intermediateDataType) && (inputBits >= 8) ) {
-      if ( conf.getSplitSeconds() ) {
-        sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((((sampleOffset + sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + std::to_string(observation.getNrSamplesPerBatch()) + ") % " + std::to_string(observation.getNrDelaySeconds()) + ") * " + std::to_string(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((sampleOffset + sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + std::to_string(observation.getNrSamplesPerBatch()) + ")];\n";
-      } else {
-        sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamDriver[(sBeam * " + std::to_string(observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
-      }
-    } else if ( inputBits < 8 ) {
-      if ( conf.getSplitSeconds() ) {
-        sum_sTemplate =  "interBuffer = 0;\n"
-          "byte = (sampleOffset + sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + std::to_string(observation.getNrSamplesPerBatch() / (8 / inputBits)) + ";\n"
-          "firstBit = ((sampleOffset + sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + std::to_string(8 / inputBits) + ") * " + std::to_string(static_cast< unsigned int >(inputBits)) + ";\n"
-          "bitsBuffer = input[((((sampleOffset + sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + std::to_string(observation.getNrSamplesPerBatch()) + ") % " + std::to_string(observation.getNrDelaySeconds()) + ") * " + std::to_string(static_cast< uint64_t >(observation.getNrChannels()) * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(I))) + ") + byte];\n";
-      } else {
-        sum_sTemplate =  "interBuffer = 0;\n"
-          "byte = (sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + std::to_string(8 / inputBits) + ";\n"
-          "firstBit = ((sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + std::to_string(8 / inputBits) + ") * " + std::to_string(static_cast< unsigned int >(inputBits)) + ";\n"
-          "bitsBuffer = input[(beamDriver[(sBeam * " + std::to_string(observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMsSubbanding() * isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / (8 / inputBits), padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / (8 / inputBits), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / (8 / inputBits), padding / sizeof(I))) + ") + byte];\n";
-      }
-      for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
-        sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + std::to_string(bit)), std::to_string(bit));
-      }
-      if ( inputDataType == "char" ) {
-        for ( unsigned int bit = inputBits; bit < 8; bit++ ) {
-          sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + std::to_string(inputBits - 1)), std::to_string(bit));
-        }
-      }
-      sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(interBuffer);\n";
+    if ( conf.getSplitSeconds() ) {
+      sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[((((sampleOffset + sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + std::to_string(observation.getNrSamplesPerBatch()) + ") % " + std::to_string(observation.getNrDelaySeconds()) + ") * " + std::to_string(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((sampleOffset + sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + std::to_string(observation.getNrSamplesPerBatch()) + ")];\n";
     } else {
-      if ( conf.getSplitSeconds() ) {
-        sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[((((sampleOffset + sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + std::to_string(observation.getNrSamplesPerBatch()) + ") % " + std::to_string(observation.getNrDelaySeconds()) + ") * " + std::to_string(static_cast< uint64_t >(observation.getNrChannels()) * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((sampleOffset + sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + std::to_string(observation.getNrSamplesPerBatch()) + ")]);\n";
-      } else {
-        sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[(beamDriver[(sBeam * " + std::to_string(observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)]);\n";
-      }
+      sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamDriver[(sBeam * " + std::to_string(observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
     }
   }
-	std::string def_sTemplate = intermediateDataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
+	std::string def_sTemplate = inputDataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
   std::string defsShiftTemplate = "unsigned int shiftDM<%DM_NUM%> = 0;\n";
   std::string shiftsTemplate;
   if ( conf.getLocalMem() ) {
@@ -1095,12 +1031,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOp
   } else {
     shiftsTemplate = "shiftDM<%DM_NUM%> = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + DMStep_s + ")));\n";
   }
-  std::string store_sTemplate;
-  if ( intermediateDataType == outputDataType ) {
-    store_sTemplate = "output[(sBeam * " + std::to_string(observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ") + (firstDM * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ")  + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
-  } else {
-    store_sTemplate = "output[(sBeam * " + std::to_string(observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ") + (firstDM * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ")  + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ") + (sample + <%OFFSET%>)] = convert_" + outputDataType + "(dedispersedSample<%NUM%>DM<%DM_NUM%>);\n";
-  }
+  std::string store_sTemplate = "output[(sBeam * " + std::to_string(observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ") + (firstDM * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ")  + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
 	// End kernel's template
 
   std::string * def_s =  new std::string();
