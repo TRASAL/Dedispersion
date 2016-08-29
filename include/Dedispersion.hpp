@@ -181,10 +181,9 @@ inline void DedispersionConf::setUnroll(unsigned int unroll) {
 // TODO: splitSeconds mode does not use beams
 template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels) {
   std::string * code = new std::string();
-  std::string sum0_sTemplate = std::string();
   std::string sum_sTemplate = std::string();
   std::string unrolled_sTemplate = std::string();
-  std::string firstDM_s = isa::utils::toString(observation.getFirstDM());
+  std::string firstDM_s = isa::utils::toString(observation.getFirstDMSubbanding());
   if ( firstDM_s.find(".") == std::string::npos ) {
     firstDM_s.append(".0f");
   } else {
@@ -1025,7 +1024,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
   } else {
     shiftsTemplate = "shiftDM<%DM_NUM%> = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + DMStep_s + ")));\n";
   }
-  std::string store_sTemplate = "output[(sBeam * " + std::to_string(observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (firstDM * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ")  + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
+  std::string store_sTemplate = "output[(sBeam * " + std::to_string(observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ")  + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
 	// End kernel's template
 
   std::string * def_s =  new std::string();
