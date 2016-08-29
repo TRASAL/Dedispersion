@@ -57,8 +57,8 @@ template< typename I, typename L, typename O > void subbandDedispersionStepOne(A
 template< typename I, typename L, typename O > void subbandDedispersionStepTwo(AstroData::Observation & observation, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding);
 // OpenCL
 template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels);
-template< typename I, typename O > std::string * getSubbandDedispersionStepOneOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels);
-template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
+template< typename I, typename O > std::string * getSubbandDedispersionStepOneOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
+template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string & dedispersionFilename);
 
 
@@ -585,7 +585,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
 }
 
 // TODO: splitSeconds mode does not use beams
-template< typename I, typename O > std::string * getSubbandDedispersionStepOneOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts, const std::vector< uint8_t > & zappedChannels) {
+template< typename I, typename O > std::string * getSubbandDedispersionStepOneOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
   std::string * code = new std::string();
   std::string sum_sTemplate = std::string();
   std::string unrolled_sTemplate = std::string();
@@ -742,7 +742,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
         sum_sTemplate =  "interBuffer = 0;\n"
           "byte = (sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + std::to_string(8 / inputBits) + ";\n"
           "firstBit = ((sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + std::to_string(8 / inputBits) + ") * " + std::to_string(static_cast< unsigned int >(inputBits)) + ";\n"
-          "bitsBuffer = input[(beam * " + std::to_string(observation.getNrChannels() * std::to_string(isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(I)))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(I))) + ") + byte];\n";
+          "bitsBuffer = input[(beam * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(I))) + ") + byte];\n";
       }
       for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
         sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + std::to_string(bit)), std::to_string(bit));
@@ -913,7 +913,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
 }
 
 // TODO: splitSeconds mode does not use beams
-template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation) {
+template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
   std::string * code = new std::string();
   std::string sum_sTemplate = std::string();
   std::string unrolled_sTemplate = std::string();
@@ -1022,7 +1022,6 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOp
       unrolled_sTemplate += "barrier(CLK_LOCAL_MEM_FENCE);\n";
     }
     unrolled_sTemplate += "}\n";
-    sum0_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[get_local_id(0) + <%OFFSET%>];\n";
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
   } else {
     if ( conf.getSplitSeconds() ) {

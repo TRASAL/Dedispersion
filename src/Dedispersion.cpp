@@ -75,7 +75,7 @@ DedispersionConf::DedispersionConf() : KernelConf(), splitSeconds(false), local(
 DedispersionConf::~DedispersionConf() {}
 
 std::string DedispersionConf::print() const {
-  return std::to_string(splitSeconds) + " " + std::to_string(local) + " " + std::to_string(unroll) + " " isa::OpenCL::KernelConf::print();
+  return std::to_string(splitSeconds) + " " + std::to_string(local) + " " + std::to_string(unroll) + " " + isa::OpenCL::KernelConf::print();
 }
 
 } // PulsarSearch

@@ -116,7 +116,7 @@ int main(int argc, char * argv[]) {
   if ( stepOne ) {
     zappedChannels.resize(observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
     AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
-  } else if ( stepTwo ) {
+  } else {
     beamDriver.resize(observation.getNrSyntheticBeams() * observation.getNrPaddedSubbands(padding / sizeof(uint8_t)));
   }
   if ( conf.getSplitSeconds() ) {
@@ -243,7 +243,13 @@ int main(int argc, char * argv[]) {
             double gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMs()) * observation.getNrSyntheticBeams() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch());
             isa::utils::Timer timer;
             cl::Kernel * kernel;
-            std::string * code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shifts, zappedChannels);
+            std::string * code;
+
+            if ( stepOne ) {
+              code = PulsarSearch::getSubbandedDedispersionOpenCLStepOne< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
+            } else {
+              code = PulsarSearch::getSubbandedDedispersionOpenCLStepTwo< outputDataType, outputDataType >(conf, padding, outputDataName, intermediateDataName, outputDataName, observation, *shiftsStepTwo);
+            }
 
             if ( reInit ) {
               delete clQueues;
