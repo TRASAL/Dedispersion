@@ -959,8 +959,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       "}\n"
       "<%STORES%>"
       "}";
-    unrolled_sTemplate = "if ( zappedChannels[channel + <%UNROLL%>] == 0 ) {\n"
-      "minShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + DMStep_s + ")));\n"
+    unrolled_sTemplate = "minShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") * " + DMStep_s + ")));\n"
       "<%SHIFTS%>"
       "diffShift = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + (((get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + " + std::to_string((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) + ") * " + DMStep_s + "))) - minShift;\n"
       "\n"
@@ -986,7 +985,6 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
     if ( conf.getUnroll() > 1 ) {
       unrolled_sTemplate += "barrier(CLK_LOCAL_MEM_FENCE);\n";
     }
-    unrolled_sTemplate += "}\n";
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
   } else {
     if ( conf.getSplitSeconds() ) {
