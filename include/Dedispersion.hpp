@@ -939,7 +939,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepTwoOp
       *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts) {\n"
         "unsigned int sampleOffset = secondOffset * " + std::to_string(observation.getNrSamplesPerBatch()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global const uchar * const restrict beamDriver, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __global const uchar * const restrict beamDriver) {\n";
     }
     *code +="unsigned int sBeam = get_group_id(2) / " + std::to_string(observation.getNrDMsSubbanding()) + ";\n"
       "unsigned int firstStepDM = get_group_id(2) % " + std::to_string(observation.getNrDMsSubbanding()) + ";\n"
