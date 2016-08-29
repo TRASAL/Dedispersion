@@ -246,9 +246,9 @@ int main(int argc, char * argv[]) {
             std::string * code;
 
             if ( stepOne ) {
-              code = PulsarSearch::getSubbandedDedispersionOpenCLStepOne< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
+              code = PulsarSearch::getSubbandDedispersionOpenCLStepOne< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
             } else {
-              code = PulsarSearch::getSubbandedDedispersionOpenCLStepTwo< outputDataType >(conf, padding, outputDataName, observation, *shiftsStepTwo);
+              code = PulsarSearch::getSubbandDedispersionOpenCLStepTwo< outputDataType >(conf, padding, outputDataName, observation, *shiftsStepTwo);
             }
 
             if ( reInit ) {
