@@ -245,9 +245,12 @@ int main(int argc, char * argv[]) {
           }
           for ( unsigned int unroll = 1; unroll <= maxUnroll; unroll++ ) {
             conf.setUnroll(unroll);
-            if ( observation.getNrChannels() % conf.getUnroll() != 0 ) {
+            if ( stepOne && (observation.getNrChannels() / observation.getNrSubbands()) % conf.getUnroll() != 0 ) {
+              continue;
+            } else if ( stepTwo && observation.getNrChannels() % conf.getUnroll() != 0 ) {
               continue;
             }
+
             // Generate kernel
             double gflops = 0.0;
             isa::utils::Timer timer;
