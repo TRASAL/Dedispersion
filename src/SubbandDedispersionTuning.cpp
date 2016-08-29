@@ -227,14 +227,21 @@ int main(int argc, char * argv[]) {
         }
         for ( unsigned int items = 1; items <= maxItems; items++ ) {
           conf.setNrItemsD1(items);
-          if ( (observation.getNrDMs() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
-            continue;
-          } else if ( (conf.getNrItemsD0() * conf.getNrItemsD1()) + conf.getNrItemsD1() > maxItems ) {
+          if ( (conf.getNrItemsD0() * conf.getNrItemsD1()) + conf.getNrItemsD1() > maxItems ) {
             break;
+          }
+          if ( stepOne ) {
+            if ( (observation.getNrDMsSubbanding() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
+              continue;
+            }
+          } else {
+            if ( (observation.getNrDMs() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
+              continue;
+            }
           }
           for ( unsigned int unroll = 1; unroll <= maxUnroll; unroll++ ) {
             conf.setUnroll(unroll);
-            if ( (observation.getNrChannels() - 1) % conf.getUnroll() != 0 ) {
+            if ( observation.getNrChannels() % conf.getUnroll() != 0 ) {
               continue;
             } else if ( (conf.getNrItemsD0() * conf.getNrItemsD1() * conf.getUnroll()) > maxLoopBodySize ) {
               break;
