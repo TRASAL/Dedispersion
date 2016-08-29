@@ -287,8 +287,8 @@ int main(int argc, char * argv[]) {
               global = cl::NDRange(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
               local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
             } else {
-              global(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrDMsSubbanding());
-              local(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
+              global = cl::NDRange(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrDMsSubbanding());
+              local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
             }
 
             if ( conf.getSplitSeconds() ) {
