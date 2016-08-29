@@ -34,8 +34,8 @@
 #include <Timer.hpp>
 #include <Stats.hpp>
 
-void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, const std::vector< float > * shifts, cl::Buffer * shifts_d, const std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, const std::vector< inputDataType > & dispersedData, cl::Buffer * dispersedData_d, const std::vector< outputDataType > & subbandedData, cl::Buffer * subbandedData_d);
-void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, const std::vector< float > * shifts, cl::Buffer * shifts_d, const std::vector< uint8_t > & beamDriver, cl::Buffer * beamDriver_d, const std::vector< outputDataType > & subbandedData, cl::Buffer * subbandedData_d, const std::vector< outputDataType > & dedispersedData, cl::Buffer * dedispersedData_d);
+void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, std::vector< inputDataType > & dispersedData, cl::Buffer * dispersedData_d, const std::vector< outputDataType > & subbandedData, cl::Buffer * subbandedData_d);
+void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< uint8_t > & beamDriver, cl::Buffer * beamDriver_d, std::vector< outputDataType > & subbandedData, cl::Buffer * subbandedData_d, const std::vector< outputDataType > & dedispersedData, cl::Buffer * dedispersedData_d);
 
 int main(int argc, char * argv[]) {
   bool reInit = false;
@@ -284,8 +284,8 @@ int main(int argc, char * argv[]) {
             cl::NDRange global;
             cl::NDRange local;
             if ( stepOne ) {
-              global(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
-              local(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
+              global = cl::NDRange(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
+              local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
             } else {
               global(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrDMsSubbanding());
               local(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
@@ -334,7 +334,7 @@ int main(int argc, char * argv[]) {
 
             std::cout << observation.getNrBeams() << " " << observation.getNrSyntheticBeams() << " ";
             std::cout << observation.getNrDMsSubbanding() << " " << observation.getNrDMs() << " ";
-            std::Cout << observation.getNrSubbands() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " " << observation.getNrSamplesPerBatch() << " ";
+            std::cout << observation.getNrSubbands() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " " << observation.getNrSamplesPerBatch() << " ";
             std::cout << conf.print() << " ";
             std::cout << std::setprecision(3);
             std::cout << gflops / timer.getAverageTime() << " ";
@@ -352,7 +352,7 @@ int main(int argc, char * argv[]) {
 	return 0;
 }
 
-void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, const std::vector< float > * shifts, cl::Buffer * shifts_d, const std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, const std::vector< inputDataType > & dispersedData, cl::Buffer * dispersedData_d, const std::vector< outputDataType > & subbandedData, cl::Buffer * subbandedData_d) {
+void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, std::vector< inputDataType > & dispersedData, cl::Buffer * dispersedData_d, const std::vector< outputDataType > & subbandedData, cl::Buffer * subbandedData_d) {
   try {
     *shifts_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
     *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
@@ -368,7 +368,7 @@ void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * c
   }
 }
 
-void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, const std::vector< float > * shifts, cl::Buffer * shifts_d, const std::vector< uint8_t > & beamDriver, cl::Buffer * beamDriver_d, const std::vector< outputDataType > & subbandedData, cl::Buffer * subbandedData_d, const std::vector< outputDataType > & dedispersedData, cl::Buffer * dedispersedData_d) {
+void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< uint8_t > & beamDriver, cl::Buffer * beamDriver_d, std::vector< outputDataType > & subbandedData, cl::Buffer * subbandedData_d, const std::vector< outputDataType > & dedispersedData, cl::Buffer * dedispersedData_d) {
   try {
     *shifts_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shifts->size() * sizeof(float), 0, 0);
     *beamDriver_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamDriver.size() * sizeof(uint8_t), 0, 0);
