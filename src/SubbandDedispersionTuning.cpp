@@ -53,7 +53,6 @@ int main(int argc, char * argv[]) {
   unsigned int vectorWidth = 0;
   unsigned int maxItems = 0;
   unsigned int maxUnroll = 0;
-  unsigned int maxLoopBodySize = 0;
   std::string channelsFile;
   AstroData::Observation observation;
   PulsarSearch::DedispersionConf conf;
@@ -85,7 +84,6 @@ int main(int argc, char * argv[]) {
 		maxColumns = args.getSwitchArgument< unsigned int >("-max_columns");
 		maxItems = args.getSwitchArgument< unsigned int >("-max_items");
     maxUnroll = args.getSwitchArgument< unsigned int >("-max_unroll");
-    maxLoopBodySize = args.getSwitchArgument< unsigned int >("-max_loopsize");
     observation.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
     if ( stepTwo ) {
       observation.setNrSyntheticBeams(args.getSwitchArgument< unsigned int >("-synthetic_beams"));
@@ -95,7 +93,7 @@ int main(int argc, char * argv[]) {
     observation.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-step_one | -step_two] [-split_seconds] [-local] -input_bits ... -padding ... -vector ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_loopsize ... -max_columns ... -max_rows ... -beams ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-step_one | -step_two] [-split_seconds] [-local] -input_bits ... -padding ... -vector ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_columns ... -max_rows ... -beams ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     std::cerr << " -step_one: -zapped_channels ..." << std::endl;
     std::cerr << " -step_two: -synthetic_beams ..." << std::endl;
 		return 1;
@@ -249,8 +247,6 @@ int main(int argc, char * argv[]) {
             conf.setUnroll(unroll);
             if ( observation.getNrChannels() % conf.getUnroll() != 0 ) {
               continue;
-            } else if ( (conf.getNrItemsD0() * conf.getNrItemsD1() * conf.getUnroll()) > maxLoopBodySize ) {
-              break;
             }
             // Generate kernel
             double gflops = 0.0;
