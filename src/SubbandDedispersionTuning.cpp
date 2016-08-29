@@ -240,14 +240,16 @@ int main(int argc, char * argv[]) {
               break;
             }
             // Generate kernel
-            double gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMs()) * observation.getNrSyntheticBeams() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch());
+            double gflops = 0.0;
             isa::utils::Timer timer;
             cl::Kernel * kernel;
             std::string * code;
 
             if ( stepOne ) {
+              gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMsSubbanding()) * observation.getNrBeams() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch());
               code = PulsarSearch::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
             } else {
+              gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrDMs()) * observation.getNrSyntheticBeams() * observation.getNrSubbands() * observation.getNrDMsSubbanding() * observation.getNrSamplesPerBatch());
               code = PulsarSearch::getSubbandDedispersionStepTwoOpenCL< outputDataType >(conf, padding, outputDataName, observation, *shiftsStepTwo);
             }
 
