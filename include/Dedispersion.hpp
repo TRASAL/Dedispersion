@@ -628,6 +628,9 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
         + inputDataType + " interBuffer;\n";
     }
     *code += "\n"
+      "if ( sample > " + std::to_string(observation.getNrSamplesPerBatchSubbanding()) + " ) {\n"
+      "return;\n"
+      "}\n"
       "for ( unsigned int channel = subband * " + std::to_string(observation.getNrChannelsPerSubband()) + "; channel < (subband + 1) * " + std::to_string(observation.getNrChannelsPerSubband()) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
       "unsigned int minShift = 0;\n"
       "<%DEFS_SHIFT%>"
@@ -714,6 +717,9 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
         + inputDataType + " interBuffer;\n";
     }
     *code += "\n"
+      "if ( sample > " + std::to_string(observation.getNrSamplesPerBatchSubbanding()) + " ) {\n"
+      "return;\n"
+      "}\n"
       "for ( unsigned int channel = subband * " + std::to_string(observation.getNrChannelsPerSubband()) + "; channel < (subband + 1) * " + std::to_string(observation.getNrChannelsPerSubband()) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
       "<%DEFS_SHIFT%>"
       "<%UNROLLED_LOOP%>"
@@ -950,6 +956,9 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       "<%DEFS%>"
       "__local " + inputDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep())))) + "];\n"
       "\n"
+      "if ( sample > " + std::to_string(observation.getNrSamplesPerBatchSubbanding()) + " ) {\n"
+      "return;\n"
+      "}\n"
       "for ( unsigned int channel = 0; channel < " + std::to_string(observation.getNrSubbands()) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
       "unsigned int minShift = 0;\n"
       "<%DEFS_SHIFT%>"
@@ -999,6 +1008,9 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
       "<%DEFS%>"
       "\n"
+      "if ( sample > " + std::to_string(observation.getNrSamplesPerBatchSubbanding()) + " ) {\n"
+      "return;\n"
+      "}\n"
       "for ( unsigned int channel = 0; channel < " + std::to_string(observation.getNrSubbands()) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
       "<%DEFS_SHIFT%>"
       "<%UNROLLED_LOOP%>"
