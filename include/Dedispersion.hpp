@@ -620,7 +620,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
       "unsigned int inShMem = 0;\n"
       "unsigned int inGlMem = 0;\n"
       "<%DEFS%>"
-      "__local " + intermediateDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep())))) + "];\n";
+      "__local " + intermediateDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDMSubbanding() + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep())))) + "];\n";
     if ( inputBits < 8 ) {
       *code += inputDataType + " bitsBuffer;\n"
         "unsigned int byte = 0;\n"
