@@ -221,11 +221,11 @@ int main(int argc, char * argv[]) {
       for ( unsigned int items = 1; items <= maxItems; items++ ) {
         conf.setNrItemsD0(items);
         if ( stepOne ) {
-          if ( (observation.getNrSamplesPerBatchSubbanding() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          if ( (observation.getNrSamplesPerBatchSubbanding() % conf.getNrItemsD0()) != 0 ) {
             continue;
           }
         } else {
-          if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          if ( (observation.getNrSamplesPerBatch() % conf.getNrItemsD0()) != 0 ) {
             continue;
           }
         }
