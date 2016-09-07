@@ -209,7 +209,7 @@ int main(int argc, char * argv[]) {
 	std::cout << std::fixed << std::endl;
 	std::cout << "# nrBeams nrSBeams nrSubbandingDMs nrDMs nrSubbands nrChannels nrZappedChannels nrSamples *configuration* GFLOP/s time stdDeviation COV" << std::endl << std::endl;
 
-	for ( unsigned int threads = minThreads; threads <= maxColumns; threads++) {
+	for ( unsigned int threads = minThreads; threads <= maxColumns; threads += minThreads ) {
     conf.setNrThreadsD0(threads);
 		for ( unsigned int threads = 1; threads <= maxRows; threads++ ) {
       conf.setNrThreadsD1(threads);
