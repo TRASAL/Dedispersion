@@ -301,7 +301,7 @@ int main(int argc, char * argv[]) {
               global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMsSubbanding() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
               local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
             } else {
-              global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrDMsSubbanding());
+              global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSyntheticBeams() * observation.getNrDMsSubbanding());
               local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
             }
 
