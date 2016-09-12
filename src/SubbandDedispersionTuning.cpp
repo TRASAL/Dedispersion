@@ -342,7 +342,7 @@ int main(int argc, char * argv[]) {
                 return -1;
               }
               reInit = true;
-              break;
+              continue;
             }
             delete kernel;
 
