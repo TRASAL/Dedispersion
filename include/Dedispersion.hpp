@@ -956,7 +956,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       "<%DEFS%>"
       "__local " + inputDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep())))) + "];\n"
       "\n"
-      "if ( sample > " + std::to_string(observation.getNrSamplesPerBatchSubbanding()) + " ) {\n"
+      "if ( sample > " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
       "return;\n"
       "}\n"
       "for ( unsigned int channel = 0; channel < " + std::to_string(observation.getNrSubbands()) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
