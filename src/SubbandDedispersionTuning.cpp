@@ -247,7 +247,7 @@ int main(int argc, char * argv[]) {
             conf.setUnroll(unroll);
             if ( stepOne && (observation.getNrChannels() / observation.getNrSubbands()) % conf.getUnroll() != 0 ) {
               continue;
-            } else if ( stepTwo && observation.getNrChannels() % conf.getUnroll() != 0 ) {
+            } else if ( stepTwo && observation.getNrSubbands() % conf.getUnroll() != 0 ) {
               continue;
             }
 
