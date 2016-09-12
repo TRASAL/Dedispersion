@@ -311,13 +311,13 @@ int main(int argc, char * argv[]) {
               if ( stepOne ) {
                 kernel->setArg(0, dispersedData_d);
                 kernel->setArg(1, subbandedData_d);
-                kernel->setArg(2, shiftsStepOne_d);
-                kernel->setArg(3, zappedChannels_d);
+                kernel->setArg(2, zappedChannels_d);
+                kernel->setArg(3, shiftsStepOne_d);
               } else {
                 kernel->setArg(0, subbandedData_d);
                 kernel->setArg(1, dedispersedData_d);
-                kernel->setArg(2, shiftsStepTwo_d);
-                kernel->setArg(3, beamDriver_d);
+                kernel->setArg(2, beamDriver_d);
+                kernel->setArg(3, shiftsStepTwo_d);
               }
             }
 

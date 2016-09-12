@@ -203,10 +203,10 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   // Begin kernel's template
   if ( conf.getLocalMem() ) {
     if ( conf.getSplitSeconds() ) {
-      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n"
+      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n"
         "unsigned int sampleOffset = secondOffset * " + isa::utils::toString(observation.getNrSamplesPerBatch()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global const uchar * const restrict beamDriver, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const uchar * const restrict beamDriver, __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
     }
     *code +=  "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
@@ -338,10 +338,10 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
   } else {
     if ( conf.getSplitSeconds() ) {
-      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n"
+      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n"
         "unsigned int sampleOffset = secondOffset * " + isa::utils::toString(observation.getNrSamplesPerBatch()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global const uchar * restrict const beamDriver, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const uchar * restrict const beamDriver,  __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
     }
     *code += "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
@@ -608,10 +608,10 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
   // Begin kernel's template
   if ( conf.getLocalMem() ) {
     if ( conf.getSplitSeconds() ) {
-      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n"
+      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n"
         "unsigned int sampleOffset = secondOffset * " + std::to_string(observation.getNrSamplesPerBatch()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
     }
     *code += "unsigned int beam = get_group_id(2) / " + std::to_string(observation.getNrSubbands())  + ";\n"
       "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
@@ -700,10 +700,10 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
   } else {
     if ( conf.getSplitSeconds() ) {
-      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n"
+      *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n"
         "unsigned int sampleOffset = secondOffset * " + std::to_string(observation.getNrSamplesPerBatch()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const float * restrict const shifts, __constant const uchar * restrict const zappedChannels) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
     }
     *code += "unsigned int beam = get_group_id(2) / " + std::to_string(observation.getNrSubbands()) + ";\n"
       "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
@@ -945,7 +945,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const float * restrict const shifts) {\n"
         "unsigned int sampleOffset = secondOffset * " + std::to_string(observation.getNrSamplesPerBatch()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const float * restrict const shifts, __global const uchar * const restrict beamDriver) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const uchar * const restrict beamDriver, __constant const float * restrict const shifts) {\n";
     }
     *code +="unsigned int sBeam = get_group_id(2) / " + std::to_string(observation.getNrDMsSubbanding()) + ";\n"
       "unsigned int firstStepDM = get_group_id(2) % " + std::to_string(observation.getNrDMsSubbanding()) + ";\n"
@@ -1000,7 +1000,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       *code = "__kernel void dedispersion(const unsigned int secondOffset, __global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const float * restrict const shifts {\n"
         "unsigned int sampleOffset = secondOffset * " + std::to_string(observation.getNrSamplesPerBatch()) + ";\n";
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global const uchar * restrict const beamDriver, __global " + inputDataType + " * restrict const output, __constant const float * restrict const shifts) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const uchar * restrict const beamDriver, __constant const float * restrict const shifts) {\n";
     }
     *code +="unsigned int sBeam = get_group_id(2) / " + std::to_string(observation.getNrDMsSubbanding()) + ";\n"
       "unsigned int firstStepDM = get_group_id(2) % " + std::to_string(observation.getNrDMsSubbanding()) + ";\n"

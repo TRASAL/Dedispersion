@@ -226,14 +226,14 @@ int main(int argc, char * argv[]) {
               kernel->setArg(0, 0);
               kernel->setArg(1, dispersedData_d);
               kernel->setArg(2, dedispersedData_d);
-              kernel->setArg(3, shifts_d);
-              kernel->setArg(4, zappedChannels_d);
+              kernel->setArg(3, zappedChannels_d);
+              kernel->setArg(4, shifts_d);
             } else {
               kernel->setArg(0, dispersedData_d);
-              kernel->setArg(1, beamDriver_d);
-              kernel->setArg(2, dedispersedData_d);
-              kernel->setArg(3, shifts_d);
-              kernel->setArg(4, zappedChannels_d);
+              kernel->setArg(1, dedispersedData_d);
+              kernel->setArg(2, beamDriver_d);
+              kernel->setArg(3, zappedChannels_d);
+              kernel->setArg(4, shifts_d);
             }
 
             try {
