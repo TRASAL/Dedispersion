@@ -207,7 +207,7 @@ int main(int argc, char * argv[]) {
   }
 
 	std::cout << std::fixed << std::endl;
-	std::cout << "# nrBeams nrSBeams nrSubbandingDMs nrDMs nrSubbands nrChannels nrZappedChannels nrSamples *configuration* GFLOP/s time stdDeviation COV" << std::endl << std::endl;
+	std::cout << "# nrBeams nrSBeams nrSubbandingDMs nrDMs nrSubbands nrChannels nrZappedChannels nrSamplesSubbanding nrSamples *configuration* GFLOP/s time stdDeviation COV" << std::endl << std::endl;
 
 	for ( unsigned int threads = minThreads; threads <= maxColumns; threads += minThreads ) {
     conf.setNrThreadsD0(threads);
@@ -348,7 +348,8 @@ int main(int argc, char * argv[]) {
 
             std::cout << observation.getNrBeams() << " " << observation.getNrSyntheticBeams() << " ";
             std::cout << observation.getNrDMsSubbanding() << " " << observation.getNrDMs() << " ";
-            std::cout << observation.getNrSubbands() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " " << observation.getNrSamplesPerBatch() << " ";
+            std::cout << observation.getNrSubbands() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " ";
+            std::cout << observation.getNrSamplesPerBatchSubbanding() << " " << observation.getNrSamplesPerBatch() << " ";
             std::cout << conf.print() << " ";
             std::cout << std::setprecision(3);
             std::cout << gflops / timer.getAverageTime() << " ";
