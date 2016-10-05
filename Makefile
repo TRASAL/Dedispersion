@@ -1,14 +1,16 @@
 
+ROOT ?= $(HOME)
+
 # https://github.com/isazi/utils
-UTILS := $(HOME)/src/utils
+UTILS := $(ROOT)/src/utils
 # https://github.com/isazi/OpenCL
-OPENCL := $(HOME)/src/OpenCL
+OPENCL := $(ROOT)/src/OpenCL
 # https://github.com/isazi/AstroData
-ASTRODATA := $(HOME)/src/AstroData
+ASTRODATA := $(ROOT)/src/AstroData
 # HDF5
-HDF5 := $(HOME)/src/hdf5
+HDF5 := $(ROOT)/src/hdf5
 # http://psrdada.sourceforge.net/
-PSRDADA  := $(HOME)/src/psrdada
+PSRDADA  := $(ROOT)/src/psrdada
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
@@ -23,7 +25,7 @@ else
 endif
 
 LDFLAGS := -lm
-CL_LDFLAGS := $(LDFLAGS) -lOpenCL
+CL_LDFLAGS := $(LDFLAGS) -L/usr/local/cuda-6.0/targets/x86_64-linux/lib/ -lOpenCL
 HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp
 
 CC := g++
@@ -31,7 +33,7 @@ CC := g++
 # Dependencies
 DEPS := $(ASTRODATA)/bin/Observation.o $(UTILS)/bin/ArgumentList.o $(UTILS)/bin/Timer.o $(UTILS)/bin/utils.o bin/Shifts.o bin/Dedispersion.o
 CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $(OPENCL)/bin/Kernel.o
-DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o
+DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
 
 
 all: bin/Shifts.o bin/Dedispersion.o bin/DedispersionTest bin/DedispersionTuning bin/printCode bin/printShifts
