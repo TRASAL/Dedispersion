@@ -287,7 +287,11 @@ int main(int argc, char * argv[]) {
               reInit = false;
             }
             try {
-              kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+              if ( stepOne ) {
+                kernel = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+              } else {
+                kernel = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+              }
             } catch ( isa::OpenCL::OpenCLError & err ) {
               std::cerr << err.what() << std::endl;
               delete code;
