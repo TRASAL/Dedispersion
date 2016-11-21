@@ -52,6 +52,8 @@ int main(int argc, char * argv[]) {
 	unsigned int maxColumns = 0;
   unsigned int vectorWidth = 0;
   unsigned int maxItems = 0;
+  unsigned int maxSampleItems = 0;
+  unsigned int maxDMItems = 0;
   unsigned int maxUnroll = 0;
   std::string channelsFile;
   AstroData::Observation observation;
@@ -83,6 +85,8 @@ int main(int argc, char * argv[]) {
 		maxRows = args.getSwitchArgument< unsigned int >("-max_rows");
 		maxColumns = args.getSwitchArgument< unsigned int >("-max_columns");
 		maxItems = args.getSwitchArgument< unsigned int >("-max_items");
+    maxSampleItems = args.getSwitchArgument< unsigned int >("-max_sample_items");
+    maxDMItems = args.getSwitchArgument< unsigned int >("-max_dm_items");
     maxUnroll = args.getSwitchArgument< unsigned int >("-max_unroll");
     observation.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
     if ( stepTwo ) {
@@ -93,7 +97,7 @@ int main(int argc, char * argv[]) {
     observation.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"));
     observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
 	} catch ( isa::utils::EmptyCommandLine & err ) {
-		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-step_one | -step_two] [-split_seconds] [-local] -input_bits ... -padding ... -vector ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_columns ... -max_rows ... -beams ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+		std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-step_one | -step_two] [-split_seconds] [-local] -input_bits ... -padding ... -vector ... -min_threads ... -max_threads ... -max_items ... -max_unroll ... -max_columns ... -max_rows ... -max_sample_items ... -max_dm_items ... -beams ... -min_freq ... -channel_bandwidth ... -samples ... -subbands ... -channels ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     std::cerr << " -step_one: -zapped_channels ..." << std::endl;
     std::cerr << " -step_two: -synthetic_beams ..." << std::endl;
 		return 1;
@@ -218,7 +222,7 @@ int main(int argc, char * argv[]) {
       } else if ( (conf.getNrThreadsD0() * conf.getNrThreadsD1()) % vectorWidth != 0 ) {
          continue;
       }
-      for ( unsigned int items = 1; items <= maxItems; items++ ) {
+      for ( unsigned int items = 1; items <= maxSampleItems; items++ ) {
         conf.setNrItemsD0(items);
         if ( stepOne ) {
           if ( (observation.getNrSamplesPerBatchSubbanding() % conf.getNrItemsD0()) != 0 ) {
@@ -229,7 +233,7 @@ int main(int argc, char * argv[]) {
             continue;
           }
         }
-        for ( unsigned int items = 1; items <= maxItems; items++ ) {
+        for ( unsigned int items = 1; items <= maxDMItems; items++ ) {
           conf.setNrItemsD1(items);
           if ( (conf.getNrItemsD0() * conf.getNrItemsD1()) + conf.getNrItemsD1() > maxItems ) {
             break;
