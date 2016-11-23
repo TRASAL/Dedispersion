@@ -1,16 +1,16 @@
 
-ROOT ?= $(HOME)
+APERTIF_ROOT ?= $(HOME)
 
 # https://github.com/isazi/utils
-UTILS := $(ROOT)/src/utils
+UTILS := $(APERTIF_ROOT)/src/utils
 # https://github.com/isazi/OpenCL
-OPENCL := $(ROOT)/src/OpenCL
+OPENCL := $(APERTIF_ROOT)/src/OpenCL
 # https://github.com/isazi/AstroData
-ASTRODATA := $(ROOT)/src/AstroData
+ASTRODATA := $(APERTIF_ROOT)/src/AstroData
 # HDF5
-HDF5 := $(ROOT)/src/hdf5
+HDF5 := $(APERTIF_ROOT)/src/hdf5
 # http://psrdada.sourceforge.net/
-PSRDADA  := $(ROOT)/src/psrdada
+PSRDADA  := $(APERTIF_ROOT)/src/psrdada
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
@@ -55,6 +55,16 @@ bin/printCode: $(DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODAT
 
 bin/printShifts: $(DEPS) src/printShifts.cpp
 	$(CC) -o bin/printShifts src/printShifts.cpp $(DEPS) $(INCLUDES) $(LDFLAGS) $(CFLAGS)
+
+test: bin/DedispersionTest
+	touch empty
+	./bin/DedispersionTest -opencl_platform 0 -opencl_device 0 -input_bits 32 -padding 32 -vector 32 -zapped_channels empty -threads0 4 -threads1 4 -items0 4 -items1 4 -unroll 4 -channels 16 -min_freq 52.5 -channel_bandwidth 5 -samples 1024 -dms 16 -dm_first 1.1 -dm_step 5.5 
+	rm empty
+
+tune: bin/DedispersionTuning
+	touch empty
+	./bin/DedispersionTuning -opencl_platform 0 -opencl_device 0 -input_bits 32 -padding 32 -vector 32 -zapped_channels empty -min_threads 4 -max_threads 1024 -max_items 255 -max_unroll 4 -channels 16 -min_freq 52.5 -channel_bandwidth 5 -samples 1024 -dms 16 -dm_first 1.1 -dm_step 5.5 -max_loopsize 512 -max_rows 16 -max_columns 16 -iterations 3
+	rm empty
 
 clean:
 	-@rm bin/*
