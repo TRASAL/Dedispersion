@@ -58,6 +58,10 @@ bin/printShifts: $(DEPS) src/printShifts.cpp
 
 test: bin/DedispersionTest
 	touch empty
+	echo "Example kernel:"
+	./bin/printCode -opencl_platform 0 -opencl_device 0 -input_bits 32 -padding 32 -vector 32 -zapped_channels empty -threads0 4 -threads1 4 -items0 4 -items1 4 -unroll 4 -channels 16 -min_freq 52.5 -channel_bandwidth 5 -samples 1024 -dms 16 -dm_first 1.1 -dm_step 5.5 
+	echo "Example shifts:"
+	./bin/printShifts -opencl_platform 0 -opencl_device 0 -input_bits 32 -padding 32 -vector 32 -zapped_channels empty -threads0 4 -threads1 4 -items0 4 -items1 4 -unroll 4 -channels 16 -min_freq 52.5 -channel_bandwidth 5 -samples 1024 -dms 16 -dm_first 1.1 -dm_step 5.5 
 	./bin/DedispersionTest -opencl_platform 0 -opencl_device 0 -input_bits 32 -padding 32 -vector 32 -zapped_channels empty -threads0 4 -threads1 4 -items0 4 -items1 4 -unroll 4 -channels 16 -min_freq 52.5 -channel_bandwidth 5 -samples 1024 -dms 16 -dm_first 1.1 -dm_step 5.5 
 	rm empty
 

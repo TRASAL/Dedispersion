@@ -34,21 +34,44 @@ Then build and test as follows:
 
 The dedispersion step is typically compiled as part of a larger pipeline, but this repo contains two example programs in the `bin/` directory to test and autotune a dedispersion kernel.
 
+## printCode
+
+Prints the code for a specific dedispersion kernel to stdout.
+Needs platform, data layout, and kernel configuration parameters (see below).
+
 ## DedispersionTest
 
 Checks if the output of the CPU is the same for the GPU.
 The CPU is assumed to be always correct.
+Needs platform, data layout, and kernel configuration parameters (see below).
 
-Platform specific arguments:
+## DedispersionTune
+
+Tune the dedispersion kernel's parameters by doing a complete sampling of the parameter space.
+Kernel configuration and runtime statistics are written to stdout.
+The commandline parameters are as above, except for the kernel configuration parameters.
+Needs platform, data layout, and tuning parameters (see below).
+
+The output can be analyzed using the python scripts in in the *analysis* directory.
+
+## printShifts
+
+Python program to store, analyse, and plot the output of the tuning.
+Needs platform and data layout parameters (see below).
+
+## Commandline arguments
+
+Description of common commandline arguments for the separate binaries.
+
+### Compute platform specific arguments
 
  * *opencl_platform*     OpenCL platform
  * *opencl_device*       OpenCL device number
  * *input_bits*          number of bits of the input
  * *padding*             number of elements in the cacheline of the platform
  * *vector*              vector size in number of elements
- * *zapped_channels*     file containing tainted channels, or empty file
 
-Data input arguments:
+### Data layout arguments
 
  * *channels*                Number of channels
  * *min_freq*                Frequency of first channel
@@ -57,18 +80,17 @@ Data input arguments:
  * *dms*                     Number of dispersion measures, ie. length of dm dimension; should be divisible by *threads1*, *items1*, and *threads1 x items1*
  * *dm_first*                Dispersion measure [m3/parsec?]
  * *dm_step*                 Dispersion measure step size [m3/parsec?]
+ * *zapped_channels*         File containing tainted channels, or empty file
+ * *split-seconds*           Optional. Sets a different way of treating the input: (not implemented in subband, unclear if it will be useful). Reduces data transfers but slows down computation.
 
-Kernel Configuration arguments:
-
- *  *split-seconds*         Optional. Sets a different way of treating the input: (not implemented in subband, unclear if it will be useful). Reduces data transfers but slows down computation.
-
-    * standard mode data is continuous in memmory
+    * default mode: data is continuous in memmory
     * split-seconds mode: data is blocked in bunches of 1 second 
-
- *  *local*                 Defines OpenCL memmory space to use; ie. automatic or manual caching.
+ *  *local*                  Defines OpenCL memmory space to use; ie. automatic or manual caching.
 
     * global [default]
     * local, local is often faster
+
+### Kernel Configuration arguments
 
  *  *threads0*              Number of threads in dimension 0 (time)
  *  *threads1*              Number of threads in dimension 1 (dm)
@@ -76,13 +98,7 @@ Kernel Configuration arguments:
  *  *items1*                Tiling factor in dimension 1: ie. the number of items per thread
  *  *unroll*                How far to unroll loops
 
-
-## DedispersionTune
-
-Tune the dedispersion kernel's parameters by doing a complete sampling of the parameter space.
-Kernel configuration and runtime statistics are written to stdout.
-The commandline arguments are as above, except for the kernel configuration arguments.
-These are replaced by the folling options to define the parameter space:
+### Tuning parameters
 
  * *iterations*          Number of samples for a given configuration. 
  * *min_threads*         Minimum number of threads to use. Use this to reduce the parameter space.
@@ -93,9 +109,10 @@ These are replaced by the folling options to define the parameter space:
  * *max_columns*         Limit on length of dimension 0
  * *max_rows*            Limit on length of dimension 1
 
-## analysis.py (TODO)
 
-Python program to store, analyse, and plot the output of the tuning.
+# Analyzing tuning output
+
+TODO
 
 # Included classes
 
