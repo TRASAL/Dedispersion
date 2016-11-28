@@ -18,8 +18,7 @@
 #include <Observation.hpp>
 
 
-#ifndef SHIFTS_HPP
-#define SHIFTS_HPP
+#pragma once
 
 namespace PulsarSearch {
 
@@ -27,6 +26,4 @@ std::vector< float > * getShifts(AstroData::Observation & observation, const uns
 std::vector< float > * getSubbandStepTwoShifts(AstroData::Observation & observation, const unsigned int padding);
 
 } // PulsarSearch
-
-#endif // SHIFTS_HPP
 

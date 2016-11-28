@@ -22,8 +22,7 @@
 #include <utils.hpp>
 #include <Bits.hpp>
 
-#ifndef DEDISPERSION_HPP
-#define DEDISPERSION_HPP
+#pragma once
 
 namespace PulsarSearch {
 
@@ -1160,6 +1159,4 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
 }
 
 } // PulsarSearch
-
-#endif // DEDISPERSION_HPP
 

@@ -1,6 +1,5 @@
 
-#ifndef CONFIGURATION_DEDISPERSION_HPP
-#define CONFIGURATION_DEDISPERSION_HPP
+#pragma once
 
 // Define the data types
 typedef float inputDataType;
@@ -9,6 +8,4 @@ typedef float intermediateDataType;
 std::string intermediateDataName("float");
 typedef float outputDataType;
 std::string outputDataName("float");
-
-#endif // CONFIGURATION_DEDISPERSION_HPP
 
