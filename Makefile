@@ -1,16 +1,16 @@
 
-APERTIF_ROOT ?= $(HOME)
+SOURCE_ROOT ?= $(HOME)
 
 # https://github.com/isazi/utils
-UTILS := $(APERTIF_ROOT)/src/utils
+UTILS := $(SOURCE_ROOT)/src/utils
 # https://github.com/isazi/OpenCL
-OPENCL := $(APERTIF_ROOT)/src/OpenCL
+OPENCL := $(SOURCE_ROOT)/src/OpenCL
 # https://github.com/isazi/AstroData
-ASTRODATA := $(APERTIF_ROOT)/src/AstroData
+ASTRODATA := $(SOURCE_ROOT)/src/AstroData
 # HDF5
-HDF5 := $(APERTIF_ROOT)/src/hdf5
+HDF5 := $(SOURCE_ROOT)/src/hdf5
 # http://psrdada.sourceforge.net/
-PSRDADA  := $(APERTIF_ROOT)/src/psrdada
+PSRDADA  := $(SOURCE_ROOT)/src/psrdada
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"

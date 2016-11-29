@@ -9,11 +9,11 @@ Many-core incoherent dedispersion algorithm in OpenCL, with classes to use them 
 
 # Installation
 
-Set the `APERTIF_ROOT` environment variable to the location of the pipeline sourcode.
+Set the `SOURCE_ROOT` environment variable to the location of the pipeline sourcode.
 If this package is installed in `$HOME/Code/APERTIF/Dedispersion` this would be:
 
 ```bash
- $ export APERTIF_ROOT=$HOME/Code/APERTIF
+ $ export SOURCE_ROOT=$HOME/Code/APERTIF
 ```
 
 Then build and test as follows:
@@ -112,7 +112,53 @@ Description of common commandline arguments for the separate binaries.
 
 # Analyzing tuning output
 
-TODO
+Kernel statistics can be saved to a database, and analyzed to find the optimal configuration.
+
+## Setup
+
+### MariaDB
+
+Install mariadb, fi. via your package manager. Then:
+
+0. log in to the database: ` $ mysql`
+1. create a database to hold our tuning data: `create database AAALERT`
+2. make sure we can use it (replace USER with your username): `grant all privileges on AAALERT.* to 'USER'@'localhost';` 
+3. copy the template configuration file: `cp analysis/config.py.orig analysis/config.py` and enter your configuration.
+
+### Python
+
+The analysis scripts use some python3 packages. An easy way to set this up is using `virtualenv`:
+
+```bash
+$ cd $SOURCE_ROOT/Dedispersion/analysis`
+$ virtualenv --system-site-packages --python=python3 env`
+$ . env/bin/activate`
+```
+
+And then install the missing packages:
+
+```bash
+$ pip install pymysql
+```
+
+## Run Analysis
+
+The analysis is controlled by the `analysis/dedispersin.py` script.
+It prints data as space-separated data to stdout, where you can plot it with fi. gnuplot, or copy-paste it in your favorite spreadsheet.
+You can also write it to a file, that can then be read by the dedispersion code.
+
+1. List current tables: `./dedispersion.py list`
+2. Create a table: `./dedispersion.py create <table name>`
+3. Enter a file create with DedispersionTuning into the database: `./dedispersion load <table name> <file name>`
+4. Find optimal kernel configuration: `./dedispersion.py tune <table name> max <channels> <samples>`
+     
+The tune subcommand also takes a number of different parameters: `./dedispersion.py tune <table> <operator> <channels> <samples> [local|cache] [split|cont]`
+
+ * operator: max, min, avg, std  (SQL aggergation commands)
+ * channels: number of channels
+ * samples: number of samples
+ * local|cache  When specified, only consider local or cache kernels. See tuning document.
+ * split|cont   When specified, only consider with or without the split_second option. See tuning document.
 
 # Included classes
 
