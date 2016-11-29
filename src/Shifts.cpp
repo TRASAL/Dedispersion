@@ -30,7 +30,7 @@ std::vector< float > * getShifts(AstroData::Observation & observation, const uns
 	return shifts;
 }
 
-std::vector< float > * getSubbandStepTwoShifts(AstroData::Observation & observation, const unsigned int padding) {
+std::vector< float > * getShiftsStepTwo(AstroData::Observation & observation, const unsigned int padding) {
   float inverseHighFreq = 1.0f / std::pow(observation.getSubbandMaxFreq(), 2.0f);
   std::vector< float > * shifts = new std::vector< float >(observation.getNrPaddedSubbands(padding / sizeof(float)));
 
