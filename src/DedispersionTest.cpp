@@ -64,10 +64,12 @@ int main(int argc, char *argv[]) {
     }
     clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
     clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
-    inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
+    if ( singleStep || stepOne ) {
+      inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
+      channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
+    }
     padding = args.getSwitchArgument< unsigned int >("-padding");
     // Kernel configuration
-    channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     conf.setLocalMem(args.getSwitch("-local"));
     conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-threads0"));
     conf.setNrThreadsD1(args.getSwitchArgument< unsigned int >("-threads1"));
