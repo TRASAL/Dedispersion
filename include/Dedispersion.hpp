@@ -63,7 +63,7 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
 
 // Implementations
 template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
-  for ( unsigned int sBeam = 0; sBeam < observation.getNrSyntheticBeams(); sBeam++ ) {
+  for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
     for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
         L dedispersedSample = static_cast< L >(0);
@@ -134,7 +134,7 @@ template< typename I, typename L, typename O > void subbandDedispersionStepOne(A
 }
 
 template< typename I, typename L, typename O > void subbandDedispersionStepTwo(AstroData::Observation & observation, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding) {
-  for ( unsigned int sBeam = 0; sBeam < observation.getNrSyntheticBeams(); sBeam++ ) {
+  for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
     for ( unsigned int firstStepDM = 0; firstStepDM < observation.getNrDMsSubbanding(); firstStepDM++ ) {
       for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
         for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
@@ -177,7 +177,7 @@ inline void DedispersionConf::setUnroll(unsigned int unroll) {
   this->unroll = unroll;
 }
 
-// TODO: splitSeconds mode 
+// TODO: splitSeconds mode
 template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
   std::string * code = new std::string();
   std::string sum_sTemplate = std::string();
@@ -341,7 +341,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       }
     }
   }
-	std::string def_sTemplate = intermediateDataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
+  std::string def_sTemplate = intermediateDataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
   std::string defsShiftTemplate = "unsigned int shiftDM<%DM_NUM%> = 0;\n";
   std::string shiftsTemplate;
   if ( conf.getLocalMem() ) {
@@ -355,7 +355,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   } else {
     store_sTemplate = "output[(sBeam * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ") + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(O))) + ") + (sample + <%OFFSET%>)] = convert_" + outputDataType + "(dedispersedSample<%NUM%>DM<%DM_NUM%>);\n";
   }
-	// End kernel's template
+  // End kernel's template
 
   std::string * def_s =  new std::string();
   std::string * defsShift_s = new std::string();
@@ -660,7 +660,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
       }
     }
   }
-	std::string def_sTemplate = intermediateDataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
+  std::string def_sTemplate = intermediateDataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
   std::string defsShiftTemplate = "unsigned int shiftDM<%DM_NUM%> = 0;\n";
   std::string shiftsTemplate;
   if ( conf.getLocalMem() ) {
@@ -881,9 +881,6 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
       "<%DEFS%>"
       "\n"
-      "if ( sample > " + std::to_string(observation.getNrSamplesPerBatchSubbanding()) + " ) {\n"
-      "return;\n"
-      "}\n"
       "for ( unsigned int channel = 0; channel < " + std::to_string(observation.getNrSubbands()) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
       "<%DEFS_SHIFT%>"
       "<%UNROLLED_LOOP%>"
@@ -895,15 +892,13 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       "<%SUMS%>"
       "\n";
   }
-	std::string def_sTemplate = inputDataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
+  std::string def_sTemplate = inputDataType + " dedispersedSample<%NUM%>DM<%DM_NUM%> = 0;\n";
   std::string defsShiftTemplate = "unsigned int shiftDM<%DM_NUM%> = 0;\n";
   std::string shiftsTemplate;
   std::string sum_sTemplate;
   if ( conf.getLocalMem() ) {
     shiftsTemplate = "shiftDM<%DM_NUM%> = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + DMStep_s + "))) - minShift;\n";
-    sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatchSubbanding()) + " ) {\n"
-      "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n"
-      "}\n";
+    sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
   } else {
     shiftsTemplate = "shiftDM<%DM_NUM%> = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + DMStep_s + ")));\n";
     sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
@@ -913,7 +908,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
   std::string store_sTemplate ="if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
     "output[(sBeam * " + std::to_string(observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ")  + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n"
     "}\n";
-	// End kernel's template
+  // End kernel's template
 
   std::string * def_s =  new std::string();
   std::string * defsShift_s = new std::string();
