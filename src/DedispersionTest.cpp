@@ -80,14 +80,14 @@ int main(int argc, char *argv[]) {
     observation.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
     observation.setNrSamplesPerBatch(args.getSwitchArgument< unsigned int >("-samples"));
     if ( singleStep ) {
-      observation.setNrSyntheticBeams(args.getSwitchArgument< unsigned int >("-synthetic_beams"));
+      observation.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
       observation.setFrequencyRange(1, args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
     } else if ( stepOne ) {
       observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       observation.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"));
     } else if ( stepTwo ) {
-      observation.setNrSyntheticBeams(args.getSwitchArgument< unsigned int >("-synthetic_beams"));
+      observation.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
       observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
       observation.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), 0.0f, 0.0f);
       observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
@@ -97,9 +97,9 @@ int main(int argc, char *argv[]) {
     return 1;
   }catch ( std::exception & err ) {
     std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] [-random] [-single_step | -step_one | -step_two] -opencl_platform ... -opencl_device ... -padding ... -vector ... [-local] -threads0 ... -threads1 ... -items0 ... -items1 ... -unroll ... -beams ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
-    std::cerr << "\t-single_step -input_bits ... -zapped_channels ... -synthetic_beams ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "\t-single_step -input_bits ... -zapped_channels ... -synthesized_beams ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     std::cerr << "\t-step_one -input_bits ... -zapped_channels ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ..." << std::endl;
-    std::cerr << "\t-step_two -synthetic_beams ... -subbands ... -subbanding_dms ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "\t-step_two -synthesized_beams ... -subbands ... -subbanding_dms ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     return 1;
   }
 
@@ -120,20 +120,20 @@ int main(int argc, char *argv[]) {
   std::vector< float > * shiftsStepOne = PulsarSearch::getShifts(observation, padding);
   std::vector< float > * shiftsStepTwo = PulsarSearch::getShiftsStepTwo(observation, padding);
   std::vector< uint8_t > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
-  std::vector< uint8_t > beamDriverSingleStep(observation.getNrSyntheticBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
-  std::vector< uint8_t > beamDriverStepTwo(observation.getNrSyntheticBeams() * observation.getNrPaddedSubbands(padding / sizeof(uint8_t)));
+  std::vector< uint8_t > beamDriverSingleStep(observation.getNrSynthesizedBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
+  std::vector< uint8_t > beamDriverStepTwo(observation.getNrSynthesizedBeams() * observation.getNrPaddedSubbands(padding / sizeof(uint8_t)));
 
   AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
   if ( singleStep ) {
     observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
     if ( inputBits >= 8 ) {
       dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)));
-      dedispersedData.resize(observation.getNrSyntheticBeams() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
-      dedispersedData_c.resize(observation.getNrSyntheticBeams() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
+      dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
+      dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
     } else {
       dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)));
-      dedispersedData.resize(observation.getNrSyntheticBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(outputDataType)));
-      dedispersedData_c.resize(observation.getNrSyntheticBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(outputDataType)));
+      dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(outputDataType)));
+      dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(outputDataType)));
     }
   } else if ( stepOne ) {
     observation.setNrSamplesPerBatchSubbanding(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
@@ -150,8 +150,8 @@ int main(int argc, char *argv[]) {
   } else {
     observation.setNrSamplesPerBatchSubbanding(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
     subbandedData.resize(observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerBatchSubbanding(padding / sizeof(outputDataType)));
-    dedispersedData.resize(observation.getNrSyntheticBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
-    dedispersedData_c.resize(observation.getNrSyntheticBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
+    dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
+    dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
   }
 
   // Allocate device memory
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
       beamDriverStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamDriverStepTwo.sizeo() * sizeof(uint8_t), 0, 0);
     }
   } catch ( cl::Error & err ) {
-    std::cerr << "OpenCL error allocating memory: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
+    std::cerr << "OpenCL error allocating memory: " << std::to_string(err.err()) << "." << std::endl;
     return 1;
   }
 
@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSyntheticBeams(); syntBeam++ ) {
+    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
         beamDriverSingleStep[(syntBeam * observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel] = syntBeam % observation.getNrBeams();
       }
@@ -300,7 +300,7 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSyntheticBeams(); syntBeam++ ) {
+    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
       for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
         beamDriverSingleStep[(syntBeam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband] = syntBeam % observation.getNrBeams();
       }
@@ -325,7 +325,7 @@ int main(int argc, char *argv[]) {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamDriverStepTwo_d, CL_FALSE, 0, beamDriverStepTwo.size() * sizeof(uint8_t), reinterpret_cast< void * >(beamDriverStepTwo.data()), 0, 0);
     }
   } catch ( cl::Error & err ) {
-    std::cerr << "OpenCL error H2D transfer: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
+    std::cerr << "OpenCL error H2D transfer: " << std::to_string(err.err()) << "." << std::endl;
     return 1;
   }
 
@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
   cl::Kernel * kernel;
 
   if ( singleStep ) {
-    code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsSingleStep, zappedChannels);
+    code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsSingleStep);
   } else if ( stepOne ) {
     code = PulsarSearch::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
   } else {
@@ -362,13 +362,13 @@ int main(int argc, char *argv[]) {
     cl::NDRange local;
 
     if ( singleStep ) {
-      global = cl::NDRange(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSyntheticBeams());
+      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSynthesizedBeams());
       local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
     } else if ( stepOne ) {
       global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMsSubbanding() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
       local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
     } else {
-      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSyntheticBeams() * observation.getNrDMsSubbanding());
+      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding());
       local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
     }
 
@@ -407,15 +407,15 @@ int main(int argc, char *argv[]) {
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()));
     }
   } catch ( cl::Error & err ) {
-    std::cerr << "OpenCL error kernel execution: " << isa::utils::toString< cl_int >(err.err()) << "." << std::endl;
+    std::cerr << "OpenCL error kernel execution: " << std::to_string(err.err()) << "." << std::endl;
     return 1;
   }
 
   // Compare results
   if ( singleStep ) {
-    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSyntheticBeams(); syntBeam++ ) {
+    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
       if ( printResults ) {
-        std::cout << "Synthetic Beam: " << syntBeam << std::endl;
+        std::cout << "Synthesized Beam: " << syntBeam << std::endl;
       }
       for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
         if ( printResults ) {
@@ -467,9 +467,9 @@ int main(int argc, char *argv[]) {
       }
     }
   } else {
-    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSyntheticBeams(); syntBeam++ ) {
+    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
       if ( printResults ) {
-        std::cout << "Synthetic Beam: " << syntBeam << std::endl;
+        std::cout << "Synthesized Beam: " << syntBeam << std::endl;
       }
       for ( unsigned int dm = 0; dm < observation.getNrDMsSubbanding() * observation.getNrDMs(); dm++ ) {
         if ( printResults ) {
@@ -495,11 +495,11 @@ int main(int argc, char *argv[]) {
 
   if ( wrongSamples > 0 ) {
     if ( singleStep ) {
-      std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrSyntheticBeams()) * observation.getNrDMs() * observation.getNrSamplesPerBatch()) << "%)." << std::endl;
+      std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMs() * observation.getNrSamplesPerBatch()) << "%)." << std::endl;
     } else if ( stepOne ) {
       std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrBeams()) * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerBatchSubbanding()) << "%)." << std::endl;
     } else {
-      std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrSyntheticBeams()) * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerBatch()) << "%)." << std::endl;
+      std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerBatch()) << "%)." << std::endl;
     }
   } else {
     std::cout << "TEST PASSED." << std::endl;
