@@ -304,7 +304,7 @@ int main(int argc, char *argv[]) {
     }
     for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
       for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-        beamDriverSingleStep[(syntBeam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband] = syntBeam % observation.getNrBeams();
+        beamDriverStepTwo[(syntBeam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband] = syntBeam % observation.getNrBeams();
       }
     }
   }
