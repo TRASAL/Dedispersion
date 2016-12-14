@@ -208,13 +208,33 @@ int main(int argc, char * argv[]) {
       }
       for ( unsigned int items = 1; items <= maxSampleItems; items++ ) {
         conf.setNrItemsD0(items);
-        if ( (observation.getNrSamplesPerBatch() % conf.getNrItemsD0()) != 0 ) {
-          continue;
+        if ( singleStep ) {
+          if ( (observation.getNrSamplesPerBatch() % conf.getNrItemsD0()) != 0 ) {
+            continue;
+          }
+        } else if ( stepOne ) {
+          if ( (observation.getNrSamplesPerBatchSubbanding() % conf.getNrItemsD0()) != 0 ) {
+            continue;
+          }
+        } else {
+          if ( (observation.getNrSamplesPerBatch() % conf.getNrItemsD0()) != 0 ) {
+            continue;
+          }
         }
         for ( unsigned int items = 1; items <= maxDMItems; items++ ) {
           conf.setNrItemsD1(items);
-          if ( (observation.getNrDMs() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
-            continue;
+          if ( singleStep ) {
+            if ( (observation.getNrDMs() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
+              continue;
+            }
+          } else if ( stepOne ) {
+            if ( (observation.getNrDMsSubbanding() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
+              continue;
+            }
+          } else {
+            if ( (observation.getNrDMs() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
+              continue;
+            }
           }
           unsigned int nrItems = conf.getNrItemsD1() + (conf.getNrItemsD0() * conf.getNrItemsD1());
           if ( singleStep ) {
@@ -248,8 +268,18 @@ int main(int argc, char * argv[]) {
           }
           for ( unsigned int unroll = 1; unroll <= maxUnroll; unroll++ ) {
             conf.setUnroll(unroll);
-            if ( observation.getNrChannels() % conf.getUnroll() != 0 ) {
-              continue;
+            if ( singleStep ) {
+              if ( observation.getNrChannels() % conf.getUnroll() != 0 ) {
+                continue;
+              }
+            } else if ( stepOne ) {
+              if ( observation.getNrChannelsPerSubband() % conf.getUnroll() != 0 ) {
+                continue;
+              }
+            } else {
+              if ( observation.getNrSubbands() % conf.getUnroll() != 0 ) {
+                continue;
+              }
             }
 
             // Generate kernel
