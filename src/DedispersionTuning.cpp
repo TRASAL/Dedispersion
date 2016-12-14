@@ -266,9 +266,9 @@ int main(int argc, char * argv[]) {
                 if ( singleStep ) {
                   initializeDeviceMemorySingleStep(clContext, &(clQueues->at(clDeviceID)[0]), shiftsSingleStep, &shiftsSingleStep_d, zappedChannels, &zappedChannels_d, beamDriverSingleStep, &beamDriverSingleStep_d, &dispersedData_d, dispersedData_size, &dedispersedData_d, dedispersedData_size);
                 } else if ( stepOne ) {
-                  initializeDeviceMemoryStepOne(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepOne, &shiftsStepOne_d, zappedChannels, &zappedChannels_d, &dispersedData_d, dispersedData_size, &subbandedData_d, subbandedData_size);
+                  initializeDeviceMemoryStepOne(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepOne, &shiftsStepOne_d, zappedChannels, &zappedChannels_d, dispersedData_size, &dispersedData_d, subbandedData_size, &subbandedData_d);
                 } else {
-                  initializeDeviceMemoryStepTwo(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepTwo, &shiftsStepTwo_d, beamDriverStepTwo, &beamDriverStepTwo_d, &subbandedData_d, subbanded_size, &dedispersed_d, dedispersed_size);
+                  initializeDeviceMemoryStepTwo(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepTwo, &shiftsStepTwo_d, beamDriverStepTwo, &beamDriverStepTwo_d, subbanded_size, &subbandedData_d, dedispersed_size, &dedispersedData_d);
                 }
               } catch ( cl::Error & err ) {
                 std::cerr << "Error in memory allocation: ";
