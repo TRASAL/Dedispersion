@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
       shiftsStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepTwo->size() * sizeof(float), 0, 0);
       subbandedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, subbandedData.size() * sizeof(outputDataType), 0, 0);
       dedispersedData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, dedispersedData.size() * sizeof(outputDataType), 0, 0);
-      beamDriverStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamDriverStepTwo.sizeo() * sizeof(uint8_t), 0, 0);
+      beamDriverStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamDriverStepTwo.size() * sizeof(uint8_t), 0, 0);
     }
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error allocating memory: " << std::to_string(err.err()) << "." << std::endl;
