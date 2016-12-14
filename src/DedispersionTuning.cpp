@@ -124,7 +124,7 @@ int main(int argc, char * argv[]) {
   std::vector< float > * shiftsStepTwo = PulsarSearch::getShiftsStepTwo(observation, padding);
   std::vector< uint8_t > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
   std::vector< uint8_t > beamDriverSingleStep(observation.getNrSynthesizedBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
-  std::vector< uint8_t > beamDriverStepTwo(observation.getNrSynthesizedBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
+  std::vector< uint8_t > beamDriverStepTwo(observation.getNrSynthesizedBeams() * observation.getNrPaddedSubbands(padding / sizeof(uint8_t)));
 
   if ( singleStep || stepOne ) {
     AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
