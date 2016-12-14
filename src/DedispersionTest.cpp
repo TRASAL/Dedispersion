@@ -387,8 +387,8 @@ int main(int argc, char *argv[]) {
       kernel->setArg(2, zappedChannels_d);
       kernel->setArg(3, shiftsStepOne_d);
     } else {
-      kernel->setArg(0, dispersedData_d);
-      kernel->setArg(1, subbandedData_d);
+      kernel->setArg(0, subbandedData_d);
+      kernel->setArg(1, dedispersedData_d);
       kernel->setArg(2, beamDriverStepTwo_d);
       kernel->setArg(3, shiftsStepTwo_d);
     }
