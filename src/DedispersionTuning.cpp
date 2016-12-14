@@ -159,35 +159,35 @@ int main(int argc, char * argv[]) {
 
   try {
     if ( singleStep ) {
-      shiftsSingleStep_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsSingleStep->size() * sizeof(float), 0, 0);
-      zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
+      shiftsSingleStep_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsSingleStep->size() * sizeof(float), 0, 0);
+      zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
       if ( inputBits >= 8 ) {
         dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType));
       } else {
         dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType));
       }
-      dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
+      dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
       dedispersedData_size = observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType));
-      dedispersedData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, dedispersedData_size * sizeof(outputDataType), 0, 0);
-      beamDriverSingleStep_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamDriverSingleStep.size() * sizeof(uint8_t), 0, 0);
+      dedispersedData_d = cl::Buffer(clContext, CL_MEM_WRITE_ONLY, dedispersedData_size * sizeof(outputDataType), 0, 0);
+      beamDriverSingleStep_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamDriverSingleStep.size() * sizeof(uint8_t), 0, 0);
     } else if ( stepOne ) {
-      shiftsStepOne_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
-      zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
+      shiftsStepOne_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
+      zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
       if ( inputBits >= 8 ) {
         dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType));
       } else {
         dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType));
       }
-      dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
+      dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
       subbandedData_size = observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType));
-      subbandedData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, subbandedData_size * sizeof(outputDataType), 0, 0);
+      subbandedData_d = cl::Buffer(clContext, CL_MEM_WRITE_ONLY, subbandedData_size * sizeof(outputDataType), 0, 0);
     } else {
-      shiftsStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepTwo->size() * sizeof(float), 0, 0);
+      shiftsStepTwo_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsStepTwo->size() * sizeof(float), 0, 0);
       subbandedData_size = observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType));
-      subbandedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, subbandedData_size * sizeof(outputDataType), 0, 0);
+      subbandedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, subbandedData_size * sizeof(outputDataType), 0, 0);
       dedispersedData_size = observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType));
-      dedispersedData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, dedispersedData_size * sizeof(outputDataType), 0, 0);
-      beamDriverStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamDriverStepTwo.size() * sizeof(uint8_t), 0, 0);
+      dedispersedData_d = cl::Buffer(clContext, CL_MEM_WRITE_ONLY, dedispersedData_size * sizeof(outputDataType), 0, 0);
+      beamDriverStepTwo_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamDriverStepTwo.size() * sizeof(uint8_t), 0, 0);
     }
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error allocating memory: " << std::to_string< cl_int >(err.err()) << "." << std::endl;
@@ -289,11 +289,11 @@ int main(int argc, char * argv[]) {
             }
             try {
               if ( singleStep ) {
-                kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+                kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
               } else if ( stepOne ) {
-                kernel = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+                kernel = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
               } else {
-                kernel = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *clContext, clDevices->at(clDeviceID));
+                kernel = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
               }
             } catch ( isa::OpenCL::OpenCLError & err ) {
               std::cerr << err.what() << std::endl;
