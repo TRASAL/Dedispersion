@@ -123,7 +123,9 @@ int main(int argc, char *argv[]) {
   std::vector< uint8_t > beamDriverSingleStep(observation.getNrSynthesizedBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
   std::vector< uint8_t > beamDriverStepTwo(observation.getNrSynthesizedBeams() * observation.getNrPaddedSubbands(padding / sizeof(uint8_t)));
 
-  AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
+  if ( singleStep || stepOne ) {
+    AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
+  }
   if ( singleStep ) {
     observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
     if ( inputBits >= 8 ) {
