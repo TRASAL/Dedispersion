@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
     observation.setNrSamplesPerSubbandingDispersedChannel(observation.getNrSamplesPerBatchSubbanding() + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDMSubbanding() + ((observation.getNrDMsSubbanding() - 1) * observation.getDMSubbandingStep()))));
     if ( inputBits >= 8 ) {
       dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType)));
-      subbandedData.resize(observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerBatchSubbanding(padding / sizeof(outputDataType)));
+      subbandedData.resize(observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType)));
       subbandedData_c.resize(observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerBatchSubbanding(padding / sizeof(outputDataType)));
     } else {
       dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)));
@@ -455,7 +455,7 @@ int main(int argc, char *argv[]) {
             }
           }
           if ( printResults) {
-            istd::cout << std::endl;
+            std::cout << std::endl;
           }
         }
         if ( printResults) {
