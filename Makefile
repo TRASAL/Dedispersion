@@ -34,7 +34,7 @@ CL_DEPS := $(DEPS) $(OPENCL)/bin/Exceptions.o $(OPENCL)/bin/InitializeOpenCL.o $
 DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o
 
 
-all: bin/Shifts.o bin/Dedispersion.o bin/DedispersionTest bin/DedispersionTuning bin/printCode bin/printShifts
+all: bin/Shifts.o bin/Dedispersion.o bin/DedispersionTest bin/DedispersionTuning
 
 bin/Shifts.o: $(ASTRODATA)/bin/Observation.o include/Shifts.hpp src/Shifts.cpp
 	$(CC) -o bin/Shifts.o -c src/Shifts.cpp $(INCLUDES) $(CFLAGS)
@@ -47,12 +47,6 @@ bin/DedispersionTest: $(CL_DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp 
 
 bin/DedispersionTuning: $(CL_DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/DedispersionTuning.cpp
 	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp $(CL_DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(CL_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
-
-bin/printCode: $(CL_DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printCode.cpp
-	$(CC) -o bin/printCode src/printCode.cpp $(CL_DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(CL_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
-
-bin/printShifts: $(CL_DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/printShifts.cpp
-	$(CC) -o bin/printShifts src/printShifts.cpp $(CL_DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(CL_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
