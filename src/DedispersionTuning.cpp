@@ -285,7 +285,7 @@ int main(int argc, char * argv[]) {
               gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrBeams()) * observation.getNrDMsSubbanding() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatchSubbanding());
             } else {
               code = PulsarSearch::getSubbandDedispersionStepTwoOpenCL< outputDataType >(conf, padding, outputDataName, observation, *shiftsStepTwo);
-              gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrSynthesizedBeams()) observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSubbands() * observation.getNrSamplesPerBatch());
+              gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSubbands() * observation.getNrSamplesPerBatch());
             }
             try {
               if ( singleStep ) {
