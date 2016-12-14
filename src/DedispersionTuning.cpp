@@ -174,7 +174,7 @@ int main(int argc, char * argv[]) {
       shiftsStepOne_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
       zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
       if ( inputBits >= 8 ) {
-        dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType));
+        dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType));
       } else {
         dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType));
       }
