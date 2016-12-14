@@ -268,7 +268,7 @@ int main(int argc, char * argv[]) {
                 } else if ( stepOne ) {
                   initializeDeviceMemoryStepOne(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepOne, &shiftsStepOne_d, zappedChannels, &zappedChannels_d, dispersedData_size, &dispersedData_d, subbandedData_size, &subbandedData_d);
                 } else {
-                  initializeDeviceMemoryStepTwo(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepTwo, &shiftsStepTwo_d, beamDriverStepTwo, &beamDriverStepTwo_d, subbanded_size, &subbandedData_d, dedispersed_size, &dedispersedData_d);
+                  initializeDeviceMemoryStepTwo(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepTwo, &shiftsStepTwo_d, beamDriverStepTwo, &beamDriverStepTwo_d, subbandedData_size, &subbandedData_d, dedispersedData_size, &dedispersedData_d);
                 }
               } catch ( cl::Error & err ) {
                 std::cerr << "Error in memory allocation: ";
