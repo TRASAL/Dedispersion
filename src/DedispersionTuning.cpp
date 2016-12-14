@@ -138,6 +138,21 @@ int main(int argc, char * argv[]) {
     observation.setNrSamplesPerBatchSubbanding(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
   }
 
+  // Generate test data
+  if ( singleStep ) {
+    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
+      for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
+        beamDriverSingleStep[(syntBeam * observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel] = syntBeam % observation.getNrBeams();
+      }
+    }
+  } else if ( !stepOne ) {
+    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
+      for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
+        beamDriverStepTwo[(syntBeam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband] = syntBeam % observation.getNrBeams();
+      }
+    }
+  }
+
   // Initialize OpenCL
   cl::Context clContext;
   std::vector< cl::Platform > * clPlatforms = new std::vector< cl::Platform >();
