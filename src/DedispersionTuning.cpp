@@ -190,7 +190,7 @@ int main(int argc, char * argv[]) {
       beamDriverStepTwo_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamDriverStepTwo.size() * sizeof(uint8_t), 0, 0);
     }
   } catch ( cl::Error & err ) {
-    std::cerr << "OpenCL error allocating memory: " << std::to_string< cl_int >(err.err()) << "." << std::endl;
+    std::cerr << "OpenCL error allocating memory: " << std::to_string(err.err()) << "." << std::endl;
     return 1;
   }
 
