@@ -322,7 +322,6 @@ int main(int argc, char *argv[]) {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, 0);
     } else {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepTwo_d, CL_FALSE, 0, shiftsStepTwo->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepTwo->data()), 0, 0);
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()), 0, 0);
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(subbandedData_d, CL_FALSE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, 0);
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamDriverStepTwo_d, CL_FALSE, 0, beamDriverStepTwo.size() * sizeof(uint8_t), reinterpret_cast< void * >(beamDriverStepTwo.data()), 0, 0);
     }
