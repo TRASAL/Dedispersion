@@ -906,7 +906,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       "}\n";
   }
   std::string store_sTemplate ="if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
-    "output[(sBeam * " + std::to_string(observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ")  + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n"
+    "output[(sBeam * " + std::to_string(observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerPaddedBatch(padding / sizeof(I))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n"
     "}\n";
   // End kernel's template
 
