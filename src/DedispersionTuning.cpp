@@ -459,14 +459,14 @@ void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * c
   }
 }
 
-void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepTwo, cl::Buffer * shiftsStepTwo_d, std::vector< uint8_t > & beamDriver, cl::Buffer * beamDriver_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d) {
+void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepTwo, cl::Buffer * shiftsStepTwo_d, std::vector< uint8_t > & beamDriverStepTwo, cl::Buffer * beamDriverStepTwo_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d) {
   try {
     *shiftsStepTwo_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsStepTwo->size() * sizeof(float), 0, 0);
-    *beamDriver_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamDriver.size() * sizeof(uint8_t), 0, 0);
+    *beamDriverStepTwo_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamDriverStepTwo.size() * sizeof(uint8_t), 0, 0);
     *subbandedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, subbandedData_size * sizeof(outputDataType), 0, 0);
     *dedispersedData_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, dedispersedData_size * sizeof(outputDataType), 0, 0);
     clQueue->enqueueWriteBuffer(*shiftsStepTwo_d, CL_FALSE, 0, shiftsStepTwo->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepTwo->data()));
-    clQueue->enqueueWriteBuffer(*beamDriver_d, CL_FALSE, 0, beamDriver.size() * sizeof(uint8_t), reinterpret_cast< void * >(beamDriver.data()));
+    clQueue->enqueueWriteBuffer(*beamDriverStepTwo_d, CL_FALSE, 0, beamDriverStepTwo.size() * sizeof(uint8_t), reinterpret_cast< void * >(beamDriverStepTwo.data()));
     clQueue->finish();
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error: " << std::to_string(err.err()) << "." << std::endl;
