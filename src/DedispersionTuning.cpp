@@ -34,7 +34,7 @@
 #include <Timer.hpp>
 #include <Stats.hpp>
 
-void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, std::vector< uint8_t > & beamDriver, cl::Buffer * beamDriver_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size);
+void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, std::vector< uint8_t > & beamDriver, cl::Buffer * beamDriver_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d);
 void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepOne, cl::Buffer * shiftsStepOne_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d);
 void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepTwo, cl::Buffer * shiftsStepTwo_d, std::vector< uint8_t > & beamDriver, cl::Buffer * beamDriver_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d);
 
@@ -311,7 +311,7 @@ int main(int argc, char * argv[]) {
               isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
               try {
                 if ( singleStep ) {
-                  initializeDeviceMemorySingleStep(clContext, &(clQueues->at(clDeviceID)[0]), shiftsSingleStep, &shiftsSingleStep_d, zappedChannels, &zappedChannels_d, beamDriverSingleStep, &beamDriverSingleStep_d, &dispersedData_d, dispersedData_size, &dedispersedData_d, dedispersedData_size);
+                  initializeDeviceMemorySingleStep(clContext, &(clQueues->at(clDeviceID)[0]), shiftsSingleStep, &shiftsSingleStep_d, zappedChannels, &zappedChannels_d, beamDriverSingleStep, &beamDriverSingleStep_d, dispersedData_size, &dispersedData_d, dedispersedData_size, &dedispersedData_d);
                 } else if ( stepOne ) {
                   initializeDeviceMemoryStepOne(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepOne, &shiftsStepOne_d, zappedChannels, &zappedChannels_d, dispersedData_size, &dispersedData_d, subbandedData_size, &subbandedData_d);
                 } else {
@@ -427,7 +427,7 @@ int main(int argc, char * argv[]) {
   return 0;
 }
 
-void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsSingleStep, cl::Buffer * shiftsSingleStep_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, std::vector< uint8_t > & beamDriverSingleStep, cl::Buffer * beamDriverSingleStep_d, cl::Buffer * dispersedData_d, const unsigned int dispersedData_size, cl::Buffer * dedispersedData_d, const unsigned int dedispersedData_size) {
+void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsSingleStep, cl::Buffer * shiftsSingleStep_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, std::vector< uint8_t > & beamDriverSingleStep, cl::Buffer * beamDriverSingleStep_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d) {
   try {
     *shiftsSingleStep_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsSingleStep->size() * sizeof(float), 0, 0);
     *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
