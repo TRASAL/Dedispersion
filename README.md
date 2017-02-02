@@ -4,6 +4,8 @@ Many-core incoherent dedispersion algorithm in OpenCL, with classes to use them 
 
 ## Publications
 
+* Alessio Sclocco, Joeri van Leeuwen, Henri E. Bal, Rob V. van Nieuwpoort. _Real-time dedispersion for fast radio transient surveys, using auto tuning on many-core accelerators_. **Astronomy and Computing**, 2016, 14, 1-7. ([print](http://www.sciencedirect.com/science/article/pii/S2213133716000020)) ([preprint](http://alessio.sclocco.eu/pubs/sclocco2016.pdf)) ([arxiv](http://arxiv.org/abs/1601.01165))
+* Alessio Sclocco, Joeri van Leeuwen, Henri E. Bal, Rob V. van Nieuwpoort. _A Real-Time Radio Transient Pipeline for ARTS_. **3rd IEEE Global Conference on Signal & Information Processing**, December 14-16, 2015, Orlando (Florida), USA. ([print](http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=7418239&abstractAccess=no&userType=inst)) ([preprint](http://alessio.sclocco.eu/pubs/sclocco2015a.pdf)) ([slides](http://alessio.sclocco.eu/pubs/Presentation_GlobalSIP2015.pdf))
 * Alessio Sclocco, Henri E. Bal, Rob V. van Nieuwpoort. _Finding Pulsars in Real-Time_. **IEEE International Conference on eScience**, 31 August - 4 September, 2015, Munich, Germany. ([print](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=7304280)) ([preprint](http://alessio.sclocco.eu/pubs/sclocco2015.pdf)) ([slides](http://alessio.sclocco.eu/pubs/Presentation_eScience2015.pdf))
 * Alessio Sclocco, Henri E. Bal, Jason Hessels, Joeri van Leeuwen, Rob V. van Nieuwpoort. _Auto-Tuning Dedispersion for Many-Core Accelerators_. **28th IEEE International Parallel & Distributed Processing Symposium (IPDPS)**, May 19-23, 2014, Phoenix (Arizona), USA. ([print](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6877325)) ([preprint](http://alessio.sclocco.eu/pubs/sclocco2014.pdf))
 
@@ -26,9 +28,9 @@ Then build and test as follows:
 
 ## Dependencies
 
-* [AstroData](https://github.com/isazi/AstroData) - master branch
-* [OpenCL](https://github.com/isazi/OpenCL) - master branch
 * [utils](https://github.com/isazi/utils) - master branch
+* [OpenCL](https://github.com/isazi/OpenCL) - master branch
+* [AstroData](https://github.com/isazi/AstroData) - master branch
 
 # Included programs
 
