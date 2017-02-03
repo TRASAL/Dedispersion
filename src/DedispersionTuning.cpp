@@ -71,7 +71,7 @@ int main(int argc, char * argv[]) {
     singleStep = args.getSwitch("-single_step");
     stepOne = args.getSwitch("-step_one");
     bool stepTwo = args.getSwitch("-step_two");
-    if ( (static_cast< unsigned int >(singleStep) + static_cast< unsigned int >(stepOne) + static_cast< unsigned int >(stepTwo)) > 1 ) {
+    if ( (static_cast< unsigned int >(singleStep) + static_cast< unsigned int >(stepOne) + static_cast< unsigned int >(stepTwo)) != 1 ) {
       std::cerr << "Mutually exclusive modes, select one: -single_step -step_one -step_two" << std::endl;
       return 1;
     }
