@@ -39,7 +39,7 @@ void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * c
 void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepTwo, cl::Buffer * shiftsStepTwo_d, std::vector< uint8_t > & beamDriver, cl::Buffer * beamDriver_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d);
 
 int main(int argc, char * argv[]) {
-  // TODO: implement split_seconds mode
+  // TODO: implement split_batches mode
   bool singleStep = false;
   bool stepOne = false;
   bool reInit = false;

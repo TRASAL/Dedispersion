@@ -34,7 +34,7 @@
 
 
 int main(int argc, char *argv[]) {
-  // TODO: implement split_seconds mode
+  // TODO: implement split_batches mode
   // TODO: implement a way to test external beam drivers
   unsigned int padding = 0;
   uint8_t inputBits = 0;
