@@ -76,14 +76,14 @@ def percentiles(queue, table, scenario, flags):
         condition = "local = 0"
     if flags[1] == 1:
         if flags[0] != 0:
-            condition += " AND splitSeconds = 1"
+            condition += " AND splitBatches = 1"
         else:
-            condition = "splitSeconds = 1"
+            condition = "splitBatches = 1"
     elif flags[1] == 2:
         if flags[0] != 0:
-            condition += " AND splitSeconds = 0"
+            condition += " AND splitBatches = 0"
         else:
-            condition = "splitSeconds = 0"
+            condition = "splitBatches = 0"
     dms_range = manage.get_dm_range(queue, table, scenario)
     for dm in dms_range:
         internalResults = list()

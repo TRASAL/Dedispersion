@@ -39,7 +39,7 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
 		nrDMs = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
-		conf->setSplitSeconds(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
+		conf->setSplitBatches(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
 		conf->setLocalMem(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
@@ -70,12 +70,12 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
   dedispersionFile.close();
 }
 
-DedispersionConf::DedispersionConf() : KernelConf(), splitSeconds(false), local(false), unroll(1) {}
+DedispersionConf::DedispersionConf() : KernelConf(), splitBatches(false), local(false), unroll(1) {}
 
 DedispersionConf::~DedispersionConf() {}
 
 std::string DedispersionConf::print() const {
-  return std::to_string(splitSeconds) + " " + std::to_string(local) + " " + std::to_string(unroll) + " " + isa::OpenCL::KernelConf::print();
+  return std::to_string(splitBatches) + " " + std::to_string(local) + " " + std::to_string(unroll) + " " + isa::OpenCL::KernelConf::print();
 }
 
 } // PulsarSearch

@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
         for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedChannel(); sample++ ) {
           if ( inputBits >= 8 ) {
-            if ( conf.getSplitSeconds() ) {
+            if ( conf.getSplitBatches() ) {
             } else {
               if ( random ) {
                 dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(rand() % 10);
@@ -215,7 +215,7 @@ int main(int argc, char *argv[]) {
             } else {
               value = inputBits - 1;
             }
-            if ( conf.getSplitSeconds() ) {
+            if ( conf.getSplitBatches() ) {
             } else {
               byte = sample / (8 / inputBits);
               firstBit = (sample % (8 / inputBits)) * inputBits;
@@ -223,13 +223,13 @@ int main(int argc, char *argv[]) {
             }
 
             for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
-              if ( conf.getSplitSeconds() ) {
+              if ( conf.getSplitBatches() ) {
               } else {
                 isa::utils::setBit(buffer, isa::utils::getBit(value, bit), firstBit + bit);
               }
             }
 
-            if ( conf.getSplitSeconds() ) {
+            if ( conf.getSplitBatches() ) {
             } else {
               dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
             }
@@ -247,7 +247,7 @@ int main(int argc, char *argv[]) {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
         for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSubbandingDispersedChannel(); sample++ ) {
           if ( inputBits >= 8 ) {
-            if ( conf.getSplitSeconds() ) {
+            if ( conf.getSplitBatches() ) {
             } else {
               if ( random ) {
                 dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(rand() % 10);
@@ -266,7 +266,7 @@ int main(int argc, char *argv[]) {
             } else {
               value = inputBits - 1;
             }
-            if ( conf.getSplitSeconds() ) {
+            if ( conf.getSplitBatches() ) {
             } else {
               byte = sample / (8 / inputBits);
               firstBit = (sample % (8 / inputBits)) * inputBits;
@@ -274,13 +274,13 @@ int main(int argc, char *argv[]) {
             }
 
             for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
-              if ( conf.getSplitSeconds() ) {
+              if ( conf.getSplitBatches() ) {
               } else {
                 isa::utils::setBit(buffer, isa::utils::getBit(value, bit), firstBit + bit);
               }
             }
 
-            if ( conf.getSplitSeconds() ) {
+            if ( conf.getSplitBatches() ) {
             } else {
               dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
             }
@@ -374,7 +374,7 @@ int main(int argc, char *argv[]) {
     }
 
     if ( singleStep ) {
-      if ( conf.getSplitSeconds() ) {
+      if ( conf.getSplitBatches() ) {
       } else {
         kernel->setArg(0, dispersedData_d);
         kernel->setArg(1, dedispersedData_d);
@@ -395,7 +395,7 @@ int main(int argc, char *argv[]) {
     }
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
     if ( singleStep ) {
-      if ( conf.getSplitSeconds() ) {
+      if ( conf.getSplitBatches() ) {
       } else {
         PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriverSingleStep, dispersedData, dedispersedData_c, *shiftsSingleStep, padding, inputBits);
       }
