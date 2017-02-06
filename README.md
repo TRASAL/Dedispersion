@@ -59,9 +59,9 @@ Description of common commandline arguments for the separate binaries.
 
  * *opencl_platform*     OpenCL platform
  * *opencl_device*       OpenCL device number
- * *input_bits*          number of bits of the input
- * *padding*             number of elements in the cacheline of the platform
- * *vector*              vector size in number of elements
+ * *input_bits*          number of bits used to represent a single input item
+ * *padding*             cacheline size, in bytes, of the OpenCL device
+ * *vector*              vector size, in number of input items, of the OpenCL device
 
 ### Data layout arguments
 
