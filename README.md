@@ -76,7 +76,7 @@ Description of common commandline arguments for the separate binaries.
  * *split-seconds*           Optional. Sets a different way of treating the input: (not implemented in subband, unclear if it will be useful). Reduces data transfers but slows down computation.
 
     * default mode: data is continuous in memmory
-    * split-seconds mode: data is blocked in bunches of 1 second 
+    * split-seconds mode: data is blocked in bunches of 1 second
  *  *local*                  Defines OpenCL memmory space to use; ie. automatic or manual caching.
 
     * global [default]
@@ -92,7 +92,7 @@ Description of common commandline arguments for the separate binaries.
 
 ### Tuning parameters
 
- * *iterations*          Number of samples for a given configuration. 
+ * *iterations*          Number of samples for a given configuration.
  * *min_threads*         Minimum number of threads to use. Use this to reduce the parameter space.
  * *max_threads*         Limits on total number of threads
  * *max_items*           Maximum value on *item0 + item1*
@@ -114,7 +114,7 @@ Install mariadb, fi. via your package manager. Then:
 
 0. log in to the database: ` $ mysql`
 1. create a database to hold our tuning data: `create database AAALERT`
-2. make sure we can use it (replace USER with your username): `grant all privileges on AAALERT.* to 'USER'@'localhost';` 
+2. make sure we can use it (replace USER with your username): `grant all privileges on AAALERT.* to 'USER'@'localhost';`
 3. copy the template configuration file: `cp analysis/config.py.orig analysis/config.py` and enter your configuration.
 
 ### Python
@@ -143,7 +143,7 @@ You can also write it to a file, that can then be read by the dedispersion code.
 2. Create a table: `./dedispersion.py create <table name>`
 3. Enter a file create with DedispersionTuning into the database: `./dedispersion load <table name> <file name>`
 4. Find optimal kernel configuration: `./dedispersion.py tune <table name> max <channels> <samples>`
-     
+
 The tune subcommand also takes a number of different parameters: `./dedispersion.py tune <table> <operator> <channels> <samples> [local|cache] [split|cont]`
 
  * operator: max, min, avg, std  (SQL aggergation commands)
