@@ -15,81 +15,60 @@
 
 import manage
 
-def statistics(queue, table, channels, samples, flags):
+def statistics(queue, table, scenario, flags):
     confs = list()
-    dms_range = manage.get_dm_range(queue, table, channels, samples)
+    dms_range = manage.get_dm_range(queue, table, scenario)
     for dm in dms_range:
         if flags[0]:
-            queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1)")
+            queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND local = 1)")
         elif flags[1]:
-            queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0)")
+            queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND local = 0)")
         else:
-            queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
+            queue.execute("SELECT MIN(GFLOPs),AVG(GFLOPs),MAX(GFLOPs),STDDEV_POP(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND "  + scenario + ")")
         line = queue.fetchall()
         confs.append([dm[0], line[0][0], line[0][2], line[0][1], line[0][3], (line[0][2] - line[0][1]) / line[0][3]])
     return confs
 
-def histogram(queue, table, channels, samples, flags):
+def histogram(queue, table, scenario, flags):
     hists = list()
-    dms_range = manage.get_dm_range(queue, table, channels, samples)
+    dms_range = manage.get_dm_range(queue, table, scenario)
     for dm in dms_range:
         if flags[0]:
-            queue.execute("SELECT MAX(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1)")
+            queue.execute("SELECT MAX(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND local = 1)")
         elif flags[1]:
-            queue.execute("SELECT MAX(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0)")
+            queue.execute("SELECT MAX(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND local = 0)")
         else:
-            queue.execute("SELECT MAX(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
+            queue.execute("SELECT MAX(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ")")
         maximum = int(queue.fetchall()[0][0])
         hist = [0 for i in range(0, maximum + 1)]
         if flags[0]:
-            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1)")
+            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND local = 1)")
         elif flags[1]:
-            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0)")
+            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + "  AND local = 0)")
         else:
-            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
+            queue.execute("SELECT GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ")")
         flops = queue.fetchall()
         for flop in flops:
             hist[int(flop[0])] = hist[int(flop[0])] + 1
         hists.append(hist)
     return hists
 
-def optimization_space(queue, table, channels, samples, flags):
+def optimization_space(queue, table, scenario, flags):
     confs = list()
-    dms_range = manage.get_dm_range(queue, table, channels, samples)
+    dms_range = manage.get_dm_range(queue, table, scenario)
     for dm in dms_range:
         if flags[0]:
-            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 1)")
+            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND local = 1)")
         elif flags[1]:
-            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND local = 0)")
+            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND local = 0)")
         else:
-            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
+            queue.execute("SELECT local,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + ")")
         best = queue.fetchall()
         confs.append([best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5]])
     return confs
 
-def single_parameter_space(queue, table, parameter, channels, samples, flags):
-    confs = list()
-    scenario = "(channels = " + channels +" AND samples = " + samples + ")"
-    dms_range = manage.get_dm_range(queue, table, channels, samples)
-    for dm in dms_range:
-        internalConf = list()
-        queue.execute("SELECT DISTINCT " + parameter + " FROM " + table + " WHERE DMs = " + str(dm[0]) + " AND " + scenario + " ORDER BY " + parameter)
-        values = queue.fetchall()
-        for value in values:
-            if flags[0]:
-                queue.execute("SELECT MAX(GFLOPs) FROM " + table + " WHERE " + parameter + " = " + str(value[0]) + " AND DMs = " + str(dm[0]) + " AND " + scenario + " AND local = 1")
-            elif flags[1]:
-                queue.execute("SELECT MAX(GFLOPs) FROM " + table + " WHERE " + parameter + " = " + str(value[0]) + " AND DMs = " + str(dm[0]) + " AND " + scenario + " AND local = 0")
-            else:
-                queue.execute("SELECT MAX(GFLOPs) FROM " + table + " WHERE " + parameter + " = " + str(value[0]) + " AND DMs = " + str(dm[0]) + " AND " + scenario)
-            best = queue.fetchall()
-            internalConf.append([value[0], best[0][0]])
-        confs.append(internalConf)
-    return confs
-
-def percentiles(queue, table, channels, samples, flags):
+def percentiles(queue, table, scenario, flags):
     results = list()
-    scenario = "(channels = " + channels +" AND samples = " + samples + ")"
     condition = str()
     if flags[0] == 1:
         condition = "local = 1"
@@ -105,7 +84,7 @@ def percentiles(queue, table, channels, samples, flags):
             condition += " AND splitSeconds = 0"
         else:
             condition = "splitSeconds = 0"
-    dms_range = manage.get_dm_range(queue, table, channels, samples)
+    dms_range = manage.get_dm_range(queue, table, scenario)
     for dm in dms_range:
         internalResults = list()
         internalResults.append(dm[0])

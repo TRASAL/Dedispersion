@@ -15,7 +15,7 @@
 
 import manage
 
-def tune(queue, table, operator, channels, samples, flags):
+def tune(queue, table, operator, scenario, flags):
     confs = list()
     if operator.casefold() == "max" or operator.casefold() == "min":
         condition = str()
@@ -33,17 +33,17 @@ def tune(queue, table, operator, channels, samples, flags):
                 condition += " AND splitSeconds = 0"
             else:
                 condition = "splitSeconds = 0"
-        dms_range = manage.get_dm_range(queue, table, channels, samples)
+        dms_range = manage.get_dm_range(queue, table, scenario)
         for dm in dms_range:
             if flags[0] == 0 and flags[1] == 0:
-                queue.execute("SELECT splitSeconds,local,unroll,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + "))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + ")")
+                queue.execute("SELECT splitSeconds,local,unroll,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + "))) AND (DMs = " + str(dm[0]) + " AND " + scenario + ")")
             else:
-                queue.execute("SELECT splitSeconds,local,unroll,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND (" + condition + ")))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND (" + condition + "))")
+                queue.execute("SELECT splitSeconds,local,unroll,nrThreadsD0,nrThreadsD1,nrItemsD0,nrItemsD1,GFLOPs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND (" + condition + ")))) AND (DMs = " + str(dm[0]) + " AND " + scenario + " AND (" + condition + "))")
             best = queue.fetchall()
             confs.append([dm[0], best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5], best[0][6], best[0][7], best[0][8], best[0][9], best[0][10]])
     return confs
 
-def tune_no_reuse(queue, table, operator, channels, samples, flags):
+def tune_no_reuse(queue, table, operator, scenario, flags):
     confs = list()
     if operator.casefold() == "max" or operator.casefold() == "min":
         condition = str()
@@ -61,13 +61,13 @@ def tune_no_reuse(queue, table, operator, channels, samples, flags):
                 condition += " AND splitSeconds = 0"
             else:
                 condition = "splitSeconds = 0"
-        dms_range = manage.get_dm_range(queue, table, channels, samples)
+        dms_range = manage.get_dm_range(queue, table,scenario)
         no_reuse = "(nrThreadsD1 = 1 AND nrItemsD1 = 1)"
         for dm in dms_range:
             if flags[0] == 0 and flags[1] == 0:
-                queue.execute("SELECT splitSeconds,local,unroll,nrThreadsD0,nrItemsD0,GFLOPs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + "))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + ")")
+                queue.execute("SELECT splitSeconds,local,unroll,nrThreadsD0,nrItemsD0,GFLOPs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + no_reuse + "))) AND (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + no_reuse + ")")
             else:
-                queue.execute("SELECT splitSeconds,local,unroll,nrThreadsD0,nrItemsD0,GFLOPs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + " AND (" + condition + ")))) AND (DMs = " + str(dm[0]) + " AND channels = " + channels + " AND samples = " + samples + " AND " + no_reuse + " AND (" + condition + "))")
+                queue.execute("SELECT splitSeconds,local,unroll,nrThreadsD0,nrItemsD0,GFLOPs,time,time_err,cov FROM " + table + " WHERE (GFLOPs = (SELECT " + operator + "(GFLOPs) FROM " + table + " WHERE (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + no_reuse + " AND (" + condition + ")))) AND (DMs = " + str(dm[0]) + " AND " + scenario + " AND " + no_reuse + " AND (" + condition + "))")
             best = queue.fetchall()
             confs.append([dm[0], best[0][0], best[0][1], best[0][2], best[0][3], best[0][4], best[0][5], best[0][6], best[0][7], best[0][8]])
     return confs
