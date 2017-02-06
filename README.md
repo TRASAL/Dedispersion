@@ -36,11 +36,6 @@ Then build and test as follows:
 
 The dedispersion step is typically compiled as part of a larger pipeline, but this repo contains two example programs in the `bin/` directory to test and autotune a dedispersion kernel.
 
-## printCode
-
-Prints the code for a specific dedispersion kernel to stdout.
-Needs platform, data layout, and kernel configuration parameters (see below).
-
 ## DedispersionTest
 
 Checks if the output of the CPU is the same for the GPU.
@@ -55,11 +50,6 @@ The commandline parameters are as above, except for the kernel configuration par
 Needs platform, data layout, and tuning parameters (see below).
 
 The output can be analyzed using the python scripts in in the *analysis* directory.
-
-## printShifts
-
-Python program to store, analyse, and plot the output of the tuning.
-Needs platform and data layout parameters (see below).
 
 ## Commandline arguments
 
