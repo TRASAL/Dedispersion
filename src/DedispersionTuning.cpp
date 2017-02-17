@@ -401,6 +401,9 @@ int main(int argc, char * argv[]) {
               delete kernel;
               if ( err.err() == -4 || err.err() == -61 ) {
                 return -1;
+              } else if ( err.err() == -5 ) {
+                // No need to reallocate the memory in this case
+                break;
               }
               reInit = true;
               break;
