@@ -63,7 +63,7 @@ test: bin/DedispersionTest
 
 tune: bin/DedispersionTuning
 	touch empty
-	./bin/DedispersionTuning -opencl_platform 0 -opencl_device 0 -input_bits 32 -padding 32 -vector 32 -zapped_channels empty -min_threads 4 -max_threads 1024 -max_items 255 -max_unroll 4 -channels 16 -min_freq 52.5 -channel_bandwidth 5 -samples 1024 -dms 16 -dm_first 1.1 -dm_step 5.5 -max_loopsize 512 -max_rows 16 -max_columns 16 -iterations 3
+	./bin/DedispersionTuning -opencl_platform 0 -opencl_device 0 -input_bits 32 -padding 128 -vector 32 -single_step -zapped_channels empty -min_threads 8 -max_threads 1024 -max_rows 128 -max_columns 128 -max_items 255 -max_sample_items 32 -max_dm_items 32 -max_unroll 4 -channels 16 -min_freq 52.5 -channel_bandwidth 5 -samples 1024 -dms 32 -dm_first 1.1 -dm_step 5.5 -iterations 3 -beams 2 -synthesized_beams 4
 	rm empty
 
 clean:
