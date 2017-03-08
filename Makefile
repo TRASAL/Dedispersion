@@ -25,8 +25,8 @@ else
 endif
 
 LDFLAGS := -lm
-CL_LDFLAGS := $(LDFLAGS) -L/usr/local/cuda-6.0/targets/x86_64-linux/lib/ -lOpenCL
-HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp
+CL_LDFLAGS := $(LDFLAGS) -lOpenCL
+HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp -lz
 
 CC := g++
 
