@@ -71,10 +71,10 @@ int main(int argc, char *argv[]) {
     padding = args.getSwitchArgument< unsigned int >("-padding");
     // Kernel configuration
     conf.setLocalMem(args.getSwitch("-local"));
-    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-threads0"));
-    conf.setNrThreadsD1(args.getSwitchArgument< unsigned int >("-threads1"));
-    conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-items0"));
-    conf.setNrItemsD1(args.getSwitchArgument< unsigned int >("-items1"));
+    conf.setNrThreadsD0(args.getSwitchArgument< unsigned int >("-threadsD0"));
+    conf.setNrThreadsD1(args.getSwitchArgument< unsigned int >("-threadsD1"));
+    conf.setNrItemsD0(args.getSwitchArgument< unsigned int >("-itemsD0"));
+    conf.setNrItemsD1(args.getSwitchArgument< unsigned int >("-itemsD1"));
     conf.setUnroll(args.getSwitchArgument< unsigned int >("-unroll"));
     // Observation configuration
     observation.setNrBeams(args.getSwitchArgument< unsigned int >("-beams"));
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     std::cerr << err.what() << std::endl;
     return 1;
   }catch ( std::exception & err ) {
-    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] [-random] [-single_step | -step_one | -step_two] -opencl_platform ... -opencl_device ... -padding ... -vector ... [-local] -threads0 ... -threads1 ... -items0 ... -items1 ... -unroll ... -beams ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
+    std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] [-random] [-single_step | -step_one | -step_two] -opencl_platform ... -opencl_device ... -padding ... -vector ... [-local] -threadsD0 ... -threadsD1 ... -itemsD0 ... -itemsD1 ... -unroll ... -beams ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
     std::cerr << "\t-single_step -input_bits ... -zapped_channels ... -synthesized_beams ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     std::cerr << "\t-step_one -input_bits ... -zapped_channels ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ..." << std::endl;
     std::cerr << "\t-step_two -synthesized_beams ... -subbands ... -subbanding_dms ... -dms ... -dm_first ... -dm_step ..." << std::endl;
