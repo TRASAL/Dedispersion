@@ -39,7 +39,7 @@ DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ip
 all: bin/Shifts.o bin/Dedispersion.o bin/DedispersionTest bin/DedispersionTuning
 
 bin/Shifts.o: $(ASTRODATA)/bin/Observation.o include/Shifts.hpp src/Shifts.cpp
-	-m@kdir -p bin
+	-@mkdir -p bin
 	$(CC) -o bin/Shifts.o -c src/Shifts.cpp $(INCLUDES) $(CFLAGS)
 
 bin/Dedispersion.o: $(UTILS)/bin/utils.o bin/Shifts.o $(OPENCL)/include/Bits.hpp include/Dedispersion.hpp src/Dedispersion.cpp
