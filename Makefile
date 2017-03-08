@@ -7,15 +7,18 @@ UTILS := $(SOURCE_ROOT)/src/utils
 OPENCL := $(SOURCE_ROOT)/src/OpenCL
 # https://github.com/isazi/AstroData
 ASTRODATA := $(SOURCE_ROOT)/src/AstroData
+
 # HDF5
-HDF5 := $(SOURCE_ROOT)/src/hdf5
+HDF5_INCLUDE ?= -I/usr/include
+HDF5_LIBS ?= -L/usr/lib
+HDF5_LDFLAGS ?= -lhdf5 -lhdf5_cpp -lz
+
 # http://psrdada.sourceforge.net/
 PSRDADA  := $(SOURCE_ROOT)/src/psrdada
 
 INCLUDES := -I"include" -I"$(ASTRODATA)/include" -I"$(UTILS)/include"
 CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 CL_LIBS := -L"$(OPENCL_LIB)"
-HDF5_LIBS := -L"$(HDF5)/lib"
 
 CFLAGS := -std=c++11 -Wall
 ifneq ($(debug), 1)
@@ -26,7 +29,6 @@ endif
 
 LDFLAGS := -lm
 CL_LDFLAGS := $(LDFLAGS) -lOpenCL
-HDF5_LDFLAGS := -lhdf5 -lhdf5_cpp -lz
 
 CC := g++
 
@@ -48,11 +50,11 @@ bin/Dedispersion.o: $(UTILS)/bin/utils.o bin/Shifts.o $(OPENCL)/include/Bits.hpp
 
 bin/DedispersionTest: $(CL_DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/DedispersionTest.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp $(CL_DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(CL_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp $(CL_DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" $(HDF5_INCLUDE) $(CL_LIBS) $(CL_LDFLAGS) $(HDF5_LIBS) $(HDF5_LDFLAGS) $(CFLAGS)
 
 bin/DedispersionTuning: $(CL_DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hpp $(ASTRODATA)/bin/ReadData.o include/configuration.hpp src/DedispersionTuning.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp $(CL_DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" -I"$(HDF5)/include" $(HDF5_LIBS) $(CL_LIBS) $(CL_LDFLAGS) $(HDF5_LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp $(CL_DEPS) $(ASTRODATA)/bin/ReadData.o $(DADA_DEPS) $(CL_INCLUDES) -I"$(PSRDADA)/src" $(HDF5_INCLUDE) $(CL_LIBS) $(CL_LDFLAGS) $(HDF5_LIBS) $(HDF5_LDFLAGS) $(CFLAGS)
 
 test: bin/DedispersionTest
 	touch empty
