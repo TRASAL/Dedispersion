@@ -56,7 +56,7 @@ bin/DedispersionTuning: $(CL_DEPS) $(DADA_DEPS) $(ASTRODATA)/include/ReadData.hp
 
 test: bin/DedispersionTest
 	touch empty
-	./bin/DedispersionTest -opencl_platform 0 -opencl_device 0 -input_bits 32 -padding 32 -vector 32 -zapped_channels empty -threads0 4 -threads1 4 -items0 4 -items1 4 -unroll 4 -channels 16 -min_freq 52.5 -channel_bandwidth 5 -samples 1024 -dms 16 -dm_first 1.1 -dm_step 5.5 
+	./bin/DedispersionTest -opencl_platform 0 -opencl_device 0 -input_bits 32 -padding 128 -vector 32 -zapped_channels empty -single_step -threadsD0 32 -threadsD1 4 -itemsD0 2 -itemsD1 4 -unroll 4 -channels 16 -min_freq 52.5 -channel_bandwidth 5 -samples 1024 -dms 32 -dm_first 1.1 -dm_step 5.5 
 	rm empty
 
 tune: bin/DedispersionTuning
