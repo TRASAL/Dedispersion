@@ -32,6 +32,8 @@ Then build and test as follows:
 * [OpenCL](https://github.com/isazi/OpenCL) - master branch
 * [AstroData](https://github.com/isazi/AstroData) - master branch
 
+If AstroData is compiled with PSRDADA support, please set the `PSRDADA` environment variable to the psrdada build directory
+
 # Included programs
 
 The dedispersion step is typically compiled as part of a larger pipeline, but this repo contains two example programs in the `bin/` directory to test and autotune a dedispersion kernel.
