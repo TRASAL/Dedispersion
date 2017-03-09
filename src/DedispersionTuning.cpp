@@ -439,7 +439,12 @@ int main(int argc, char * argv[]) {
   }
 
   if ( bestMode ) {
-    std::cout << observation.getNrDMs() << " " << bestConf.print() << std::endl;
+    if ( stepOne ) {
+      std::cout << observation.getNrDMsSubbanding() << " ";
+    } else {
+      std::cout << observation.getNrDMs() << " ";
+    }
+    std::cout << bestConf.print() << std::endl;
   } else {
     std::cout << std::endl;
   }
