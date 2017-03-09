@@ -54,9 +54,15 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
 		conf->setNrThreadsD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
 		splitPoint = temp.find(" ");
+		conf->setNrThreadsD2(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		temp = temp.substr(splitPoint + 1);
+		splitPoint = temp.find(" ");
 		conf->setNrItemsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
 		temp = temp.substr(splitPoint + 1);
-		conf->setNrItemsD1(isa::utils::castToType< std::string, unsigned int >(temp));
+		splitPoint = temp.find(" ");
+		conf->setNrItemsD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+		temp = temp.substr(splitPoint + 1);
+		conf->setNrItemsD2(isa::utils::castToType< std::string, unsigned int >(temp));
 
 		if ( tunedDedispersion.count(deviceName) == 0 ) {
       std::map< unsigned int, PulsarSearch::DedispersionConf * > * container = new std::map< unsigned int, PulsarSearch::DedispersionConf * >();
