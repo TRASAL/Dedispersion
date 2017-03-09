@@ -43,6 +43,7 @@ int main(int argc, char * argv[]) {
   bool singleStep = false;
   bool stepOne = false;
   bool reInit = false;
+  bool bestMode = false;
   unsigned int padding = 0;
   uint8_t inputBits = 0;
   unsigned int nrIterations = 0;
@@ -57,9 +58,11 @@ int main(int argc, char * argv[]) {
   unsigned int maxSampleItems = 0;
   unsigned int maxDMItems = 0;
   unsigned int maxUnroll = 0;
+  double bestGFLOPs = 0.0;
   std::string channelsFile;
   AstroData::Observation observation;
   PulsarSearch::DedispersionConf conf;
+  PulsarSearch::DedispersionConf bestConf;
   cl::Event event;
 
   try {
@@ -68,6 +71,7 @@ int main(int argc, char * argv[]) {
     nrIterations = args.getSwitchArgument< unsigned int >("-iterations");
     clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
     clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
+    bestMode = args.getSwitch("-best");
     singleStep = args.getSwitch("-single_step");
     stepOne = args.getSwitch("-step_one");
     bool stepTwo = args.getSwitch("-step_two");
@@ -212,8 +216,10 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
-  std::cout << std::fixed << std::endl;
-  std::cout << "# nrBeams nrSynthesizedBeams nrSubbandingDMs nrDMs nrSubbands nrChannels nrZappedChannels nrSamplesSubbanding nrSamples *configuration* GFLOP/s time stdDeviation COV" << std::endl << std::endl;
+  if ( !bestMode ) {
+    std::cout << std::fixed << std::endl;
+    std::cout << "# nrBeams nrSynthesizedBeams nrSubbandingDMs nrDMs nrSubbands nrChannels nrZappedChannels nrSamplesSubbanding nrSamples *configuration* GFLOP/s time stdDeviation COV" << std::endl << std::endl;
+  }
 
   for ( unsigned int threads = minThreads; threads <= maxColumns; threads *= 2 ) {
     conf.setNrThreadsD0(threads);
@@ -410,23 +416,33 @@ int main(int argc, char * argv[]) {
             }
             delete kernel;
 
-            std::cout << observation.getNrBeams() << " " << observation.getNrSynthesizedBeams() << " ";
-            std::cout << observation.getNrDMsSubbanding() << " " << observation.getNrDMs() << " ";
-            std::cout << observation.getNrSubbands() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " ";
-            std::cout << observation.getNrSamplesPerBatchSubbanding() << " " << observation.getNrSamplesPerBatch() << " ";
-            std::cout << conf.print() << " ";
-            std::cout << std::setprecision(3);
-            std::cout << gflops / timer.getAverageTime() << " ";
-            std::cout << std::setprecision(6);
-            std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " ";
-            std::cout << timer.getCoefficientOfVariation() <<  std::endl;
+            if ( (gflops / timer.getAverageTime()) > bestGFLOPs ) {
+              bestGFLOPs = gflops / timer.getAverageTime();
+              bestConf = conf;
+            }
+            if ( !bestMode ) {
+              std::cout << observation.getNrBeams() << " " << observation.getNrSynthesizedBeams() << " ";
+              std::cout << observation.getNrDMsSubbanding() << " " << observation.getNrDMs() << " ";
+              std::cout << observation.getNrSubbands() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " ";
+              std::cout << observation.getNrSamplesPerBatchSubbanding() << " " << observation.getNrSamplesPerBatch() << " ";
+              std::cout << conf.print() << " ";
+              std::cout << std::setprecision(3);
+              std::cout << gflops / timer.getAverageTime() << " ";
+              std::cout << std::setprecision(6);
+              std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " ";
+              std::cout << timer.getCoefficientOfVariation() <<  std::endl;
+            }
           }
         }
       }
     }
   }
 
-  std::cout << std::endl;
+  if ( bestMode ) {
+    std::cout << observation.getNrDMs() << " " << bestConf.print() << std::endl;
+  } else {
+    std::cout << std::endl;
+  }
 
   return 0;
 }
