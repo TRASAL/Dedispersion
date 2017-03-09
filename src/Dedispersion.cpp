@@ -19,60 +19,60 @@ namespace PulsarSearch {
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string  & dedispersionFilename) {
   unsigned int splitPoint = 0;
   unsigned int nrDMs = 0;
-	std::string temp;
+  std::string temp;
   std::string deviceName;
   PulsarSearch::DedispersionConf * conf = 0;
-	std::ifstream dedispersionFile;
+  std::ifstream dedispersionFile;
 
   dedispersionFile.open(dedispersionFilename);
-	while ( ! dedispersionFile.eof() ) {
-		std::getline(dedispersionFile, temp);
-		if ( ! std::isalpha(temp[0]) ) {
-			continue;
-		}
+  while ( ! dedispersionFile.eof() ) {
+    std::getline(dedispersionFile, temp);
+    if ( ! std::isalpha(temp[0]) ) {
+      continue;
+    }
 
     conf = new PulsarSearch::DedispersionConf();
-		splitPoint = temp.find(" ");
-		deviceName = temp.substr(0, splitPoint);
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		nrDMs = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		conf->setSplitBatches(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		conf->setLocalMem(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		conf->setUnroll(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		conf->setNrThreadsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		conf->setNrThreadsD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		conf->setNrThreadsD2(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		conf->setNrItemsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
-		temp = temp.substr(splitPoint + 1);
-		splitPoint = temp.find(" ");
-		conf->setNrItemsD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
-		temp = temp.substr(splitPoint + 1);
-		conf->setNrItemsD2(isa::utils::castToType< std::string, unsigned int >(temp));
+    splitPoint = temp.find(" ");
+    deviceName = temp.substr(0, splitPoint);
+    temp = temp.substr(splitPoint + 1);
+    splitPoint = temp.find(" ");
+    nrDMs = isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint));
+    temp = temp.substr(splitPoint + 1);
+    splitPoint = temp.find(" ");
+    conf->setSplitBatches(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
+    temp = temp.substr(splitPoint + 1);
+    splitPoint = temp.find(" ");
+    conf->setLocalMem(isa::utils::castToType< std::string, bool >(temp.substr(0, splitPoint)));
+    temp = temp.substr(splitPoint + 1);
+    splitPoint = temp.find(" ");
+    conf->setUnroll(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+    temp = temp.substr(splitPoint + 1);
+    splitPoint = temp.find(" ");
+    conf->setNrThreadsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+    temp = temp.substr(splitPoint + 1);
+    splitPoint = temp.find(" ");
+    conf->setNrThreadsD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+    temp = temp.substr(splitPoint + 1);
+    splitPoint = temp.find(" ");
+    conf->setNrThreadsD2(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+    temp = temp.substr(splitPoint + 1);
+    splitPoint = temp.find(" ");
+    conf->setNrItemsD0(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+    temp = temp.substr(splitPoint + 1);
+    splitPoint = temp.find(" ");
+    conf->setNrItemsD1(isa::utils::castToType< std::string, unsigned int >(temp.substr(0, splitPoint)));
+    temp = temp.substr(splitPoint + 1);
+    conf->setNrItemsD2(isa::utils::castToType< std::string, unsigned int >(temp));
 
-		if ( tunedDedispersion.count(deviceName) == 0 ) {
+    if ( tunedDedispersion.count(deviceName) == 0 ) {
       std::map< unsigned int, PulsarSearch::DedispersionConf * > * container = new std::map< unsigned int, PulsarSearch::DedispersionConf * >();
 
-			container->insert(std::make_pair(nrDMs, conf));
-			tunedDedispersion.insert(std::make_pair(deviceName, container));
-		} else {
-			tunedDedispersion.at(deviceName)->insert(std::make_pair(nrDMs, conf));
-		}
-	}
+      container->insert(std::make_pair(nrDMs, conf));
+      tunedDedispersion.insert(std::make_pair(deviceName, container));
+    } else {
+      tunedDedispersion.at(deviceName)->insert(std::make_pair(nrDMs, conf));
+    }
+  }
   dedispersionFile.close();
 }
 
