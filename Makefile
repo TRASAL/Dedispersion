@@ -1,4 +1,3 @@
-No more mixed indentation.
 SOURCE_ROOT ?= $(HOME)
 
 # https://github.com/isazi/utils
