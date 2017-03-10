@@ -25,6 +25,9 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
   std::ifstream dedispersionFile;
 
   dedispersionFile.open(dedispersionFilename);
+  if ( !dedispersionFile ) {
+    throw FileError("Impossible to open " + dedispersionFilename);
+  }
   while ( ! dedispersionFile.eof() ) {
     std::getline(dedispersionFile, temp);
     if ( ! std::isalpha(temp[0]) ) {

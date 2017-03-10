@@ -21,6 +21,7 @@
 #include <Observation.hpp>
 #include <utils.hpp>
 #include <Bits.hpp>
+#include <Platform.hpp>
 
 #pragma once
 
