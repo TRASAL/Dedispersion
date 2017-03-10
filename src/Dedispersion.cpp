@@ -26,7 +26,7 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
 
   dedispersionFile.open(dedispersionFilename);
   if ( !dedispersionFile ) {
-    throw FileError("Impossible to open " + dedispersionFilename);
+    throw AstroData::FileError("Impossible to open " + dedispersionFilename);
   }
   while ( ! dedispersionFile.eof() ) {
     std::getline(dedispersionFile, temp);
