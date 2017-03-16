@@ -2,8 +2,8 @@
 #pragma once
 
 // Define the data types
-typedef float inputDataType;
-std::string inputDataName("float");
+typedef std::uint8_t inputDataType;
+std::string inputDataName("uchar");
 typedef float intermediateDataType;
 std::string intermediateDataName("float");
 typedef float outputDataType;
