@@ -17,10 +17,10 @@ CL_INCLUDES := $(INCLUDES) -I"$(OPENCL)/include"
 CL_LIBS := -L"$(OPENCL_LIB)"
 
 CFLAGS := -std=c++11 -Wall
-ifneq ($(debug), 1)
-	CFLAGS += -O3 -g0
-else
+ifdef DEBUG
 	CFLAGS += -O0 -g3
+else
+	CFLAGS += -O3 -g0
 endif
 
 LDFLAGS := -lm
