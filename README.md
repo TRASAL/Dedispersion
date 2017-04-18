@@ -72,8 +72,8 @@ Description of common commandline arguments for the separate binaries.
  * *channel_bandwidth*       Mhz
  * *samples*                 Number of samples in a batch, ie. length of time dimension; should be divisible by *threads0*, *items0*, and *threads0 x items0*
  * *dms*                     Number of dispersion measures, ie. length of dm dimension; should be divisible by *threads1*, *items1*, and *threads1 x items1*
- * *dm_first*                Dispersion measure [m3/parsec?]
- * *dm_step*                 Dispersion measure step size [m3/parsec?]
+ * *dm_first*                Dispersion measure [parsec/cc]
+ * *dm_step*                 Dispersion measure step size [parsec/cc]
  * *zapped_channels*         File containing tainted channels, or empty file
  * *split-seconds*           Optional. Sets a different way of treating the input: (not implemented in subband, unclear if it will be useful). Reduces data transfers but slows down computation.
 
