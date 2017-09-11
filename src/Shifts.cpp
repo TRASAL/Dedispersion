@@ -15,7 +15,7 @@
 
 #include <Shifts.hpp>
 
-namespace PulsarSearch {
+namespace Dedispersion {
 
 std::vector< float > * getShifts(AstroData::Observation & observation, const unsigned int padding) {
   float inverseHighFreq = 1.0f / std::pow(observation.getMaxFreq(), 2.0f);
