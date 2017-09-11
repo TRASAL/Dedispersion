@@ -62,8 +62,8 @@ int main(int argc, char * argv[]) {
   double bestGFLOPs = 0.0;
   std::string channelsFile;
   AstroData::Observation observation;
-  PulsarSearch::DedispersionConf conf;
-  PulsarSearch::DedispersionConf bestConf;
+  Dedispersion::DedispersionConf conf;
+  Dedispersion::DedispersionConf bestConf;
   cl::Event event;
 
   try {
@@ -125,9 +125,9 @@ int main(int argc, char * argv[]) {
   }
 
   // Allocate host memory
-  std::vector< float > * shiftsSingleStep = PulsarSearch::getShifts(observation, padding);
-  std::vector< float > * shiftsStepOne = PulsarSearch::getShifts(observation, padding);
-  std::vector< float > * shiftsStepTwo = PulsarSearch::getShiftsStepTwo(observation, padding);
+  std::vector< float > * shiftsSingleStep = Dedispersion::getShifts(observation, padding);
+  std::vector< float > * shiftsStepOne = Dedispersion::getShifts(observation, padding);
+  std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, padding);
   std::vector< uint8_t > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
   std::vector< uint8_t > beamDriverSingleStep(observation.getNrSynthesizedBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
   std::vector< uint8_t > beamDriverStepTwo(observation.getNrSynthesizedBeams() * observation.getNrPaddedSubbands(padding / sizeof(uint8_t)));
@@ -333,13 +333,13 @@ int main(int argc, char * argv[]) {
               reInit = false;
             }
             if ( singleStep ) {
-              code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsSingleStep);
+              code = Dedispersion::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsSingleStep);
               gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMs() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch());
             } else if ( stepOne ) {
-              code = PulsarSearch::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
+              code = Dedispersion::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
               gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrBeams()) * observation.getNrDMsSubbanding() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatchSubbanding());
             } else {
-              code = PulsarSearch::getSubbandDedispersionStepTwoOpenCL< outputDataType >(conf, padding, outputDataName, observation, *shiftsStepTwo);
+              code = Dedispersion::getSubbandDedispersionStepTwoOpenCL< outputDataType >(conf, padding, outputDataName, observation, *shiftsStepTwo);
               gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSubbands() * observation.getNrSamplesPerBatch());
             }
             try {

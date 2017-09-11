@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
   unsigned int clDeviceID = 0;
   uint64_t wrongSamples = 0;
   std::string channelsFile;
-  PulsarSearch::DedispersionConf conf;
+  Dedispersion::DedispersionConf conf;
   AstroData::Observation observation;
 
   try {
@@ -117,9 +117,9 @@ int main(int argc, char *argv[]) {
   std::vector< outputDataType > subbandedData_c;
   std::vector< outputDataType > dedispersedData;
   std::vector< outputDataType > dedispersedData_c;
-  std::vector< float > * shiftsSingleStep = PulsarSearch::getShifts(observation, padding);
-  std::vector< float > * shiftsStepOne = PulsarSearch::getShifts(observation, padding);
-  std::vector< float > * shiftsStepTwo = PulsarSearch::getShiftsStepTwo(observation, padding);
+  std::vector< float > * shiftsSingleStep = Dedispersion::getShifts(observation, padding);
+  std::vector< float > * shiftsStepOne = Dedispersion::getShifts(observation, padding);
+  std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, padding);
   std::vector< uint8_t > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
   std::vector< uint8_t > beamDriverSingleStep(observation.getNrSynthesizedBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
   std::vector< uint8_t > beamDriverStepTwo(observation.getNrSynthesizedBeams() * observation.getNrPaddedSubbands(padding / sizeof(uint8_t)));
@@ -336,11 +336,11 @@ int main(int argc, char *argv[]) {
   cl::Kernel * kernel;
 
   if ( singleStep ) {
-    code = PulsarSearch::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsSingleStep);
+    code = Dedispersion::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsSingleStep);
   } else if ( stepOne ) {
-    code = PulsarSearch::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
+    code = Dedispersion::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
   } else {
-    code = PulsarSearch::getSubbandDedispersionStepTwoOpenCL< outputDataType >(conf, padding, outputDataName, observation, *shiftsStepTwo);
+    code = Dedispersion::getSubbandDedispersionStepTwoOpenCL< outputDataType >(conf, padding, outputDataName, observation, *shiftsStepTwo);
   }
   if ( printCode ) {
     std::cout << *code << std::endl;
@@ -398,14 +398,14 @@ int main(int argc, char *argv[]) {
     if ( singleStep ) {
       if ( conf.getSplitBatches() ) {
       } else {
-        PulsarSearch::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriverSingleStep, dispersedData, dedispersedData_c, *shiftsSingleStep, padding, inputBits);
+        Dedispersion::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriverSingleStep, dispersedData, dedispersedData_c, *shiftsSingleStep, padding, inputBits);
       }
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()));
     } else if ( stepOne ) {
-      PulsarSearch::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData, subbandedData_c, *shiftsStepOne, padding, inputBits);
+      Dedispersion::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData, subbandedData_c, *shiftsStepOne, padding, inputBits);
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(subbandedData_d, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()));
     } else {
-      PulsarSearch::subbandDedispersionStepTwo< outputDataType, intermediateDataType, outputDataType >(observation, beamDriverStepTwo, subbandedData, dedispersedData_c, *shiftsStepTwo, padding);
+      Dedispersion::subbandDedispersionStepTwo< outputDataType, intermediateDataType, outputDataType >(observation, beamDriverStepTwo, subbandedData, dedispersedData_c, *shiftsStepTwo, padding);
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()));
     }
   } catch ( cl::Error & err ) {

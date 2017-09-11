@@ -15,14 +15,14 @@
 
 #include <Dedispersion.hpp>
 
-namespace PulsarSearch {
+namespace Dedispersion {
 
 void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const std::string  & dedispersionFilename) {
   unsigned int splitPoint = 0;
   unsigned int nrDMs = 0;
   std::string temp;
   std::string deviceName;
-  PulsarSearch::DedispersionConf * conf = 0;
+  Dedispersion::DedispersionConf * conf = 0;
   std::ifstream dedispersionFile;
 
   dedispersionFile.open(dedispersionFilename);
@@ -35,7 +35,7 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
       continue;
     }
 
-    conf = new PulsarSearch::DedispersionConf();
+    conf = new Dedispersion::DedispersionConf();
     splitPoint = temp.find(" ");
     deviceName = temp.substr(0, splitPoint);
     temp = temp.substr(splitPoint + 1);
@@ -69,7 +69,7 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
     conf->setNrItemsD2(isa::utils::castToType< std::string, unsigned int >(temp));
 
     if ( tunedDedispersion.count(deviceName) == 0 ) {
-      std::map< unsigned int, PulsarSearch::DedispersionConf * > * container = new std::map< unsigned int, PulsarSearch::DedispersionConf * >();
+      std::map< unsigned int, Dedispersion::DedispersionConf * > * container = new std::map< unsigned int, Dedispersion::DedispersionConf * >();
 
       container->insert(std::make_pair(nrDMs, conf));
       tunedDedispersion.insert(std::make_pair(deviceName, container));
@@ -88,5 +88,5 @@ std::string DedispersionConf::print() const {
   return std::to_string(splitBatches) + " " + std::to_string(local) + " " + std::to_string(unroll) + " " + isa::OpenCL::KernelConf::print();
 }
 
-} // PulsarSearch
+} // Dedispersion
 
