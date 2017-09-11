@@ -1,4 +1,5 @@
-// Copyright 2014 Alessio Sclocco <a.sclocco@vu.nl>
+// Copyright 2017 Netherlands Institute for Radio Astronomy (ASTRON)
+// Copyright 2017 Netherlands eScience Center
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +26,7 @@
 
 #pragma once
 
-namespace PulsarSearch {
+namespace Dedispersion {
 
 class DedispersionConf : public isa::OpenCL::KernelConf {
 public:
