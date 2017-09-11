@@ -26,5 +26,5 @@ namespace Dedispersion {
 std::vector<float> * getShifts(AstroData::Observation & observation, const unsigned int padding);
 std::vector<float> * getShiftsStepTwo(AstroData::Observation & observation, const unsigned int padding);
 
-} // PulsarSearch
+} // Dedispersion
 

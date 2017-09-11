@@ -44,5 +44,5 @@ std::vector< float > * getShiftsStepTwo(AstroData::Observation & observation, co
 
 	return shifts;
 }
-} // PulsarSearch
+} // Dedispersion
 

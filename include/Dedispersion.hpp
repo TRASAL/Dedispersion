@@ -51,7 +51,7 @@ private:
   unsigned int unroll;
 };
 
-typedef std::map< std::string, std::map< unsigned int, PulsarSearch::DedispersionConf * > * > tunedDedispersionConf;
+typedef std::map< std::string, std::map< unsigned int, Dedispersion::DedispersionConf * > * > tunedDedispersionConf;
 
 // Sequential
 template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
@@ -1048,5 +1048,5 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
   return code;
 }
 
-} // PulsarSearch
+} // Dedispersion
 
