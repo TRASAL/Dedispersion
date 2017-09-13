@@ -43,7 +43,7 @@ bin/DedispersionTest: $(INSTALL_ROOT)/include/ReadData.hpp include/configuration
 
 bin/DedispersionTuning: $(INSTALL_ROOT)/include/ReadData.hpp include/configuration.hpp src/DedispersionTuning.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp bin/Dedispersion.o bin/Shifts.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
