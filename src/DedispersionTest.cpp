@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
     }
   } else if ( stepOne ) {
     observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
-    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatchSubbanding() + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDMSubbanding() + ((observation.getNrDMsSubbanding() - 1) * observation.getDMSubbandingStep()))), true);
+    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
     if ( inputBits >= 8 ) {
       dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(inputDataType)));
       subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType)));
@@ -251,9 +251,9 @@ int main(int argc, char *argv[]) {
             if ( conf.getSplitBatches() ) {
             } else {
               if ( random ) {
-                dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(rand() % 10);
+                dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(rand() % 10);
               } else {
-                dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(10);
+                dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(10);
               }
             }
           } else {
@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
             } else {
               byte = sample / (8 / inputBits);
               firstBit = (sample % (8 / inputBits)) * inputBits;
-              buffer = dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte];
+              buffer = dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(inputDataType))) + byte];
             }
 
             for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
 
             if ( conf.getSplitBatches() ) {
             } else {
-              dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
+              dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
             }
           }
         }
