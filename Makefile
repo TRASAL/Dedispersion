@@ -5,7 +5,7 @@ LIBS := -L"$(INSTALL_ROOT)/lib"
 
 CC := g++
 CFLAGS := -std=c++11 -Wall
-LDFLAGS := -lm -lutils -lOpenCL
+LDFLAGS := -lm -lOpenCL -lutils -lisaOpenCL -lAstroData
 
 ifdef DEBUG
 	CFLAGS += -O0 -g3
