@@ -103,7 +103,7 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
 
 template< typename I, typename L, typename O > void subbandDedispersionStepOne(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
   for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
-    for ( unsigned int dm = 0; dm < observation.getNrDMsSubbanding(); dm++ ) {
+    for ( unsigned int dm = 0; dm < observation.getNrDMs(true); dm++ ) {
       for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
         for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++ ) {
           L dedispersedSample = static_cast< L >(0);
@@ -150,7 +150,7 @@ template< typename I, typename L, typename O > void subbandDedispersionStepTwo(A
             dedispersedSample += static_cast< L >(input[(sBeamDriver[(sBeam * observation.getNrSubbands(padding / sizeof(uint8_t))) + channel] * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(I))) + (firstStepDM * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(I))) + (channel * observation.getNrSamplesPerBatch(true, padding / sizeof(I))) + (sample + shift)]);
           }
 
-          output[(sBeam * (observation.getNrDMs(true) * observation.getNrDMs()) * observation.getNrSamplesBatch(false, padding / sizeof(O))) + (((firstStepDM * observation.getNrDMs()) + dm) * observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
+          output[(sBeam * (observation.getNrDMs(true) * observation.getNrDMs()) * observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + (((firstStepDM * observation.getNrDMs()) + dm) * observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + sample] = static_cast< O >(dedispersedSample);
         }
       }
     }
