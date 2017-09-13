@@ -86,11 +86,11 @@ int main(int argc, char *argv[]) {
       observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
     } else if ( stepOne ) {
       observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
-      observation.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"));
+      observation.setDMRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), args.getSwitchArgument< float >("-subbanding_dm_first"), args.getSwitchArgument< float >("-subbanding_dm_step"), true);
     } else if ( stepTwo ) {
       observation.setNrSynthesizedBeams(args.getSwitchArgument< unsigned int >("-synthesized_beams"));
       observation.setFrequencyRange(args.getSwitchArgument< unsigned int >("-subbands"), args.getSwitchArgument< unsigned int >("-channels"), args.getSwitchArgument< float >("-min_freq"), args.getSwitchArgument< float >("-channel_bandwidth"));
-      observation.setDMSubbandingRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), 0.0f, 0.0f);
+      observation.setDMRange(args.getSwitchArgument< unsigned int >("-subbanding_dms"), 0.0f, 0.0f, true);
       observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
     }
   } catch  ( isa::utils::SwitchNotFound & err ) {
@@ -120,41 +120,41 @@ int main(int argc, char *argv[]) {
   std::vector< float > * shiftsSingleStep = Dedispersion::getShifts(observation, padding);
   std::vector< float > * shiftsStepOne = Dedispersion::getShifts(observation, padding);
   std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, padding);
-  std::vector< uint8_t > zappedChannels(observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
-  std::vector< uint8_t > beamDriverSingleStep(observation.getNrSynthesizedBeams() * observation.getNrPaddedChannels(padding / sizeof(uint8_t)));
-  std::vector< uint8_t > beamDriverStepTwo(observation.getNrSynthesizedBeams() * observation.getNrPaddedSubbands(padding / sizeof(uint8_t)));
+  std::vector< uint8_t > zappedChannels(observation.getNrChannels(padding / sizeof(uint8_t)));
+  std::vector< uint8_t > beamDriverSingleStep(observation.getNrSynthesizedBeams() * observation.getNrChannels(padding / sizeof(uint8_t)));
+  std::vector< uint8_t > beamDriverStepTwo(observation.getNrSynthesizedBeams() * observation.getNrSubbands(padding / sizeof(uint8_t)));
 
   if ( singleStep || stepOne ) {
     AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
   }
   if ( singleStep ) {
-    observation.setNrSamplesPerDispersedChannel(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
+    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
     if ( inputBits >= 8 ) {
-      dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType)));
-      dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
-      dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
+      dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(padding / sizeof(inputDataType)));
+      dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(padding / sizeof(outputDataType)));
+      dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(padding / sizeof(outputDataType)));
     } else {
-      dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)));
+      dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType)));
       dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(outputDataType)));
       dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(outputDataType)));
     }
   } else if ( stepOne ) {
-    observation.setNrSamplesPerBatchSubbanding(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
-    observation.setNrSamplesPerSubbandingDispersedChannel(observation.getNrSamplesPerBatchSubbanding() + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDMSubbanding() + ((observation.getNrDMsSubbanding() - 1) * observation.getDMSubbandingStep()))));
+    observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
+    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatchSubbanding() + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDMSubbanding() + ((observation.getNrDMsSubbanding() - 1) * observation.getDMSubbandingStep()))), true);
     if ( inputBits >= 8 ) {
-      dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerPaddedSubbandingDispersedChannel(padding / sizeof(inputDataType)));
-      subbandedData.resize(observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType)));
-      subbandedData_c.resize(observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType)));
+      dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(inputDataType)));
+      subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType)));
+      subbandedData_c.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType)));
     } else {
-      dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerSubbandingDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType)));
-      subbandedData.resize(observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / (8 / inputBits), padding / sizeof(outputDataType)));
-      subbandedData_c.resize(observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / (8 / inputBits), padding / sizeof(outputDataType)));
+      dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(inputDataType)));
+      subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / (8 / inputBits), padding / sizeof(outputDataType)));
+      subbandedData_c.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / (8 / inputBits), padding / sizeof(outputDataType)));
     }
   } else {
-    observation.setNrSamplesPerBatchSubbanding(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
-    subbandedData.resize(observation.getNrBeams() * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType)));
-    dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
-    dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType)));
+    observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
+    subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType)));
+    dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType)));
+    dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType)));
   }
 
   // Allocate device memory
@@ -195,14 +195,14 @@ int main(int argc, char *argv[]) {
   if ( singleStep ) {
     for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedChannel(); sample++ ) {
+        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(); sample++ ) {
           if ( inputBits >= 8 ) {
             if ( conf.getSplitBatches() ) {
             } else {
               if ( random ) {
-                dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(rand() % 10);
+                dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(rand() % 10);
               } else {
-                dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerPaddedDispersedChannel(padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(10);
+                dispersedData[(beam * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(inputDataType))) + (channel * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(inputDataType))) + sample] = static_cast< inputDataType >(10);
               }
             }
           } else {
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
             } else {
               byte = sample / (8 / inputBits);
               firstBit = (sample % (8 / inputBits)) * inputBits;
-              buffer = dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte];
+              buffer = dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType))) + byte];
             }
 
             for ( unsigned int bit = 0; bit < inputBits; bit++ ) {
@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
 
             if ( conf.getSplitBatches() ) {
             } else {
-              dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedChannel() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
+              dispersedData[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType))) + byte] = buffer;
             }
           }
         }
@@ -240,13 +240,13 @@ int main(int argc, char *argv[]) {
     }
     for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-        beamDriverSingleStep[(syntBeam * observation.getNrPaddedChannels(padding / sizeof(uint8_t))) + channel] = syntBeam % observation.getNrBeams();
+        beamDriverSingleStep[(syntBeam * observation.getNrChannels(padding / sizeof(uint8_t))) + channel] = syntBeam % observation.getNrBeams();
       }
     }
   } else if ( stepOne ) {
     for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerSubbandingDispersedChannel(); sample++ ) {
+        for ( unsigned int sample = 0; sample < observation.getNrSamplesPerDispersedBatch(true); sample++ ) {
           if ( inputBits >= 8 ) {
             if ( conf.getSplitBatches() ) {
             } else {
@@ -291,13 +291,13 @@ int main(int argc, char *argv[]) {
     }
   } else {
     for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
-      for ( unsigned int dm = 0; dm < observation.getNrDMsSubbanding(); dm++ ) {
+      for ( unsigned int dm = 0; dm < observation.getNrDMs(true); dm++ ) {
         for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-          for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatchSubbanding(); sample++ ) {
+          for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++ ) {
             if ( random ) {
-              subbandedData[(beam * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + sample] = static_cast< outputDataType >(rand() % 10);
+              subbandedData[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + sample] = static_cast< outputDataType >(rand() % 10);
             } else {
-              subbandedData[(beam * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + sample] = static_cast< outputDataType >(10);
+              subbandedData[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + sample] = static_cast< outputDataType >(10);
             }
           }
         }
@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
     }
     for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
       for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-        beamDriverStepTwo[(syntBeam * observation.getNrPaddedSubbands(padding / sizeof(uint8_t))) + subband] = syntBeam % observation.getNrBeams();
+        beamDriverStepTwo[(syntBeam * observation.getNrSubbands(padding / sizeof(uint8_t))) + subband] = syntBeam % observation.getNrBeams();
       }
     }
   }
@@ -367,10 +367,10 @@ int main(int argc, char *argv[]) {
       global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSynthesizedBeams());
       local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
     } else if ( stepOne ) {
-      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatchSubbanding() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMsSubbanding() / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
+      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch(true) / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs(true) / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
       local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
     } else {
-      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSynthesizedBeams() * observation.getNrDMsSubbanding());
+      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSynthesizedBeams() * observation.getNrDMs(true));
       local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
     }
 
@@ -424,11 +424,11 @@ int main(int argc, char *argv[]) {
           std::cout << "DM: " << dm << " = ";
         }
         for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
-          if ( !isa::utils::same(dedispersedData[(syntBeam * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample], dedispersedData_c[(syntBeam * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample]) ) {
+          if ( !isa::utils::same(dedispersedData[(syntBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + sample], dedispersedData_c[(syntBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + sample]) ) {
             wrongSamples++;
           }
           if ( printResults ) {
-            std::cout << dedispersedData[(syntBeam * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << "," << dedispersedData_c[(syntBeam * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << " ";
+            std::cout << dedispersedData[(syntBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + sample] << "," << dedispersedData_c[(syntBeam * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + sample] << " ";
           }
         }
         if ( printResults ) {
@@ -444,16 +444,16 @@ int main(int argc, char *argv[]) {
       if ( printResults ) {
         std::cout << "Beam: " << beam << std::endl;
       }
-      for ( unsigned int dm = 0; dm < observation.getNrDMsSubbanding(); dm++ ) {
+      for ( unsigned int dm = 0; dm < observation.getNrDMs(true); dm++ ) {
         if ( printResults ) {
           std::cout << "DM: " << dm << std::endl;
         }
         for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-          for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatchSubbanding(); sample++ ) {
-            if ( !isa::utils::same(subbandedData[(beam * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + sample], subbandedData_c[(beam * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + sample]) ) {
+          for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(true); sample++ ) {
+            if ( !isa::utils::same(subbandedData[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + sample], subbandedData_c[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + sample]) ) {
             }
             if ( printResults) {
-              std::cout << subbandedData[(beam * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + sample] << "," << subbandedData_c[(beam * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerPaddedBatchSubbanding(padding / sizeof(outputDataType))) + sample] << " ";
+              std::cout << subbandedData[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + sample] << "," << subbandedData_c[(beam * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (dm * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + (subband * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType))) + sample] << " ";
             }
           }
           if ( printResults) {
@@ -473,16 +473,16 @@ int main(int argc, char *argv[]) {
       if ( printResults ) {
         std::cout << "Synthesized Beam: " << syntBeam << std::endl;
       }
-      for ( unsigned int dm = 0; dm < observation.getNrDMsSubbanding() * observation.getNrDMs(); dm++ ) {
+      for ( unsigned int dm = 0; dm < observation.getNrDMs(true) * observation.getNrDMs(); dm++ ) {
         if ( printResults ) {
           std::cout << "DM: " << dm << " = ";
         }
         for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
-          if ( !isa::utils::same(dedispersedData[(syntBeam * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample], dedispersedData_c[(syntBeam * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample]) ) {
+          if ( !isa::utils::same(dedispersedData[(syntBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + sample], dedispersedData_c[(syntBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + sample]) ) {
             wrongSamples++;
           }
           if ( printResults ) {
-            std::cout << dedispersedData[(syntBeam * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << "," << dedispersedData_c[(syntBeam * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerPaddedBatch(padding / sizeof(outputDataType))) + sample] << " ";
+            std::cout << dedispersedData[(syntBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + sample] << "," << dedispersedData_c[(syntBeam * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + (dm * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType))) + sample] << " ";
           }
         }
         if ( printResults ) {
@@ -499,9 +499,9 @@ int main(int argc, char *argv[]) {
     if ( singleStep ) {
       std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMs() * observation.getNrSamplesPerBatch()) << "%)." << std::endl;
     } else if ( stepOne ) {
-      std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrBeams()) * observation.getNrDMsSubbanding() * observation.getNrSubbands() * observation.getNrSamplesPerBatchSubbanding()) << "%)." << std::endl;
+      std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrBeams()) * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true)) << "%)." << std::endl;
     } else {
-      std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMsSubbanding() * observation.getNrDMs() * observation.getNrSamplesPerBatch()) << "%)." << std::endl;
+      std::cout << "Wrong samples: " << wrongSamples << " (" << (wrongSamples * 100.0) / (static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch()) << "%)." << std::endl;
     }
   } else {
     std::cout << "TEST PASSED." << std::endl;
