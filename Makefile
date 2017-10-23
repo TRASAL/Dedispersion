@@ -38,8 +38,11 @@ clean:
 	-@rm lib/*
 
 install: all
+	-@mkdir -p $(INSTALL_ROOT)/include
 	-@cp include/Shifts.hpp $(INSTALL_ROOT)/include
 	-@cp include/Dedispersion.hpp $(INSTALL_ROOT)/include
+	-@mkdir -p $(INSTALL_ROOT)/lib
 	-@cp lib/* $(INSTALL_ROOT)/lib
+	-@mkdir -p $(INSTALL_ROOT)/bin
 	-@cp bin/DedispersionTest $(INSTALL_ROOT)/bin
 	-@cp bin/DedispersionTuning $(INSTALL_ROOT)/bin
