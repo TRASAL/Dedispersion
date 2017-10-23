@@ -27,11 +27,11 @@ bin/Dedispersion.o: bin/Shifts.o include/Dedispersion.hpp src/Dedispersion.cpp
 
 bin/DedispersionTest: include/configuration.hpp src/DedispersionTest.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp bin/Dedispersion.o bin/Shifts.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp bin/Dedispersion.o bin/Shifts.o $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 bin/DedispersionTuning: include/configuration.hpp src/DedispersionTuning.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp bin/Dedispersion.o bin/Shifts.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp bin/Dedispersion.o bin/Shifts.o $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
