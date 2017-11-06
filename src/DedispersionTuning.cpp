@@ -62,7 +62,7 @@ int main(int argc, char * argv[]) {
   double bestGFLOPs = 0.0;
   std::string channelsFile;
   AstroData::Observation observation;
-  Dedispersion::DedispersionConf conf;
+  std::vector<Dedispersion::DedispersionConf> confs;
   Dedispersion::DedispersionConf bestConf;
   cl::Event event;
 
@@ -80,7 +80,6 @@ int main(int argc, char * argv[]) {
       std::cerr << "Mutually exclusive modes, select one: -single_step -step_one -step_two" << std::endl;
       return 1;
     }
-    conf.setLocalMem(args.getSwitch("-local"));
     padding = args.getSwitchArgument< unsigned int >("-padding");
     vectorWidth = args.getSwitchArgument< unsigned int >("-vector");
     if ( singleStep || stepOne ) {
@@ -114,7 +113,7 @@ int main(int argc, char * argv[]) {
       observation.setDMRange(args.getSwitchArgument< unsigned int >("-dms"), args.getSwitchArgument< float >("-dm_first"), args.getSwitchArgument< float >("-dm_step"));
     }
   } catch ( isa::utils::EmptyCommandLine & err ) {
-    std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-best] [-single_step | -step_one | -step_two] [-local] -padding ... -vector ... -min_threads ... -max_threads ... -max_columns ... -max_rows ... -max_items ... -max_sample_items ... -max_dm_items ... -max_unroll ... -beams ... -samples ...-min_freq ... -channel_bandwidth ... -channels ... " << std::endl;
+    std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-best] [-single_step | -step_one | -step_two] -padding ... -vector ... -min_threads ... -max_threads ... -max_columns ... -max_rows ... -max_items ... -max_sample_items ... -max_dm_items ... -max_unroll ... -beams ... -samples ...-min_freq ... -channel_bandwidth ... -channels ... " << std::endl;
     std::cerr << "\t-single_step -input_bits ... -zapped_channels ... -synthesized_beams ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     std::cerr << "\t-step_one -input_bits ... -zapped_channels ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     std::cerr << "\t-step_two -synthesized_beams ... -subbands ... -subbanding_dms ... -dms ... -dm_first ... -dm_step ..." << std::endl;
@@ -217,225 +216,232 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
+  for ( unsigned int threadsD0 = minThreads; threadsD0 <= maxColumns; threadsD0 *= 2 ) {
+    for ( unsigned int threadsD1 = 1; threadsD1 <= maxRows; threadsD1++ ) {
+      if ( threadsD0 * threadsD1 > maxThreads ) {
+        break;
+      } else if ( (threadsD0 * threadsD1) % vectorWidth != 0 ) {
+        continue;
+      }
+      for ( unsigned int itemsD0 = 1; itemsD0 <= maxSampleItems; itemsD0++ ) {
+        if ( singleStep ) {
+          if ( (observation.getNrSamplesPerBatch() % itemsD0) != 0 ) {
+            continue;
+          }
+        } else if ( stepOne ) {
+          if ( (observation.getNrSamplesPerBatch(true) % itemsD0) != 0 ) {
+            continue;
+          }
+        } else {
+          if ( (observation.getNrSamplesPerBatch() % itemsD0) != 0 ) {
+            continue;
+          }
+        }
+        for ( unsigned int itemsD1 = 1; itemsD1 <= maxDMItems; itemsD1++ ) {
+          if ( singleStep ) {
+            if ( (observation.getNrDMs() % (threadsD1 * itemsD1)) != 0 ) {
+              continue;
+            }
+          } else if ( stepOne ) {
+            if ( (observation.getNrDMs(true) % (threadsD1 * itemsD1)) != 0 ) {
+              continue;
+            }
+          } else {
+            if ( (observation.getNrDMs() % (threadsD1 * itemsD1)) != 0 ) {
+              continue;
+            }
+          }
+          for ( unsigned int unroll = 1; unroll <= maxUnroll; unroll++ ) {
+            if ( singleStep ) {
+              if ( observation.getNrChannels() % unroll != 0 ) {
+                continue;
+              }
+            } else if ( stepOne ) {
+              if ( observation.getNrChannelsPerSubband() % unroll != 0 ) {
+                continue;
+              }
+            } else {
+              if ( observation.getNrSubbands() % unroll != 0 ) {
+                continue;
+              }
+            }
+
+            // Generate configurations
+            unsigned int nrItems, localNrItems;
+            Dedispersion::DedispersionConf conf, localConf;
+
+            conf.setNrThreadsD0(threadsD0);
+            localConf.setNrThreadsD0(threadsD0);
+            conf.setNrThreadsD1(threadsD1);
+            localConf.setNrThreadsD1(threadsD1);
+            conf.setNrItemsD0(itemsD0);
+            localConf.setNrItemsD0(itemsD0);
+            conf.setNrItemsD1(itemsD1);
+            localConf.setNrItemsD1(itemsD1);
+            conf.setUnroll(unroll);
+            localConf.setUnroll(unroll);
+            localConf.setLocalMem(true);
+
+            nrItems = conf.getNrItemsD1() + (conf.getNrItemsD0() * conf.getNrItemsD1());
+            localNrItems = nrItems;
+            if ( singleStep ) {
+              nrItems += 4;
+              localNrItems += 9;
+            } else if ( stepOne ) {
+              nrItems += 5;
+              localNrItems += 10;
+            } else {
+              nrItems += 5;
+              localNrItems += 10;
+            }
+            if ( inputBits < 8 ) {
+              nrItems += 4;
+              localNrItems += 4;
+            }
+
+            if ( nrItems <= maxItems ) {
+              confs.push_back(conf);
+            }
+            if ( localNrItems <= maxItems ) {
+              confs.push_back(localConf);
+            }
+          }
+        }
+      }
+    }
+  }
+
   if ( !bestMode ) {
     std::cout << std::fixed << std::endl;
     std::cout << "# nrBeams nrSynthesizedBeams nrSubbandingDMs nrDMs nrSubbands nrChannels nrZappedChannels nrSamplesSubbanding nrSamples *configuration* GFLOP/s time stdDeviation COV" << std::endl << std::endl;
   }
 
-  for ( unsigned int threads = minThreads; threads <= maxColumns; threads *= 2 ) {
-    conf.setNrThreadsD0(threads);
-    for ( unsigned int threads = 1; threads <= maxRows; threads++ ) {
-      conf.setNrThreadsD1(threads);
-      if ( conf.getNrThreadsD0() * conf.getNrThreadsD1() > maxThreads ) {
-        break;
-      } else if ( (conf.getNrThreadsD0() * conf.getNrThreadsD1()) % vectorWidth != 0 ) {
-        continue;
-      }
-      for ( unsigned int items = 1; items <= maxSampleItems; items++ ) {
-        conf.setNrItemsD0(items);
+  for ( auto conf = confs.begin(); conf != confs.end(); ++conf  ) {
+    // Generate kernel
+    double gflops = 0.0;
+    isa::utils::Timer timer;
+    cl::Kernel * kernel;
+    std::string * code = 0;
+
+    if ( reInit ) {
+      delete clQueues;
+      clQueues = new std::vector< std::vector < cl::CommandQueue > >();
+      isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
+      try {
         if ( singleStep ) {
-          if ( (observation.getNrSamplesPerBatch() % conf.getNrItemsD0()) != 0 ) {
-            continue;
-          }
+          initializeDeviceMemorySingleStep(clContext, &(clQueues->at(clDeviceID)[0]), shiftsSingleStep, &shiftsSingleStep_d, zappedChannels, &zappedChannels_d, beamDriverSingleStep, &beamDriverSingleStep_d, dispersedData_size, &dispersedData_d, dedispersedData_size, &dedispersedData_d);
         } else if ( stepOne ) {
-          if ( (observation.getNrSamplesPerBatch(true) % conf.getNrItemsD0()) != 0 ) {
-            continue;
-          }
+          initializeDeviceMemoryStepOne(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepOne, &shiftsStepOne_d, zappedChannels, &zappedChannels_d, dispersedData_size, &dispersedData_d, subbandedData_size, &subbandedData_d);
         } else {
-          if ( (observation.getNrSamplesPerBatch() % conf.getNrItemsD0()) != 0 ) {
-            continue;
-          }
+          initializeDeviceMemoryStepTwo(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepTwo, &shiftsStepTwo_d, beamDriverStepTwo, &beamDriverStepTwo_d, subbandedData_size, &subbandedData_d, dedispersedData_size, &dedispersedData_d);
         }
-        for ( unsigned int items = 1; items <= maxDMItems; items++ ) {
-          conf.setNrItemsD1(items);
-          if ( singleStep ) {
-            if ( (observation.getNrDMs() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
-              continue;
-            }
-          } else if ( stepOne ) {
-            if ( (observation.getNrDMs(true) % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
-              continue;
-            }
-          } else {
-            if ( (observation.getNrDMs() % (conf.getNrThreadsD1() * conf.getNrItemsD1())) != 0 ) {
-              continue;
-            }
-          }
-          unsigned int nrItems = conf.getNrItemsD1() + (conf.getNrItemsD0() * conf.getNrItemsD1());
-          if ( singleStep ) {
-            if ( conf.getLocalMem() ) {
-              nrItems += 9;
-            } else {
-              nrItems += 4;
-            }
-            if ( inputBits < 8 ) {
-              nrItems += 4;
-            }
-          } else if ( stepOne ) {
-            if ( conf.getLocalMem() ) {
-              nrItems += 10;
-            } else {
-              nrItems += 5;
-            }
-            if ( inputBits < 8 ) {
-              nrItems += 4;
-            }
-          } else {
-            if ( conf.getLocalMem() ) {
-              nrItems += 10;
-            } else {
-              nrItems += 5;
-            }
-          }
-
-          if ( nrItems > maxItems ) {
-            break;
-          }
-          for ( unsigned int unroll = 1; unroll <= maxUnroll; unroll++ ) {
-            conf.setUnroll(unroll);
-            if ( singleStep ) {
-              if ( observation.getNrChannels() % conf.getUnroll() != 0 ) {
-                continue;
-              }
-            } else if ( stepOne ) {
-              if ( observation.getNrChannelsPerSubband() % conf.getUnroll() != 0 ) {
-                continue;
-              }
-            } else {
-              if ( observation.getNrSubbands() % conf.getUnroll() != 0 ) {
-                continue;
-              }
-            }
-
-            // Generate kernel
-            double gflops = 0.0;
-            isa::utils::Timer timer;
-            cl::Kernel * kernel;
-            std::string * code = 0;
-
-            if ( reInit ) {
-              delete clQueues;
-              clQueues = new std::vector< std::vector < cl::CommandQueue > >();
-              isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
-              try {
-                if ( singleStep ) {
-                  initializeDeviceMemorySingleStep(clContext, &(clQueues->at(clDeviceID)[0]), shiftsSingleStep, &shiftsSingleStep_d, zappedChannels, &zappedChannels_d, beamDriverSingleStep, &beamDriverSingleStep_d, dispersedData_size, &dispersedData_d, dedispersedData_size, &dedispersedData_d);
-                } else if ( stepOne ) {
-                  initializeDeviceMemoryStepOne(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepOne, &shiftsStepOne_d, zappedChannels, &zappedChannels_d, dispersedData_size, &dispersedData_d, subbandedData_size, &subbandedData_d);
-                } else {
-                  initializeDeviceMemoryStepTwo(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepTwo, &shiftsStepTwo_d, beamDriverStepTwo, &beamDriverStepTwo_d, subbandedData_size, &subbandedData_d, dedispersedData_size, &dedispersedData_d);
-                }
-              } catch ( cl::Error & err ) {
-                std::cerr << "Error in memory allocation: ";
-                std::cerr << std::to_string(err.err()) << "." << std::endl;
-                return -1;
-              }
-              reInit = false;
-            }
-            if ( singleStep ) {
-              code = Dedispersion::getDedispersionOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsSingleStep);
-              gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMs() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch());
-            } else if ( stepOne ) {
-              code = Dedispersion::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
-              gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrBeams()) * observation.getNrDMs(true) * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch(true));
-            } else {
-              code = Dedispersion::getSubbandDedispersionStepTwoOpenCL< outputDataType >(conf, padding, outputDataName, observation, *shiftsStepTwo);
-              gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSubbands() * observation.getNrSamplesPerBatch());
-            }
-            try {
-              if ( singleStep ) {
-                kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
-              } else if ( stepOne ) {
-                kernel = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
-              } else {
-                kernel = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
-              }
-            } catch ( isa::OpenCL::OpenCLError & err ) {
-              std::cerr << err.what() << std::endl;
-              delete code;
-              break;
-            }
-            delete code;
-
-            cl::NDRange global;
-            cl::NDRange local;
-
-            if ( singleStep ) {
-              global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSynthesizedBeams());
-              local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
-            } else if ( stepOne ) {
-              global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch(true) / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs(true) / conf.getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
-              local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
-            } else {
-              global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / conf.getNrItemsD0(), conf.getNrThreadsD0()), observation.getNrDMs() / conf.getNrItemsD1(), observation.getNrSynthesizedBeams() * observation.getNrDMs(true));
-              local = cl::NDRange(conf.getNrThreadsD0(), conf.getNrThreadsD1(), 1);
-            }
-
-            if ( singleStep ) {
-              kernel->setArg(0, dispersedData_d);
-              kernel->setArg(1, dedispersedData_d);
-              kernel->setArg(2, beamDriverSingleStep_d);
-              kernel->setArg(3, zappedChannels_d);
-              kernel->setArg(4, shiftsSingleStep_d);
-            } else if ( stepOne ) {
-              kernel->setArg(0, dispersedData_d);
-              kernel->setArg(1, subbandedData_d);
-              kernel->setArg(2, zappedChannels_d);
-              kernel->setArg(3, shiftsStepOne_d);
-            } else {
-              kernel->setArg(0, subbandedData_d);
-              kernel->setArg(1, dedispersedData_d);
-              kernel->setArg(2, beamDriverStepTwo_d);
-              kernel->setArg(3, shiftsStepTwo_d);
-            }
-
-            try {
-              // Warm-up run
-              clQueues->at(clDeviceID)[0].finish();
-              clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
-              event.wait();
-              // Tuning runs
-              for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
-                timer.start();
-                clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
-                event.wait();
-                timer.stop();
-              }
-            } catch ( cl::Error & err ) {
-              std::cerr << "OpenCL error kernel execution (";
-              std::cerr << conf.print() << "): ";
-              std::cerr << std::to_string(err.err()) << "." << std::endl;
-              delete kernel;
-              if ( err.err() == -4 || err.err() == -61 ) {
-                return -1;
-              } else if ( err.err() == -5 ) {
-                // No need to reallocate the memory in this case
-                break;
-              }
-              reInit = true;
-              break;
-            }
-            delete kernel;
-
-            if ( (gflops / timer.getAverageTime()) > bestGFLOPs ) {
-              bestGFLOPs = gflops / timer.getAverageTime();
-              bestConf = conf;
-            }
-            if ( !bestMode ) {
-              std::cout << observation.getNrBeams() << " " << observation.getNrSynthesizedBeams() << " ";
-              std::cout << observation.getNrDMs(true) << " " << observation.getNrDMs() << " ";
-              std::cout << observation.getNrSubbands() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " ";
-              std::cout << observation.getNrSamplesPerBatch(true) << " " << observation.getNrSamplesPerBatch() << " ";
-              std::cout << conf.print() << " ";
-              std::cout << std::setprecision(3);
-              std::cout << gflops / timer.getAverageTime() << " ";
-              std::cout << std::setprecision(6);
-              std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " ";
-              std::cout << timer.getCoefficientOfVariation() <<  std::endl;
-            }
-          }
-        }
+      } catch ( cl::Error & err ) {
+        std::cerr << "Error in memory allocation: ";
+        std::cerr << std::to_string(err.err()) << "." << std::endl;
+        return -1;
       }
+      reInit = false;
+    }
+    if ( singleStep ) {
+      code = Dedispersion::getDedispersionOpenCL< inputDataType, outputDataType >(*conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsSingleStep);
+      gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMs() * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch());
+    } else if ( stepOne ) {
+      code = Dedispersion::getSubbandDedispersionStepOneOpenCL< inputDataType, outputDataType >(*conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsStepOne);
+      gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrBeams()) * observation.getNrDMs(true) * (observation.getNrChannels() - observation.getNrZappedChannels()) * observation.getNrSamplesPerBatch(true));
+    } else {
+      code = Dedispersion::getSubbandDedispersionStepTwoOpenCL< outputDataType >(*conf, padding, outputDataName, observation, *shiftsStepTwo);
+      gflops = isa::utils::giga(static_cast< uint64_t >(observation.getNrSynthesizedBeams()) * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSubbands() * observation.getNrSamplesPerBatch());
+    }
+    try {
+      if ( singleStep ) {
+        kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+      } else if ( stepOne ) {
+        kernel = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+      } else {
+        kernel = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+      }
+    } catch ( isa::OpenCL::OpenCLError & err ) {
+      std::cerr << err.what() << std::endl;
+      delete code;
+      break;
+    }
+    delete code;
+
+    cl::NDRange global;
+    cl::NDRange local;
+
+    if ( singleStep ) {
+      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / (*conf).getNrItemsD0(), (*conf).getNrThreadsD0()), observation.getNrDMs() / (*conf).getNrItemsD1(), observation.getNrSynthesizedBeams());
+      local = cl::NDRange((*conf).getNrThreadsD0(), (*conf).getNrThreadsD1(), 1);
+    } else if ( stepOne ) {
+      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch(true) / (*conf).getNrItemsD0(), (*conf).getNrThreadsD0()), observation.getNrDMs(true) / (*conf).getNrItemsD1(), observation.getNrBeams() * observation.getNrSubbands());
+      local = cl::NDRange((*conf).getNrThreadsD0(), (*conf).getNrThreadsD1(), 1);
+    } else {
+      global = cl::NDRange(isa::utils::pad(observation.getNrSamplesPerBatch() / (*conf).getNrItemsD0(), (*conf).getNrThreadsD0()), observation.getNrDMs() / (*conf).getNrItemsD1(), observation.getNrSynthesizedBeams() * observation.getNrDMs(true));
+      local = cl::NDRange((*conf).getNrThreadsD0(), (*conf).getNrThreadsD1(), 1);
+    }
+
+    if ( singleStep ) {
+      kernel->setArg(0, dispersedData_d);
+      kernel->setArg(1, dedispersedData_d);
+      kernel->setArg(2, beamDriverSingleStep_d);
+      kernel->setArg(3, zappedChannels_d);
+      kernel->setArg(4, shiftsSingleStep_d);
+    } else if ( stepOne ) {
+      kernel->setArg(0, dispersedData_d);
+      kernel->setArg(1, subbandedData_d);
+      kernel->setArg(2, zappedChannels_d);
+      kernel->setArg(3, shiftsStepOne_d);
+    } else {
+      kernel->setArg(0, subbandedData_d);
+      kernel->setArg(1, dedispersedData_d);
+      kernel->setArg(2, beamDriverStepTwo_d);
+      kernel->setArg(3, shiftsStepTwo_d);
+    }
+
+    try {
+      // Warm-up run
+      clQueues->at(clDeviceID)[0].finish();
+      clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
+      event.wait();
+      // Tuning runs
+      for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
+        timer.start();
+        clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
+        event.wait();
+        timer.stop();
+      }
+    } catch ( cl::Error & err ) {
+      std::cerr << "OpenCL error kernel execution (";
+      std::cerr << (*conf).print() << "): ";
+      std::cerr << std::to_string(err.err()) << "." << std::endl;
+      delete kernel;
+      if ( err.err() == -4 || err.err() == -61 ) {
+        return -1;
+      } else if ( err.err() == -5 ) {
+        // No need to reallocate the memory in this case
+        break;
+      }
+      reInit = true;
+      break;
+    }
+    delete kernel;
+
+    if ( (gflops / timer.getAverageTime()) > bestGFLOPs ) {
+      bestGFLOPs = gflops / timer.getAverageTime();
+      bestConf = *conf;
+    }
+    if ( !bestMode ) {
+      std::cout << observation.getNrBeams() << " " << observation.getNrSynthesizedBeams() << " ";
+      std::cout << observation.getNrDMs(true) << " " << observation.getNrDMs() << " ";
+      std::cout << observation.getNrSubbands() << " " << observation.getNrChannels() << " " << observation.getNrZappedChannels() << " ";
+      std::cout << observation.getNrSamplesPerBatch(true) << " " << observation.getNrSamplesPerBatch() << " ";
+      std::cout << (*conf).print() << " ";
+      std::cout << std::setprecision(3);
+      std::cout << gflops / timer.getAverageTime() << " ";
+      std::cout << std::setprecision(6);
+      std::cout << timer.getAverageTime() << " " << timer.getStandardDeviation() << " ";
+      std::cout << timer.getCoefficientOfVariation() <<  std::endl;
     }
   }
 
