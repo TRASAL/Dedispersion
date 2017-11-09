@@ -36,8 +36,8 @@
 #include <Timer.hpp>
 #include <Stats.hpp>
 
-void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, std::vector<unsigned int> & beamMapping, cl::Buffer * beamMapping_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d);
-void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepOne, cl::Buffer * shiftsStepOne_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d);
+void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector<unsigned int> & zappedChannels, cl::Buffer * zappedChannels_d, std::vector<unsigned int> & beamMapping, cl::Buffer * beamMapping_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d);
+void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepOne, cl::Buffer * shiftsStepOne_d, std::vector<unsigned int> & zappedChannels, cl::Buffer * zappedChannels_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d);
 void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepTwo, cl::Buffer * shiftsStepTwo_d, std::vector<unsigned int> & beamMapping, cl::Buffer * beamMapping_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d);
 
 int main(int argc, char * argv[]) {
@@ -128,7 +128,7 @@ int main(int argc, char * argv[]) {
   std::vector< float > * shiftsSingleStep = Dedispersion::getShifts(observation, padding);
   std::vector< float > * shiftsStepOne = Dedispersion::getShifts(observation, padding);
   std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, padding);
-  std::vector< uint8_t > zappedChannels(observation.getNrChannels(padding / sizeof(uint8_t)));
+  std::vector<unsigned int> zappedChannels(observation.getNrChannels(padding / sizeof(unsigned int)));
   std::vector<unsigned int> beamMappingSingleStep(observation.getNrSynthesizedBeams() * observation.getNrChannels(padding / sizeof(unsigned int)));
   std::vector<unsigned int> beamMappingStepTwo(observation.getNrSynthesizedBeams() * observation.getNrSubbands(padding / sizeof(unsigned int)));
 
@@ -175,7 +175,7 @@ int main(int argc, char * argv[]) {
   try {
     if ( singleStep ) {
       shiftsSingleStep_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsSingleStep->size() * sizeof(float), 0, 0);
-      zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
+      zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
       if ( inputBits >= 8 ) {
         dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(inputDataType));
       } else {
@@ -187,7 +187,7 @@ int main(int argc, char * argv[]) {
       beamMappingSingleStep_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamMappingSingleStep.size() * sizeof(unsigned int), 0, 0);
     } else if ( stepOne ) {
       shiftsStepOne_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
-      zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
+      zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
       if ( inputBits >= 8 ) {
         dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(true, padding / sizeof(inputDataType));
       } else {
@@ -452,15 +452,15 @@ int main(int argc, char * argv[]) {
   return 0;
 }
 
-void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsSingleStep, cl::Buffer * shiftsSingleStep_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, std::vector<unsigned int> & beamMappingSingleStep, cl::Buffer * beamMappingSingleStep_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d) {
+void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsSingleStep, cl::Buffer * shiftsSingleStep_d, std::vector<unsigned int> & zappedChannels, cl::Buffer * zappedChannels_d, std::vector<unsigned int> & beamMappingSingleStep, cl::Buffer * beamMappingSingleStep_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d) {
   try {
     *shiftsSingleStep_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsSingleStep->size() * sizeof(float), 0, 0);
-    *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
+    *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
     *beamMappingSingleStep_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamMappingSingleStep.size() * sizeof(unsigned int), 0, 0);
     *dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
     *dedispersedData_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, dedispersedData_size * sizeof(outputDataType), 0, 0);
     clQueue->enqueueWriteBuffer(*shiftsSingleStep_d, CL_FALSE, 0, shiftsSingleStep->size() * sizeof(float), reinterpret_cast< void * >(shiftsSingleStep->data()));
-    clQueue->enqueueWriteBuffer(*zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
+    clQueue->enqueueWriteBuffer(*zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(zappedChannels.data()));
     clQueue->enqueueWriteBuffer(*beamMappingSingleStep_d, CL_FALSE, 0, beamMappingSingleStep.size() * sizeof(unsigned int), reinterpret_cast< void * >(beamMappingSingleStep.data()));
     clQueue->finish();
   } catch ( cl::Error & err ) {
@@ -469,14 +469,14 @@ void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue 
   }
 }
 
-void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepOne, cl::Buffer * shiftsStepOne_d, std::vector< uint8_t > & zappedChannels, cl::Buffer * zappedChannels_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d) {
+void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepOne, cl::Buffer * shiftsStepOne_d, std::vector<unsigned int> & zappedChannels, cl::Buffer * zappedChannels_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d) {
   try {
     *shiftsStepOne_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
-    *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
+    *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
     *dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
     *subbandedData_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, subbandedData_size * sizeof(outputDataType), 0, 0);
     clQueue->enqueueWriteBuffer(*shiftsStepOne_d, CL_FALSE, 0, shiftsStepOne->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepOne->data()));
-    clQueue->enqueueWriteBuffer(*zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()));
+    clQueue->enqueueWriteBuffer(*zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(zappedChannels.data()));
     clQueue->finish();
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error: " << std::to_string(err.err()) << "." << std::endl;

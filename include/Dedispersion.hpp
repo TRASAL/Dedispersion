@@ -55,8 +55,8 @@ private:
 typedef std::map< std::string, std::map< unsigned int, Dedispersion::DedispersionConf * > * > tunedDedispersionConf;
 
 // Sequential
-template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
-template< typename I, typename L, typename O > void subbandDedispersionStepOne(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
+template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector<unsigned int> & zappedChannels, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
+template< typename I, typename L, typename O > void subbandDedispersionStepOne(AstroData::Observation & observation, const std::vector<unsigned int> & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits);
 template< typename I, typename L, typename O > void subbandDedispersionStepTwo(AstroData::Observation & observation, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding);
 // OpenCL
 template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts);
@@ -66,7 +66,7 @@ void readTunedDedispersionConf(tunedDedispersionConf & tunedDedispersion, const 
 
 
 // Implementations
-template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
+template< typename I, typename L, typename O > void dedispersion(AstroData::Observation & observation, const std::vector<unsigned int> & zappedChannels, const std::vector< uint8_t > & sBeamDriver, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
   for ( unsigned int sBeam = 0; sBeam < observation.getNrSynthesizedBeams(); sBeam++ ) {
     for ( unsigned int dm = 0; dm < observation.getNrDMs(); dm++ ) {
       for ( unsigned int sample = 0; sample < observation.getNrSamplesPerBatch(); sample++ ) {
@@ -101,7 +101,7 @@ template< typename I, typename L, typename O > void dedispersion(AstroData::Obse
   }
 }
 
-template< typename I, typename L, typename O > void subbandDedispersionStepOne(AstroData::Observation & observation, const std::vector< uint8_t > & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
+template< typename I, typename L, typename O > void subbandDedispersionStepOne(AstroData::Observation & observation, const std::vector<unsigned int> & zappedChannels, const std::vector< I > & input, std::vector< O > & output, const std::vector< float > & shifts, const unsigned int padding, const uint8_t inputBits) {
   for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
     for ( unsigned int dm = 0; dm < observation.getNrDMs(true); dm++ ) {
       for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
@@ -206,7 +206,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   if ( conf.getLocalMem() ) {
     if ( conf.getSplitBatches() ) {
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const unsigned int * const restrict beamMapping, __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const unsigned int * const restrict beamMapping, __constant const unsigned int * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
     }
     *code +=  "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
@@ -285,7 +285,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   } else {
     if ( conf.getSplitBatches() ) {
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const unsigned int * restrict const beamMapping,  __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const unsigned int * restrict const beamMapping,  __constant const unsigned int * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
     }
     *code += "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
@@ -603,7 +603,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
   } else {
     if ( conf.getSplitBatches() ) {
     } else {
-      *code = "__kernel void dedispersionStepOne(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const uchar * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
+      *code = "__kernel void dedispersionStepOne(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __constant const unsigned int * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
     }
     *code += "unsigned int beam = get_group_id(2) / " + std::to_string(observation.getNrSubbands()) + ";\n"
       "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"

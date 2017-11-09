@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
   std::vector< float > * shiftsSingleStep = Dedispersion::getShifts(observation, padding);
   std::vector< float > * shiftsStepOne = Dedispersion::getShifts(observation, padding);
   std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, padding);
-  std::vector< uint8_t > zappedChannels(observation.getNrChannels(padding / sizeof(uint8_t)));
+  std::vector<unsigned int> zappedChannels(observation.getNrChannels(padding / sizeof(unsigned int)));
   std::vector<unsigned int> beamMappingSingleStep(observation.getNrSynthesizedBeams() * observation.getNrChannels(padding / sizeof(unsigned int)));
   std::vector<unsigned int> beamMappingStepTwo(observation.getNrSynthesizedBeams() * observation.getNrSubbands(padding / sizeof(unsigned int)));
 
@@ -171,13 +171,13 @@ int main(int argc, char *argv[]) {
   try {
     if ( singleStep ) {
       shiftsSingleStep_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsSingleStep->size() * sizeof(float), 0, 0);
-      zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
+      zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
       dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(inputDataType), 0, 0);
       dedispersedData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, dedispersedData.size() * sizeof(outputDataType), 0, 0);
       beamMappingSingleStep_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamMappingSingleStep.size() * sizeof(unsigned int), 0, 0);
     } else if ( stepOne ) {
       shiftsStepOne_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
-      zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
+      zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
       dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(inputDataType), 0, 0);
       subbandedData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, subbandedData.size() * sizeof(outputDataType), 0, 0);
     } else {
@@ -307,12 +307,12 @@ int main(int argc, char *argv[]) {
   try {
     if ( singleStep ) {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsSingleStep_d, CL_FALSE, 0, shiftsSingleStep->size() * sizeof(float), reinterpret_cast< void * >(shiftsSingleStep->data()), 0, 0);
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()), 0, 0);
+      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(zappedChannels.data()), 0, 0);
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, 0);
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamMappingSingleStep_d, CL_FALSE, 0, beamMappingSingleStep.size() * sizeof(unsigned int), reinterpret_cast< void * >(beamMappingSingleStep.data()), 0, 0);
     } else if ( stepOne ) {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepOne_d, CL_FALSE, 0, shiftsStepOne->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepOne->data()), 0, 0);
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()), 0, 0);
+      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(zappedChannels.data()), 0, 0);
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, 0);
     } else {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepTwo_d, CL_FALSE, 0, shiftsStepTwo->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepTwo->data()), 0, 0);
