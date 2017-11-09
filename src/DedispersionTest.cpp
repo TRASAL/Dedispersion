@@ -121,8 +121,8 @@ int main(int argc, char *argv[]) {
   std::vector< float > * shiftsStepOne = Dedispersion::getShifts(observation, padding);
   std::vector< float > * shiftsStepTwo = Dedispersion::getShiftsStepTwo(observation, padding);
   std::vector< uint8_t > zappedChannels(observation.getNrChannels(padding / sizeof(uint8_t)));
-  std::vector< uint8_t > beamDriverSingleStep(observation.getNrSynthesizedBeams() * observation.getNrChannels(padding / sizeof(uint8_t)));
-  std::vector< uint8_t > beamDriverStepTwo(observation.getNrSynthesizedBeams() * observation.getNrSubbands(padding / sizeof(uint8_t)));
+  std::vector<unsigned int> beamMappingSingleStep(observation.getNrSynthesizedBeams() * observation.getNrChannels(padding / sizeof(unsigned int)));
+  std::vector<unsigned int> beamMappingStepTwo(observation.getNrSynthesizedBeams() * observation.getNrSubbands(padding / sizeof(unsigned int)));
 
   if ( singleStep || stepOne ) {
     AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
@@ -165,15 +165,15 @@ int main(int argc, char *argv[]) {
   cl::Buffer dispersedData_d;
   cl::Buffer subbandedData_d;
   cl::Buffer dedispersedData_d;
-  cl::Buffer beamDriverSingleStep_d;
-  cl::Buffer beamDriverStepTwo_d;
+  cl::Buffer beamMappingSingleStep_d;
+  cl::Buffer beamMappingStepTwo_d;
   try {
     if ( singleStep ) {
       shiftsSingleStep_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsSingleStep->size() * sizeof(float), 0, 0);
       zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
       dispersedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, dispersedData.size() * sizeof(inputDataType), 0, 0);
       dedispersedData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, dedispersedData.size() * sizeof(outputDataType), 0, 0);
-      beamDriverSingleStep_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamDriverSingleStep.size() * sizeof(uint8_t), 0, 0);
+      beamMappingSingleStep_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamMappingSingleStep.size() * sizeof(unsigned int), 0, 0);
     } else if ( stepOne ) {
       shiftsStepOne_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
       zappedChannels_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(uint8_t), 0, 0);
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
       shiftsStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, shiftsStepTwo->size() * sizeof(float), 0, 0);
       subbandedData_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, subbandedData.size() * sizeof(outputDataType), 0, 0);
       dedispersedData_d = cl::Buffer(*clContext, CL_MEM_WRITE_ONLY, dedispersedData.size() * sizeof(outputDataType), 0, 0);
-      beamDriverStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamDriverStepTwo.size() * sizeof(uint8_t), 0, 0);
+      beamMappingStepTwo_d = cl::Buffer(*clContext, CL_MEM_READ_ONLY, beamMappingStepTwo.size() * sizeof(unsigned int), 0, 0);
     }
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error allocating memory: " << std::to_string(err.err()) << "." << std::endl;
@@ -240,7 +240,7 @@ int main(int argc, char *argv[]) {
     }
     for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-        beamDriverSingleStep[(syntBeam * observation.getNrChannels(padding / sizeof(uint8_t))) + channel] = syntBeam % observation.getNrBeams();
+        beamMappingSingleStep[(syntBeam * observation.getNrChannels(padding / sizeof(unsigned int))) + channel] = syntBeam % observation.getNrBeams();
       }
     }
   } else if ( stepOne ) {
@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
     }
     for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
       for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-        beamDriverStepTwo[(syntBeam * observation.getNrSubbands(padding / sizeof(uint8_t))) + subband] = syntBeam % observation.getNrBeams();
+        beamMappingStepTwo[(syntBeam * observation.getNrSubbands(padding / sizeof(unsigned int))) + subband] = syntBeam % observation.getNrBeams();
       }
     }
   }
@@ -316,7 +316,7 @@ int main(int argc, char *argv[]) {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsSingleStep_d, CL_FALSE, 0, shiftsSingleStep->size() * sizeof(float), reinterpret_cast< void * >(shiftsSingleStep->data()), 0, 0);
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()), 0, 0);
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(dispersedData_d, CL_FALSE, 0, dispersedData.size() * sizeof(inputDataType), reinterpret_cast< void * >(dispersedData.data()), 0, 0);
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamDriverSingleStep_d, CL_FALSE, 0, beamDriverSingleStep.size() * sizeof(uint8_t), reinterpret_cast< void * >(beamDriverSingleStep.data()), 0, 0);
+      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamMappingSingleStep_d, CL_FALSE, 0, beamMappingSingleStep.size() * sizeof(unsigned int), reinterpret_cast< void * >(beamMappingSingleStep.data()), 0, 0);
     } else if ( stepOne ) {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepOne_d, CL_FALSE, 0, shiftsStepOne->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepOne->data()), 0, 0);
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(uint8_t), reinterpret_cast< void * >(zappedChannels.data()), 0, 0);
@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
     } else {
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(shiftsStepTwo_d, CL_FALSE, 0, shiftsStepTwo->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepTwo->data()), 0, 0);
       clQueues->at(clDeviceID)[0].enqueueWriteBuffer(subbandedData_d, CL_FALSE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()), 0, 0);
-      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamDriverStepTwo_d, CL_FALSE, 0, beamDriverStepTwo.size() * sizeof(uint8_t), reinterpret_cast< void * >(beamDriverStepTwo.data()), 0, 0);
+      clQueues->at(clDeviceID)[0].enqueueWriteBuffer(beamMappingStepTwo_d, CL_FALSE, 0, beamMappingStepTwo.size() * sizeof(unsigned int), reinterpret_cast< void * >(beamMappingStepTwo.data()), 0, 0);
     }
   } catch ( cl::Error & err ) {
     std::cerr << "OpenCL error H2D transfer: " << std::to_string(err.err()) << "." << std::endl;
@@ -379,7 +379,7 @@ int main(int argc, char *argv[]) {
       } else {
         kernel->setArg(0, dispersedData_d);
         kernel->setArg(1, dedispersedData_d);
-        kernel->setArg(2, beamDriverSingleStep_d);
+        kernel->setArg(2, beamMappingSingleStep_d);
         kernel->setArg(3, zappedChannels_d);
         kernel->setArg(4, shiftsSingleStep_d);
       }
@@ -391,21 +391,21 @@ int main(int argc, char *argv[]) {
     } else {
       kernel->setArg(0, subbandedData_d);
       kernel->setArg(1, dedispersedData_d);
-      kernel->setArg(2, beamDriverStepTwo_d);
+      kernel->setArg(2, beamMappingStepTwo_d);
       kernel->setArg(3, shiftsStepTwo_d);
     }
     clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
     if ( singleStep ) {
       if ( conf.getSplitBatches() ) {
       } else {
-        Dedispersion::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamDriverSingleStep, dispersedData, dedispersedData_c, *shiftsSingleStep, padding, inputBits);
+        Dedispersion::dedispersion< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, beamMappingSingleStep, dispersedData, dedispersedData_c, *shiftsSingleStep, padding, inputBits);
       }
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()));
     } else if ( stepOne ) {
       Dedispersion::subbandDedispersionStepOne< inputDataType, intermediateDataType, outputDataType >(observation, zappedChannels, dispersedData, subbandedData_c, *shiftsStepOne, padding, inputBits);
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(subbandedData_d, CL_TRUE, 0, subbandedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(subbandedData.data()));
     } else {
-      Dedispersion::subbandDedispersionStepTwo< outputDataType, intermediateDataType, outputDataType >(observation, beamDriverStepTwo, subbandedData, dedispersedData_c, *shiftsStepTwo, padding);
+      Dedispersion::subbandDedispersionStepTwo< outputDataType, intermediateDataType, outputDataType >(observation, beamMappingStepTwo, subbandedData, dedispersedData_c, *shiftsStepTwo, padding);
       clQueues->at(clDeviceID)[0].enqueueReadBuffer(dedispersedData_d, CL_TRUE, 0, dedispersedData.size() * sizeof(outputDataType), reinterpret_cast< void * >(dedispersedData.data()));
     }
   } catch ( cl::Error & err ) {
