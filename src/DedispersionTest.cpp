@@ -27,6 +27,7 @@
 #include <ArgumentList.hpp>
 #include <Observation.hpp>
 #include <ReadData.hpp>
+#include <SynthesizedBeams.hpp>
 #include <InitializeOpenCL.hpp>
 #include <Kernel.hpp>
 #include <utils.hpp>
@@ -238,11 +239,7 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
-      for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
-        beamMappingSingleStep[(syntBeam * observation.getNrChannels(padding / sizeof(unsigned int))) + channel] = syntBeam % observation.getNrBeams();
-      }
-    }
+    AstroData::generateBeamMapping(observation, beamMappingSingleStep, padding);
   } else if ( stepOne ) {
     for ( unsigned int beam = 0; beam < observation.getNrBeams(); beam++ ) {
       for ( unsigned int channel = 0; channel < observation.getNrChannels(); channel++ ) {
@@ -303,11 +300,7 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    for ( unsigned int syntBeam = 0; syntBeam < observation.getNrSynthesizedBeams(); syntBeam++ ) {
-      for ( unsigned int subband = 0; subband < observation.getNrSubbands(); subband++ ) {
-        beamMappingStepTwo[(syntBeam * observation.getNrSubbands(padding / sizeof(unsigned int))) + subband] = syntBeam % observation.getNrBeams();
-      }
-    }
+    AstroData::generateBeamMapping(observation, beamMappingStepTwo, padding, true);
   }
 
   // Copy data from host to device H2D
