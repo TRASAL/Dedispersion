@@ -7,9 +7,10 @@
 
 // Define the data types
 typedef uint8_t inputDataType;
-std::string inputDataName("uchar");
+const std::string inputDataName("uchar");
+const uint8_t inputBits = 8;
 typedef float intermediateDataType;
-std::string intermediateDataName("float");
+const std::string intermediateDataName("float");
 typedef float outputDataType;
-std::string outputDataName("float");
+const std::string outputDataName("float");
 

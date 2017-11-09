@@ -47,7 +47,6 @@ int main(int argc, char * argv[]) {
   bool reInit = false;
   bool bestMode = false;
   unsigned int padding = 0;
-  uint8_t inputBits = 0;
   unsigned int nrIterations = 0;
   unsigned int clPlatformID = 0;
   unsigned int clDeviceID = 0;
@@ -84,7 +83,6 @@ int main(int argc, char * argv[]) {
     padding = args.getSwitchArgument< unsigned int >("-padding");
     vectorWidth = args.getSwitchArgument< unsigned int >("-vector");
     if ( singleStep || stepOne ) {
-      inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
       channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     }
     // Tuning constraints

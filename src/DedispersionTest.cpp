@@ -39,7 +39,6 @@ int main(int argc, char *argv[]) {
   // TODO: implement split_batches mode
   // TODO: implement a way to test external beam drivers
   unsigned int padding = 0;
-  uint8_t inputBits = 0;
   bool printCode = false;
   bool printResults = false;
   bool random = false;
@@ -67,7 +66,6 @@ int main(int argc, char *argv[]) {
     clPlatformID = args.getSwitchArgument< unsigned int >("-opencl_platform");
     clDeviceID = args.getSwitchArgument< unsigned int >("-opencl_device");
     if ( singleStep || stepOne ) {
-      inputBits = args.getSwitchArgument< unsigned int >("-input_bits");
       channelsFile = args.getSwitchArgument< std::string >("-zapped_channels");
     }
     padding = args.getSwitchArgument< unsigned int >("-padding");
@@ -99,8 +97,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }catch ( std::exception & err ) {
     std::cerr << "Usage: " << argv[0] << " [-print_code] [-print_results] [-random] [-single_step | -step_one | -step_two] -opencl_platform ... -opencl_device ... -padding ... -vector ... [-local] -threadsD0 ... -threadsD1 ... -itemsD0 ... -itemsD1 ... -unroll ... -beams ... -channels ... -min_freq ... -channel_bandwidth ... -samples ..." << std::endl;
-    std::cerr << "\t-single_step -input_bits ... -zapped_channels ... -synthesized_beams ... -dms ... -dm_first ... -dm_step ..." << std::endl;
-    std::cerr << "\t-step_one -input_bits ... -zapped_channels ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ..." << std::endl;
+    std::cerr << "\t-single_step -zapped_channels ... -synthesized_beams ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "\t-step_one -zapped_channels ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ..." << std::endl;
     std::cerr << "\t-step_two -synthesized_beams ... -subbands ... -subbanding_dms ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     return 1;
   }
