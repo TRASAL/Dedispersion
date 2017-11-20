@@ -121,7 +121,7 @@ template< typename I, typename L, typename O > void subbandDedispersionStepOne(A
               unsigned int byte = (sample + shift) / (8 / inputBits);
               uint8_t firstBit = ((sample + shift) % (8 / inputBits)) * inputBits;
               char value = 0;
-              char buffer = input[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(I))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(I))) + byte];
+              char buffer = input[(beam * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(I))) + (channel * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(I))) + byte];
 
               for ( uint8_t bit = 0; bit < inputBits; bit++ ) {
                 isa::utils::setBit(value, isa::utils::getBit(buffer, firstBit + bit), bit);
