@@ -298,7 +298,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
         + inputDataType + " interBuffer;\n";
     }
     *code += "\n"
-      "for ( unsigned int channel = 0; channel < " + std::to_string(observation.getNrChannels() - 1) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
+      "for ( unsigned int channel = 0; channel < " + std::to_string(observation.getNrChannels()) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
       "<%DEFS_SHIFT%>"
       "<%UNROLLED_LOOP%>"
       "}\n"
