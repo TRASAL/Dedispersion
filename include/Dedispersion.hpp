@@ -281,7 +281,9 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       unrolled_sTemplate += "barrier(CLK_LOCAL_MEM_FENCE);\n";
     }
     unrolled_sTemplate += "}\n";
-    sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
+    sum_sTemplate = "if ( (get_local_id(0) + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
+      "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n"
+      "}\n";
   } else {
     if ( conf.getSplitBatches() ) {
     } else {
