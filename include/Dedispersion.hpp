@@ -214,7 +214,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       "unsigned int inShMem = 0;\n"
       "unsigned int inGlMem = 0;\n"
       "<%DEFS%>"
-      "__local " + intermediateDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep())))) + "];\n";
+      "__local " + intermediateDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + ((conf.getNrThreadsD1() * conf.getNrItemsD1()) * observation.getDMStep())))) + "];\n";
     if ( inputBits < 8 ) {
       *code += inputDataType + " bitsBuffer;\n"
         "unsigned int byte = 0;\n"
@@ -530,7 +530,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
       "unsigned int inShMem = 0;\n"
       "unsigned int inGlMem = 0;\n"
       "<%DEFS%>"
-      "__local " + intermediateDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM(true) + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep(true))))) + "];\n";
+      "__local " + intermediateDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM(true) + ((conf.getNrThreadsD1() * conf.getNrItemsD1()) * observation.getDMStep(true))))) + "];\n";
     if ( inputBits < 8 ) {
       *code += inputDataType + " bitsBuffer;\n"
         "unsigned int byte = 0;\n"
@@ -848,7 +848,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       "unsigned int inShMem = 0;\n"
       "unsigned int inGlMem = 0;\n"
       "<%DEFS%>"
-      "__local " + inputDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + (((conf.getNrThreadsD1() * conf.getNrItemsD1()) - 1) * observation.getDMStep())))) + "];\n"
+      "__local " + inputDataType + " buffer[" + std::to_string((conf.getNrThreadsD0() * conf.getNrItemsD0()) + static_cast< unsigned int >(shifts[0] * (observation.getFirstDM() + ((conf.getNrThreadsD1() * conf.getNrItemsD1()) * observation.getDMStep())))) + "];\n"
       "\n"
       "for ( unsigned int channel = 0; channel < " + std::to_string(observation.getNrSubbands()) + "; channel += " + std::to_string(conf.getUnroll()) + " ) {\n"
       "unsigned int minShift = 0;\n"
