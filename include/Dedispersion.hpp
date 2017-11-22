@@ -357,9 +357,13 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   }
   std::string store_sTemplate;
   if ( intermediateDataType == outputDataType ) {
-    store_sTemplate = "output[(sBeam * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + ") + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
+    store_sTemplate = "if ( sample + <%OFFSET%> < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
+      "output[(sBeam * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + ") + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n"
+      "}\n";
   } else {
-    store_sTemplate = "output[(sBeam * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + ") + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + ") + (sample + <%OFFSET%>)] = convert_" + outputDataType + "(dedispersedSample<%NUM%>DM<%DM_NUM%>);\n";
+    store_sTemplate = "if ( sample + <%OFFSET%> < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
+      "output[(sBeam * " + std::to_string(observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + ") + ((dm + <%DM_OFFSET%>) * " + std::to_string(observation.getNrSamplesPerBatch(false, padding / sizeof(O))) + ") + (sample + <%OFFSET%>)] = convert_" + outputDataType + "(dedispersedSample<%NUM%>DM<%DM_NUM%>);\n"
+      "}\n";
   }
   // End kernel's template
 
