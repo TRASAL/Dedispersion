@@ -281,9 +281,13 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
       unrolled_sTemplate += "barrier(CLK_LOCAL_MEM_FENCE);\n";
     }
     unrolled_sTemplate += "}\n";
-    sum_sTemplate = "if ( sample + <%OFFSET%> < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
-      "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n"
-      "}\n";
+    if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+      sum_sTemplate += "if ( sample + <%OFFSET%> < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n";
+    }
+    sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
+    if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+      sum_sTemplate += "}\n";
+    }
   } else {
     if ( conf.getSplitBatches() ) {
     } else {
@@ -315,15 +319,21 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     if ( (inputDataType == intermediateDataType) && (inputBits >= 8) ) {
       if ( conf.getSplitBatches() ) {
       } else {
-        sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
-          "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamMapping[(sBeam * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n"
-          "}\n";
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n";
+        }
+        sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamMapping[(sBeam * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "}\n";
+        }
       }
     } else if ( inputBits < 8 ) {
       if ( conf.getSplitBatches() ) {
       } else {
-        sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
-          "interBuffer = 0;\n"
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n";
+        }
+        sum_sTemplate += "interBuffer = 0;\n"
           "byte = (sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + std::to_string(8 / inputBits) + ";\n"
           "firstBit = ((sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + std::to_string(8 / inputBits) + ") * " + std::to_string(static_cast< unsigned int >(inputBits)) + ";\n"
           "bitsBuffer = input[((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(I))) + ") + byte];\n";
@@ -336,14 +346,20 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
           sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + std::to_string(inputBits - 1)), std::to_string(bit));
         }
       }
-      sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(interBuffer);\n"
-        "}\n";
+      sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(interBuffer);\n";
+      if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+        sum_sTemplate += "}\n";
+      }
     } else {
       if ( conf.getSplitBatches() ) {
       } else {
-        sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
-          "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[(beamMapping[(sBeam * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)]);\n"
-          "}\n";
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n";
+        }
+        sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[(beamMapping[(sBeam * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)]);\n";
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "}\n";
+        }
       }
     }
   }
@@ -605,9 +621,13 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
       unrolled_sTemplate += "barrier(CLK_LOCAL_MEM_FENCE);\n";
     }
     unrolled_sTemplate += "}\n";
-    sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true)) + " ) {\n"
-      "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n"
-      "}\n";
+    if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+      sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true)) + " ) {\n";
+    }
+    sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
+    if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+      sum_sTemplate += "}\n";
+    }
   } else {
     if ( conf.getSplitBatches() ) {
     } else {
@@ -640,15 +660,21 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
     if ( (inputDataType == intermediateDataType) && (inputBits >= 8) ) {
       if ( conf.getSplitBatches() ) {
       } else {
-        sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true)) + " ) {\n"
-          "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beam * " + std::to_string(observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n"
-          "}\n";
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true)) + " ) {\n";
+        }
+        sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beam * " + std::to_string(observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "}\n";
+        }
       }
     } else if ( inputBits < 8 ) {
       if ( conf.getSplitBatches() ) {
       } else {
-        sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true)) + " ) {\n"
-          "interBuffer = 0;\n"
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true)) + " ) {\n";
+        }
+        sum_sTemplate += "interBuffer = 0;\n"
           "byte = (sample + <%OFFSET%> + shiftDM<%DM_NUM%>) / " + std::to_string(8 / inputBits) + ";\n"
           "firstBit = ((sample + <%OFFSET%> + shiftDM<%DM_NUM%>) % " + std::to_string(8 / inputBits) + ") * " + std::to_string(static_cast< unsigned int >(inputBits)) + ";\n"
           "bitsBuffer = input[(beam * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(I))) + ") + byte];\n";
@@ -661,14 +687,20 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
           sum_sTemplate += isa::OpenCL::setBit("interBuffer", isa::OpenCL::getBit("bitsBuffer", "firstBit + " + std::to_string(inputBits - 1)), std::to_string(bit));
         }
       }
-      sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(interBuffer);\n"
-        "}\n";
+      sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(interBuffer);\n";
+      if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+        sum_sTemplate += "}\n";
+      }
     } else {
       if ( conf.getSplitBatches() ) {
       } else {
-        sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true)) + " ) {\n"
-          "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[(beam * " + std::to_string(observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)]);\n"
-          "}\n";
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true)) + " ) {\n";
+        }
+        sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[(beam * " + std::to_string(observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)]);\n";
+        if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+          sum_sTemplate += "}\n";
+        }
       }
     }
   }
@@ -915,9 +947,13 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
     sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += buffer[(get_local_id(0) + <%OFFSET%>) + shiftDM<%DM_NUM%>];\n";
   } else {
     shiftsTemplate = "shiftDM<%DM_NUM%> = convert_uint_rtz(shifts[channel + <%UNROLL%>] * (" + firstDM_s + " + ((dm + <%DM_OFFSET%>) * " + DMStep_s + ")));\n";
-    sum_sTemplate = "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n"
-      "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamMapping[(sBeam * " + std::to_string(observation.getNrSubbands(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMs(true) * observation.getNrSamplesPerBatch(true, padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerBatch(true, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n"
-      "}\n";
+    if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+      sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n";
+    }
+    sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamMapping[(sBeam * " + std::to_string(observation.getNrSubbands(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMs(true) * observation.getNrSamplesPerBatch(true, padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(observation.getNrSamplesPerBatch(true, padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
+    if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+      sum_sTemplate += "}\n";
+    }
   }
   std::string store_sTemplate;
   if ( (observation.getNrSamplesPerBatch() % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
