@@ -354,7 +354,7 @@ int main(int argc, char * argv[]) {
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
       delete code;
-      break;
+      continue;
     }
     delete code;
 
@@ -411,10 +411,10 @@ int main(int argc, char * argv[]) {
         return -1;
       } else if ( err.err() == -5 ) {
         // No need to reallocate the memory in this case
-        break;
+        continue;
       }
       reInit = true;
-      break;
+      continue;
     }
     delete kernel;
 
