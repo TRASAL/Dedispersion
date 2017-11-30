@@ -44,7 +44,7 @@ int main(int argc, char * argv[]) {
   // TODO: implement split_batches mode
   bool singleStep = false;
   bool stepOne = false;
-  bool reInit = false;
+  bool initializeDeviceMemory = false;
   bool bestMode = false;
   unsigned int padding = 0;
   unsigned int nrIterations = 0;
@@ -149,17 +149,13 @@ int main(int argc, char * argv[]) {
     AstroData::generateBeamMapping(observation, beamMappingStepTwo, padding, true);
   }
 
-  // Initialize OpenCL
+  unsigned int dispersedData_size;
+  unsigned int subbandedData_size;
+  unsigned int dedispersedData_size;
   cl::Context clContext;
   std::vector< cl::Platform > * clPlatforms = new std::vector< cl::Platform >();
   std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
   std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
-  isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
-
-  // Allocate device memory
-  unsigned int dispersedData_size;
-  unsigned int subbandedData_size;
-  unsigned int dedispersedData_size;
   cl::Buffer shiftsSingleStep_d;
   cl::Buffer shiftsStepOne_d;
   cl::Buffer shiftsStepTwo_d;
@@ -170,41 +166,23 @@ int main(int argc, char * argv[]) {
   cl::Buffer subbandedData_d;
   cl::Buffer dedispersedData_d;
 
-  try {
-    if ( singleStep ) {
-      shiftsSingleStep_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsSingleStep->size() * sizeof(float), 0, 0);
-      zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
-      if ( inputBits >= 8 ) {
-        dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(inputDataType));
-      } else {
-        dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType));
-      }
-      dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
-      dedispersedData_size = observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType));
-      dedispersedData_d = cl::Buffer(clContext, CL_MEM_WRITE_ONLY, dedispersedData_size * sizeof(outputDataType), 0, 0);
-      beamMappingSingleStep_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamMappingSingleStep.size() * sizeof(unsigned int), 0, 0);
-    } else if ( stepOne ) {
-      shiftsStepOne_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
-      zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
-      if ( inputBits >= 8 ) {
-        dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(true, padding / sizeof(inputDataType));
-      } else {
-        dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType));
-      }
-      dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
-      subbandedData_size = observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType));
-      subbandedData_d = cl::Buffer(clContext, CL_MEM_WRITE_ONLY, subbandedData_size * sizeof(outputDataType), 0, 0);
+  if ( singleStep ) {
+    if ( inputBits >= 8 ) {
+      dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(inputDataType));
     } else {
-      shiftsStepTwo_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsStepTwo->size() * sizeof(float), 0, 0);
-      subbandedData_size = observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType));
-      subbandedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, subbandedData_size * sizeof(outputDataType), 0, 0);
-      dedispersedData_size = observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType));
-      dedispersedData_d = cl::Buffer(clContext, CL_MEM_WRITE_ONLY, dedispersedData_size * sizeof(outputDataType), 0, 0);
-      beamMappingStepTwo_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, beamMappingStepTwo.size() * sizeof(unsigned int), 0, 0);
+      dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType));
     }
-  } catch ( cl::Error & err ) {
-    std::cerr << "OpenCL error allocating memory: " << std::to_string(err.err()) << "." << std::endl;
-    return 1;
+    dedispersedData_size = observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType));
+  } else if ( stepOne ) {
+    if ( inputBits >= 8 ) {
+      dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(true, padding / sizeof(inputDataType));
+    } else {
+      dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType));
+    }
+    subbandedData_size = observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType));
+  } else {
+    subbandedData_size = observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType));
+    dedispersedData_size = observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType));
   }
 
   for ( unsigned int threadsD0 = minThreads; threadsD0 <= maxColumns; threadsD0 *= 2 ) {
@@ -314,7 +292,7 @@ int main(int argc, char * argv[]) {
     cl::Kernel * kernel;
     std::string * code = 0;
 
-    if ( reInit ) {
+    if ( initializeDeviceMemory ) {
       delete clQueues;
       clQueues = new std::vector< std::vector < cl::CommandQueue > >();
       isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
@@ -331,7 +309,7 @@ int main(int argc, char * argv[]) {
         std::cerr << std::to_string(err.err()) << "." << std::endl;
         return -1;
       }
-      reInit = false;
+      initializeDeviceMemory = false;
     }
     if ( singleStep ) {
       code = Dedispersion::getDedispersionOpenCL< inputDataType, outputDataType >(*conf, padding, inputBits, inputDataName, intermediateDataName, outputDataName, observation, *shiftsSingleStep);
@@ -413,7 +391,7 @@ int main(int argc, char * argv[]) {
         // No need to reallocate the memory in this case
         continue;
       }
-      reInit = true;
+      initializeDeviceMemory = true;
       continue;
     }
     delete kernel;
