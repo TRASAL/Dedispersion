@@ -44,7 +44,7 @@ int main(int argc, char * argv[]) {
   // TODO: implement split_batches mode
   bool singleStep = false;
   bool stepOne = false;
-  bool initializeDeviceMemory = false;
+  bool initializeDeviceMemory = true;
   bool bestMode = false;
   unsigned int padding = 0;
   unsigned int nrIterations = 0;
