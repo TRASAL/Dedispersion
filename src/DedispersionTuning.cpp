@@ -305,7 +305,7 @@ int main(int argc, char * argv[]) {
           initializeDeviceMemoryStepTwo(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepTwo, &shiftsStepTwo_d, beamMappingStepTwo, &beamMappingStepTwo_d, subbandedData_size, &subbandedData_d, dedispersedData_size, &dedispersedData_d);
         }
       } catch ( cl::Error & err ) {
-        std::cerr << "Error in memory allocation: ";
+        std::cerr << "Error in device memory allocation: ";
         std::cerr << std::to_string(err.err()) << "." << std::endl;
         return -1;
       }
