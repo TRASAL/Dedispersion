@@ -11,19 +11,17 @@ Many-core incoherent dedispersion algorithm in OpenCL, with classes to use them 
 
 # Installation
 
-Set the `SOURCE_ROOT` environment variable to the location of the pipeline sourcode.
+Set the `INSTALL_ROOT` environment variable to the location of the pipeline sourcode.
 If this package is installed in `$HOME/Code/APERTIF/Dedispersion` this would be:
 
 ```bash
- $ export SOURCE_ROOT=$HOME/Code/APERTIF
+ $ export INSTALL_ROOT=$HOME/Code/APERTIF
 ```
 
 Then build and test as follows:
 
 ```bash
- $ make
- $ make test # test run for a single configuration
- $ make tune # example tuning output
+ $ make install
 ```
 
 ## Dependencies
@@ -124,7 +122,7 @@ Install mariadb, fi. via your package manager. Then:
 The analysis scripts use some python3 packages. An easy way to set this up is using `virtualenv`:
 
 ```bash
-$ cd $SOURCE_ROOT/Dedispersion/analysis`
+$ cd $INSTALL_ROOT/Dedispersion/analysis`
 $ virtualenv --system-site-packages --python=python3 env`
 $ . env/bin/activate`
 ```
