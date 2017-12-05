@@ -1,4 +1,5 @@
-// Copyright 2015 Alessio Sclocco <a.sclocco@vu.nl>
+// Copyright 2017 Netherlands Institute for Radio Astronomy (ASTRON)
+// Copyright 2017 Netherlands eScience Center
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,11 +15,11 @@
 
 #include <Shifts.hpp>
 
-namespace PulsarSearch {
+namespace Dedispersion {
 
 std::vector< float > * getShifts(AstroData::Observation & observation, const unsigned int padding) {
   float inverseHighFreq = 1.0f / std::pow(observation.getMaxFreq(), 2.0f);
-  std::vector< float > * shifts = new std::vector< float >(observation.getNrPaddedChannels(padding / sizeof(float)));
+  std::vector< float > * shifts = new std::vector< float >(observation.getNrChannels(padding / sizeof(float)));
 
   for ( unsigned int channel = 0; channel < observation.getNrChannels() - 1; channel++ ) {
     float inverseFreq = 1.0f / std::pow(observation.getMinFreq() + (channel * observation.getChannelBandwidth()), 2.0f);
@@ -32,7 +33,7 @@ std::vector< float > * getShifts(AstroData::Observation & observation, const uns
 
 std::vector< float > * getShiftsStepTwo(AstroData::Observation & observation, const unsigned int padding) {
   float inverseHighFreq = 1.0f / std::pow(observation.getSubbandMaxFreq(), 2.0f);
-  std::vector< float > * shifts = new std::vector< float >(observation.getNrPaddedSubbands(padding / sizeof(float)));
+  std::vector< float > * shifts = new std::vector< float >(observation.getNrSubbands(padding / sizeof(float)));
 
   for ( unsigned int subband = 0; subband < observation.getNrSubbands() - 1; subband++ ) {
     float inverseFreq = 1.0f / std::pow(observation.getSubbandMinFreq() + (subband * observation.getSubbandBandwidth()), 2.0f);
@@ -43,5 +44,5 @@ std::vector< float > * getShiftsStepTwo(AstroData::Observation & observation, co
 
 	return shifts;
 }
-} // PulsarSearch
+} // Dedispersion
 
