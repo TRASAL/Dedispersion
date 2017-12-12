@@ -114,8 +114,8 @@ int main(int argc, char * argv[]) {
     }
   } catch ( isa::utils::EmptyCommandLine & err ) {
     std::cerr << argv[0] << " -iterations ... -opencl_platform ... -opencl_device ... [-best] [-single_step | -step_one | -step_two] -padding ... -vector ... -min_threads ... -max_threads ... -max_columns ... -max_rows ... -max_items ... -max_sample_items ... -max_dm_items ... -max_unroll ... -beams ... -samples ... -sampling_time ... -min_freq ... -channel_bandwidth ... -channels ... " << std::endl;
-    std::cerr << "\t-single_step -input_bits ... -zapped_channels ... -synthesized_beams ... -dms ... -dm_first ... -dm_step ..." << std::endl;
-    std::cerr << "\t-step_one -input_bits ... -zapped_channels ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "\t-single_step -zapped_channels ... -synthesized_beams ... -dms ... -dm_first ... -dm_step ..." << std::endl;
+    std::cerr << "\t-step_one -zapped_channels ... -subbands ... -subbanding_dms ... -subbanding_dm_first ... -subbanding_dm_step ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     std::cerr << "\t-step_two -synthesized_beams ... -subbands ... -subbanding_dms ... -dms ... -dm_first ... -dm_step ..." << std::endl;
     return 1;
   } catch ( std::exception & err ) {
