@@ -15,19 +15,27 @@ target_include_directories(libdedispersion PRIVATE include)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -g0 -march=native -mtune=native")
 
-add_executable(DedispersionTesting PROPERTIES
+add_executable(DedispersionTesting
   src/Dedispersion.cpp
   src/DedispersionTest.cpp
   src/Shifts.cpp
 )
 target_include_directories(DedispersionTesting PRIVATE include)
+set_target_properties(DedispersionTesting PROPERTIES
+  VERSION ${PROJECT_VERSION}
+  LINKER_LANGUAGE CXX
+)
 
-add_executable(DedispersionTuning PROPERTIES
+add_executable(DedispersionTuning
   src/Dedispersion.cpp
   src/DedispersionTuning.cpp
   src/Shifts.cpp
 )
 target_include_directories(DedispersionTuning PRIVATE include)
+set_target_properties(DedispersionTuning PROPERTIES
+  VERSION ${PROJECT_VERSION}
+  LINKER_LANGUAGE CXX
+)
 
 install(TARGETS libdedispersion DedispersionTesting DedispersionTuning
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
