@@ -21,10 +21,6 @@ add_executable(DedispersionTesting
   src/Shifts.cpp
 )
 target_include_directories(DedispersionTesting PRIVATE include)
-set_target_properties(DedispersionTesting PROPERTIES
-  VERSION ${PROJECT_VERSION}
-  LINKER_LANGUAGE CXX
-)
 
 add_executable(DedispersionTuning
   src/Dedispersion.cpp
@@ -32,10 +28,6 @@ add_executable(DedispersionTuning
   src/Shifts.cpp
 )
 target_include_directories(DedispersionTuning PRIVATE include)
-set_target_properties(DedispersionTuning PROPERTIES
-  VERSION ${PROJECT_VERSION}
-  LINKER_LANGUAGE CXX
-)
 
 install(TARGETS libdedispersion DedispersionTesting DedispersionTuning
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
