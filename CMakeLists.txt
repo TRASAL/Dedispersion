@@ -19,13 +19,13 @@ add_executable(DedispersionTesting
   src/DedispersionTest.cpp
 )
 target_include_directories(DedispersionTesting PRIVATE include)
-target_link_libraries(DedispersionTesting dedispersion isa_utils isa_opencl astrodata)
+target_link_libraries(DedispersionTesting dedispersion isa_utils isa_opencl astrodata OpenCL)
 
 add_executable(DedispersionTuning
   src/DedispersionTuning.cpp
 )
 target_include_directories(DedispersionTuning PRIVATE include)
-target_link_libraries(DedispersionTuning dedispersion isa_utils isa_opencl astrodata)
+target_link_libraries(DedispersionTuning dedispersion isa_utils isa_opencl astrodata OpenCL)
 
 install(TARGETS dedispersion DedispersionTesting DedispersionTuning
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
