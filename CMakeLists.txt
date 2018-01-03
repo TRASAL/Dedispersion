@@ -16,18 +16,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -g0 -march=native -mtune=native")
 
 add_executable(DedispersionTesting
-  src/Dedispersion.cpp
   src/DedispersionTest.cpp
-  src/Shifts.cpp
 )
 target_include_directories(DedispersionTesting PRIVATE include)
+target_link_libraries(DedispersionTesting dedispersion isa_utils isa_opencl astrodata)
 
 add_executable(DedispersionTuning
-  src/Dedispersion.cpp
   src/DedispersionTuning.cpp
-  src/Shifts.cpp
 )
 target_include_directories(DedispersionTuning PRIVATE include)
+target_link_libraries(DedispersionTuning dedispersion isa_utils isa_opencl astrodata)
 
 install(TARGETS libdedispersion DedispersionTesting DedispersionTuning
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
