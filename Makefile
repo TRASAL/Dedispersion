@@ -13,6 +13,13 @@ else
 	CFLAGS += -O3 -g0
 endif
 
+ifdef PSRDADA
+	DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
+	CFLAGS += -DHAVE_PSRDADA
+else
+	DADA_DEPS :=
+endif
+
 all: bin/Shifts.o bin/Dedispersion.o bin/DedispersionTest bin/DedispersionTuning
 	-@mkdir -p lib
 	$(CC) -o lib/libDedispersion.so -shared -Wl,-soname,libDedispersion.so bin/Shifts.o bin/Dedispersion.o $(CFLAGS)
@@ -27,11 +34,11 @@ bin/Dedispersion.o: bin/Shifts.o include/Dedispersion.hpp src/Dedispersion.cpp
 
 bin/DedispersionTest: include/configuration.hpp src/DedispersionTest.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp bin/Dedispersion.o bin/Shifts.o $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/DedispersionTest src/DedispersionTest.cpp bin/Dedispersion.o bin/Shifts.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 bin/DedispersionTuning: include/configuration.hpp src/DedispersionTuning.cpp
 	-@mkdir -p bin
-	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp bin/Dedispersion.o bin/Shifts.o $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
+	$(CC) -o bin/DedispersionTuning src/DedispersionTuning.cpp bin/Dedispersion.o bin/Shifts.o $(DADA_DEPS) $(INCLUDES) $(LIBS) $(LDFLAGS) $(CFLAGS)
 
 clean:
 	-@rm bin/*
