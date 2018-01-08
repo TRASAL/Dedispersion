@@ -15,6 +15,7 @@ endif
 
 ifdef PSRDADA
 	DADA_DEPS := $(PSRDADA)/src/dada_hdu.o $(PSRDADA)/src/ipcbuf.o $(PSRDADA)/src/ipcio.o $(PSRDADA)/src/ipcutil.o $(PSRDADA)/src/ascii_header.o $(PSRDADA)/src/multilog.o $(PSRDADA)/src/tmutil.o
+	INCLUDES += -I"$(PSRDADA)/src"
 	CFLAGS += -DHAVE_PSRDADA
 else
 	DADA_DEPS :=
