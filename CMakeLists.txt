@@ -14,18 +14,27 @@ set_target_properties(dedispersion PROPERTIES
 target_include_directories(dedispersion PRIVATE include)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -g0 -march=native -mtune=native")
+set(TARGET_LINK_LIBRARIES "dedispersion isa_utils isa_opencl astrodata OpenCL")
+if($ENV{LOFAR})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_HDF5")
+  set(TARGET_LINK_LIBRARIES "${TARGET_LINK_LIBRARIES} hdf5 hdf5_cpp z")
+endif()
+if($ENV{PSRDADA})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_PSRDADA")
+  set(TARGET_LINK_LIBRARIES "${TARGET_LINK_LIBRARIES} psrdada cudart")
+endif()
 
 add_executable(DedispersionTesting
   src/DedispersionTest.cpp
 )
 target_include_directories(DedispersionTesting PRIVATE include)
-target_link_libraries(DedispersionTesting dedispersion isa_utils isa_opencl astrodata OpenCL)
+target_link_libraries(DedispersionTesting ${TARGET_LINK_LIBRARIES})
 
 add_executable(DedispersionTuning
   src/DedispersionTuning.cpp
 )
 target_include_directories(DedispersionTuning PRIVATE include)
-target_link_libraries(DedispersionTuning dedispersion isa_utils isa_opencl astrodata OpenCL)
+target_link_libraries(DedispersionTuning ${TARGET_LINK_LIBRARIES})
 
 install(TARGETS dedispersion DedispersionTesting DedispersionTuning
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
