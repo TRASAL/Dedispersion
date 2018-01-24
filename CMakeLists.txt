@@ -19,7 +19,7 @@ add_library(dedispersion SHARED
   src/Dedispersion.cpp
   src/Shifts.cpp
 )
-set_target_properties(dedispersion PROPERTIES 
+set_target_properties(dedispersion PROPERTIES
   VERSION ${PROJECT_VERSION}
   SOVERSION 1
   PUBLIC_HEADER "include/Dedispersion.hpp;include/Shifts.hpp"
