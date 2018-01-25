@@ -31,14 +31,14 @@ add_executable(DedispersionTesting
   src/DedispersionTest.cpp
 )
 target_include_directories(DedispersionTesting PRIVATE include)
-target_link_libraries(DedispersionTesting ${TARGET_LINK_LIBRARIES})
+target_link_libraries(DedispersionTesting PRIVATE ${TARGET_LINK_LIBRARIES})
 
 # DedispersionTuning
 add_executable(DedispersionTuning
   src/DedispersionTuning.cpp
 )
 target_include_directories(DedispersionTuning PRIVATE include)
-target_link_libraries(DedispersionTuning ${TARGET_LINK_LIBRARIES})
+target_link_libraries(DedispersionTuning PRIVATE ${TARGET_LINK_LIBRARIES})
 
 install(TARGETS dedispersion DedispersionTesting DedispersionTuning
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
