@@ -34,7 +34,6 @@
 #include <Shifts.hpp>
 #include <Dedispersion.hpp>
 #include <Timer.hpp>
-#include <Stats.hpp>
 
 void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector<unsigned int> & zappedChannels, cl::Buffer * zappedChannels_d, std::vector<unsigned int> & beamMapping, cl::Buffer * beamMapping_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d);
 void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepOne, cl::Buffer * shiftsStepOne_d, std::vector<unsigned int> & zappedChannels, cl::Buffer * zappedChannels_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d);
