@@ -24,7 +24,6 @@ set(DEDISPERSION_HEADER
 add_library(dedispersion SHARED
   src/Dedispersion.cpp
   src/Shifts.cpp
-  ${DEDISPERSION_HEADER}
 )
 set_target_properties(dedispersion PROPERTIES
   VERSION ${PROJECT_VERSION}
