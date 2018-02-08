@@ -14,10 +14,17 @@ if($ENV{PSRDADA})
   set(TARGET_LINK_LIBRARIES ${TARGET_LINK_LIBRARIES} psrdada cudart)
 endif()
 
+set(DEDISPERSION_HEADER
+  include/configuration.hpp
+  include/Dedispersion.hpp
+  include/Shifts.hpp
+)
+
 # libdedispersion
 add_library(dedispersion SHARED
   src/Dedispersion.cpp
   src/Shifts.cpp
+  ${DEDISPERSION_HEADER}
 )
 set_target_properties(dedispersion PROPERTIES
   VERSION ${PROJECT_VERSION}
@@ -29,6 +36,7 @@ target_include_directories(dedispersion PRIVATE include)
 # DedispersionTesting
 add_executable(DedispersionTesting
   src/DedispersionTest.cpp
+  ${DEDISPERSION_HEADER}
 )
 target_include_directories(DedispersionTesting PRIVATE include)
 target_link_libraries(DedispersionTesting PRIVATE ${TARGET_LINK_LIBRARIES})
@@ -36,6 +44,7 @@ target_link_libraries(DedispersionTesting PRIVATE ${TARGET_LINK_LIBRARIES})
 # DedispersionTuning
 add_executable(DedispersionTuning
   src/DedispersionTuning.cpp
+  ${DEDISPERSION_HEADER}
 )
 target_include_directories(DedispersionTuning PRIVATE include)
 target_link_libraries(DedispersionTuning PRIVATE ${TARGET_LINK_LIBRARIES})
