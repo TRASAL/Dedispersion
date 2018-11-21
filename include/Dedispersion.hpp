@@ -977,7 +977,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
   }
   std::string store_sTemplate;
   if ( ((observation.getNrSamplesPerBatch() / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
-    store_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n";
+    store_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + " ) {\n";
   }
   store_sTemplate += "output[(sBeam * " + std::to_string(observation.getNrDMs(true) * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), padding / sizeof(I))) + ") + ((dm + <%DM_OFFSET%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch() / observation.getDownsampling(), padding / sizeof(I))) + ") + (sample + <%OFFSET%>)] = dedispersedSample<%NUM%>DM<%DM_NUM%>;\n";
   if ( ((observation.getNrSamplesPerBatch() / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
