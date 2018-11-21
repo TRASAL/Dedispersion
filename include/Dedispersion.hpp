@@ -677,7 +677,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
     if ( (inputDataType == intermediateDataType) && (inputBits >= 8) ) {
       if ( conf.getSplitBatches() ) {
       } else {
-        if ( (observation.getNrSamplesPerBatch(true) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
+        if ( ((observation.getNrSamplesPerBatch(true) / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
           sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true) / observation.getDownsampling()) + " ) {\n";
         }
         sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beam * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true), padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
@@ -712,7 +712,7 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
       if ( conf.getSplitBatches() ) {
       } else {
         if ( ((observation.getNrSamplesPerBatch(true) / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
-          sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true)) + " ) {\n";
+          sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch(true) / observation.getDownsampling() ) + " ) {\n";
         }
         sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[(beam * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true), padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)]);\n";
         if ( ((observation.getNrSamplesPerBatch(true) / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
