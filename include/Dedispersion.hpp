@@ -199,7 +199,8 @@ inline void DedispersionConf::setUnroll(unsigned int unroll) {
 }
 
 // TODO: splitBatches mode
-template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
+template< typename I, typename O > std::string * getDedispersionOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts)
+{
   std::string * code = new std::string();
   std::string sum_sTemplate = std::string();
   std::string unrolled_sTemplate = std::string();
@@ -538,7 +539,8 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
 }
 
 // TODO: splitBatches mode
-template< typename I, typename O > std::string * getSubbandDedispersionStepOneOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
+template< typename I, typename O > std::string * getSubbandDedispersionStepOneOpenCL(const DedispersionConf & conf, const unsigned int padding, const uint8_t inputBits, const std::string & inputDataType, const std::string & intermediateDataType, const std::string & outputDataType, const AstroData::Observation & observation, std::vector< float > & shifts)
+{
   std::string * code = new std::string();
   std::string sum_sTemplate = std::string();
   std::string unrolled_sTemplate = std::string();
@@ -878,7 +880,8 @@ template< typename I, typename O > std::string * getSubbandDedispersionStepOneOp
   return code;
 }
 
-template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const std::string & inputDataType, const AstroData::Observation & observation, std::vector< float > & shifts) {
+template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const DedispersionConf & conf, const unsigned int padding, const std::string & inputDataType, const AstroData::Observation & observation, std::vector< float > & shifts)
+{
   std::string * code = new std::string();
   std::string unrolled_sTemplate = std::string();
   std::string firstDM_s = std::to_string(observation.getFirstDM());
