@@ -25,7 +25,7 @@ std::vector<float> * getShifts(AstroData::Observation & observation, const unsig
     float inverseFreq = 1.0f / std::pow(observation.getMinFreq() + (channel * observation.getChannelBandwidth()), 2.0f);
 
     shifts->at(channel) = 4148.808f * (inverseFreq - inverseHighFreq) * (observation.getNrSamplesPerBatch() / observation.getDownsampling());
-    shifts->at(channel) /= (observation.getNrSamplesPerBatch() / observation.getDownsampling()) * observation.getSamplingTime();
+    shifts->at(channel) /= (observation.getNrSamplesPerBatch() / observation.getDownsampling()) * (observation.getSamplingTime() * observation.getDownsampling());
 	}
   shifts->at(observation.getNrChannels() - 1) = 0;
 
@@ -40,7 +40,7 @@ std::vector<float> * getShiftsStepTwo(AstroData::Observation & observation, cons
     float inverseFreq = 1.0f / std::pow(observation.getSubbandMinFreq() + (subband * observation.getSubbandBandwidth()), 2.0f);
 
     shifts->at(subband) = 4148.808f * (inverseFreq - inverseHighFreq) * (observation.getNrSamplesPerBatch() / observation.getDownsampling());
-    shifts->at(subband) /= (observation.getNrSamplesPerBatch() / observation.getDownsampling()) * observation.getSamplingTime();
+    shifts->at(subband) /= (observation.getNrSamplesPerBatch() / observation.getDownsampling()) * (observation.getSamplingTime() * observation.getDownsampling());
 	}
   shifts->at(observation.getNrSubbands() - 1) = 0;
 
