@@ -133,13 +133,18 @@ int main(int argc, char * argv[]) {
   if ( singleStep || stepOne ) {
     AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
   }
-  if ( singleStep ) {
-    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
-  } else if ( stepOne ) {
-    observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
-    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
-  } else {
-    observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
+  if ( singleStep )
+  {
+    observation.setNrSamplesPerDispersedBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch() + (shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))))));
+  }
+  else if ( stepOne )
+  {
+    observation.setNrSamplesPerBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch() + (shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))))), true);
+    observation.setNrSamplesPerDispersedBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch(true) + (shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))))), true);
+  }
+  else
+  {
+    observation.setNrSamplesPerBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch() + (shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))))), true);
   }
 
   // Generate test data

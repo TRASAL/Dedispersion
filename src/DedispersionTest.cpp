@@ -127,31 +127,42 @@ int main(int argc, char *argv[]) {
   if ( singleStep || stepOne ) {
     AstroData::readZappedChannels(observation, channelsFile, zappedChannels);
   }
-  if ( singleStep ) {
-    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))));
-    if ( inputBits >= 8 ) {
+  if ( singleStep )
+  {
+    observation.setNrSamplesPerDispersedBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch() + (shiftsSingleStep->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))))));
+    if ( inputBits >= 8 )
+    {
       dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(inputDataType)));
       dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType)));
       dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType)));
-    } else {
+    }
+    else
+    {
       dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType)));
       dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(outputDataType)));
       dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs() * isa::utils::pad(observation.getNrSamplesPerBatch() / (8 / inputBits), padding / sizeof(outputDataType)));
     }
-  } else if ( stepOne ) {
-    observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
-    observation.setNrSamplesPerDispersedBatch(observation.getNrSamplesPerBatch(true) + static_cast< unsigned int >(shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))), true);
-    if ( inputBits >= 8 ) {
+  }
+  else if ( stepOne )
+  {
+    observation.setNrSamplesPerBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch() + (shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))))), true);
+    observation.setNrSamplesPerDispersedBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch(true) + (shiftsStepOne->at(0) * (observation.getFirstDM(true) + ((observation.getNrDMs(true) - 1) * observation.getDMStep(true)))))), true);    
+    if ( inputBits >= 8 )
+    {
       dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(inputDataType)));
       subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType)));
       subbandedData_c.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType)));
-    } else {
+    }
+    else
+    {
       dispersedData.resize(observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(inputDataType)));
       subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / (8 / inputBits), padding / sizeof(outputDataType)));
       subbandedData_c.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / (8 / inputBits), padding / sizeof(outputDataType)));
     }
-  } else {
-    observation.setNrSamplesPerBatch(observation.getNrSamplesPerBatch() + static_cast< unsigned int >(shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))), true);
+  }
+  else
+  {
+    observation.setNrSamplesPerBatch(static_cast<unsigned int>(std::ceil(observation.getNrSamplesPerBatch() + (shiftsStepTwo->at(0) * (observation.getFirstDM() + ((observation.getNrDMs() - 1) * observation.getDMStep()))))), true);
     subbandedData.resize(observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType)));
     dedispersedData.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType)));
     dedispersedData_c.resize(observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType)));
