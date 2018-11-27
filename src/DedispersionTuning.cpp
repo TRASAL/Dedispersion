@@ -171,21 +171,32 @@ int main(int argc, char * argv[]) {
   cl::Buffer subbandedData_d;
   cl::Buffer dedispersedData_d;
 
-  if ( singleStep ) {
-    if ( inputBits >= 8 ) {
+  if ( singleStep )
+  {
+    if ( inputBits >= 8 )
+    {
       dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(false, padding / sizeof(inputDataType));
-    } else {
+    }
+    else
+    {
       dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType));
     }
     dedispersedData_size = observation.getNrSynthesizedBeams() * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType));
-  } else if ( stepOne ) {
-    if ( inputBits >= 8 ) {
-      dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerBatch(true, padding / sizeof(inputDataType));
-    } else {
-      dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch() / (8 / inputBits), padding / sizeof(inputDataType));
+  }
+  else if ( stepOne )
+  {
+    if ( inputBits >= 8 )
+    {
+      dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * observation.getNrSamplesPerDispersedBatch(true, padding / sizeof(inputDataType));
+    }
+    else
+    {
+      dispersedData_size = observation.getNrBeams() * observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(true) / (8 / inputBits), padding / sizeof(inputDataType));
     }
     subbandedData_size = observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType));
-  } else {
+  }
+  else
+  {
     subbandedData_size = observation.getNrBeams() * observation.getNrDMs(true) * observation.getNrSubbands() * observation.getNrSamplesPerBatch(true, padding / sizeof(outputDataType));
     dedispersedData_size = observation.getNrSynthesizedBeams() * observation.getNrDMs(true) * observation.getNrDMs() * observation.getNrSamplesPerBatch(false, padding / sizeof(outputDataType));
   }
