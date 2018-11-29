@@ -19,31 +19,25 @@ namespace Dedispersion {
 
 std::vector<float> * getShifts(AstroData::Observation & observation, const unsigned int padding) {
   float inverseHighFreq = 1.0f / std::pow(observation.getMaxFreq(), 2.0f);
+  float timeUnit = (observation.getNrSamplesPerBatch() / observation.getDownsampling()) * (observation.getSamplingTime() * observation.getDownsampling());
   std::vector<float> * shifts = new std::vector<float>(observation.getNrChannels(padding / sizeof(float)));
-
   for ( unsigned int channel = 0; channel < observation.getNrChannels() - 1; channel++ ) {
     float inverseFreq = 1.0f / std::pow(observation.getMinFreq() + (channel * observation.getChannelBandwidth()), 2.0f);
-
-    shifts->at(channel) = 4148.808f * (inverseFreq - inverseHighFreq) * (observation.getNrSamplesPerBatch() / observation.getDownsampling());
-    shifts->at(channel) /= (observation.getNrSamplesPerBatch() / observation.getDownsampling()) * (observation.getSamplingTime() * observation.getDownsampling());
+    shifts->at(channel) = (4148.808f * (inverseFreq - inverseHighFreq) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) / timeUnit;
 	}
   shifts->at(observation.getNrChannels() - 1) = 0;
-
 	return shifts;
 }
 
 std::vector<float> * getShiftsStepTwo(AstroData::Observation & observation, const unsigned int padding) {
   float inverseHighFreq = 1.0f / std::pow(observation.getSubbandMaxFreq(), 2.0f);
+  float timeUnit = (observation.getNrSamplesPerBatch() / observation.getDownsampling()) * (observation.getSamplingTime() * observation.getDownsampling());
   std::vector<float> * shifts = new std::vector<float>(observation.getNrSubbands(padding / sizeof(float)));
-
   for ( unsigned int subband = 0; subband < observation.getNrSubbands() - 1; subband++ ) {
     float inverseFreq = 1.0f / std::pow(observation.getSubbandMinFreq() + (subband * observation.getSubbandBandwidth()), 2.0f);
-
-    shifts->at(subband) = 4148.808f * (inverseFreq - inverseHighFreq) * (observation.getNrSamplesPerBatch() / observation.getDownsampling());
-    shifts->at(subband) /= (observation.getNrSamplesPerBatch() / observation.getDownsampling()) * (observation.getSamplingTime() * observation.getDownsampling());
+    shifts->at(subband) = (4148.808f * (inverseFreq - inverseHighFreq) * (observation.getNrSamplesPerBatch() / observation.getDownsampling())) / timeUnit;
 	}
   shifts->at(observation.getNrSubbands() - 1) = 0;
-
 	return shifts;
 }
 } // Dedispersion
