@@ -36,7 +36,7 @@
 #include <Timer.hpp>
 
 void initializeDeviceMemorySingleStep(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shifts, cl::Buffer * shifts_d, std::vector<unsigned int> & zappedChannels, cl::Buffer * zappedChannels_d, std::vector<unsigned int> & beamMapping, cl::Buffer * beamMapping_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d);
-void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepOne, cl::Buffer * shiftsStepOne_d, std::vector<unsigned int> & zappedChannels, cl::Buffer * zappedChannels_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d);
+void initializeDeviceMemoryStepOne(cl::Context & v, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepOne, cl::Buffer * shiftsStepOne_d, std::vector<unsigned int> & zappedChannels, cl::Buffer * zappedChannels_d, const unsigned int dispersedData_size, cl::Buffer * dispersedData_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d);
 void initializeDeviceMemoryStepTwo(cl::Context & clContext, cl::CommandQueue * clQueue, std::vector< float > * shiftsStepTwo, cl::Buffer * shiftsStepTwo_d, std::vector<unsigned int> & beamMapping, cl::Buffer * beamMapping_d, const unsigned int subbandedData_size, cl::Buffer * subbandedData_d, const unsigned int dedispersedData_size, cl::Buffer * dedispersedData_d);
 
 int main(int argc, char * argv[]) {
@@ -157,10 +157,7 @@ int main(int argc, char * argv[]) {
   unsigned int dispersedData_size;
   unsigned int subbandedData_size;
   unsigned int dedispersedData_size;
-  cl::Context clContext;
-  std::vector< cl::Platform > * clPlatforms = new std::vector< cl::Platform >();
-  std::vector< cl::Device > * clDevices = new std::vector< cl::Device >();
-  std::vector< std::vector< cl::CommandQueue > > * clQueues = new std::vector< std::vector < cl::CommandQueue > >();
+  isa::OpenCL::OpenCLRunTime openCLRunTime;
   cl::Buffer shiftsSingleStep_d;
   cl::Buffer shiftsStepOne_d;
   cl::Buffer shiftsStepTwo_d;
@@ -309,16 +306,14 @@ int main(int argc, char * argv[]) {
     std::string * code = 0;
 
     if ( initializeDeviceMemory ) {
-      delete clQueues;
-      clQueues = new std::vector< std::vector < cl::CommandQueue > >();
-      isa::OpenCL::initializeOpenCL(clPlatformID, 1, clPlatforms, &clContext, clDevices, clQueues);
+      isa::OpenCL::initializeOpenCL(clPlatformID, 1, openCLRunTime);
       try {
         if ( singleStep ) {
-          initializeDeviceMemorySingleStep(clContext, &(clQueues->at(clDeviceID)[0]), shiftsSingleStep, &shiftsSingleStep_d, zappedChannels, &zappedChannels_d, beamMappingSingleStep, &beamMappingSingleStep_d, dispersedData_size, &dispersedData_d, dedispersedData_size, &dedispersedData_d);
+          initializeDeviceMemorySingleStep(*(openCLRunTime.context), &(openCLRunTime.queues->at(clDeviceID)[0]), shiftsSingleStep, &shiftsSingleStep_d, zappedChannels, &zappedChannels_d, beamMappingSingleStep, &beamMappingSingleStep_d, dispersedData_size, &dispersedData_d, dedispersedData_size, &dedispersedData_d);
         } else if ( stepOne ) {
-          initializeDeviceMemoryStepOne(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepOne, &shiftsStepOne_d, zappedChannels, &zappedChannels_d, dispersedData_size, &dispersedData_d, subbandedData_size, &subbandedData_d);
+          initializeDeviceMemoryStepOne(*(openCLRunTime.context), &(openCLRunTime.queues->at(clDeviceID)[0]), shiftsStepOne, &shiftsStepOne_d, zappedChannels, &zappedChannels_d, dispersedData_size, &dispersedData_d, subbandedData_size, &subbandedData_d);
         } else {
-          initializeDeviceMemoryStepTwo(clContext, &(clQueues->at(clDeviceID)[0]), shiftsStepTwo, &shiftsStepTwo_d, beamMappingStepTwo, &beamMappingStepTwo_d, subbandedData_size, &subbandedData_d, dedispersedData_size, &dedispersedData_d);
+          initializeDeviceMemoryStepTwo(*(openCLRunTime.context), &(openCLRunTime.queues->at(clDeviceID)[0]), shiftsStepTwo, &shiftsStepTwo_d, beamMappingStepTwo, &beamMappingStepTwo_d, subbandedData_size, &subbandedData_d, dedispersedData_size, &dedispersedData_d);
         }
       } catch ( cl::Error & err ) {
         std::cerr << "Error in device memory allocation: ";
@@ -339,11 +334,11 @@ int main(int argc, char * argv[]) {
     }
     try {
       if ( singleStep ) {
-        kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+        kernel = isa::OpenCL::compile("dedispersion", *code, "-cl-mad-enable -Werror", *(openCLRunTime.context), openCLRunTime.devices->at(clDeviceID));
       } else if ( stepOne ) {
-        kernel = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+        kernel = isa::OpenCL::compile("dedispersionStepOne", *code, "-cl-mad-enable -Werror", *(openCLRunTime.context), openCLRunTime.devices->at(clDeviceID));
       } else {
-        kernel = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", clContext, clDevices->at(clDeviceID));
+        kernel = isa::OpenCL::compile("dedispersionStepTwo", *code, "-cl-mad-enable -Werror", *(openCLRunTime.context), openCLRunTime.devices->at(clDeviceID));
       }
     } catch ( isa::OpenCL::OpenCLError & err ) {
       std::cerr << err.what() << std::endl;
@@ -386,13 +381,13 @@ int main(int argc, char * argv[]) {
 
     try {
       // Warm-up run
-      clQueues->at(clDeviceID)[0].finish();
-      clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
+      openCLRunTime.queues->at(clDeviceID)[0].finish();
+      openCLRunTime.queues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
       event.wait();
       // Tuning runs
       for ( unsigned int iteration = 0; iteration < nrIterations; iteration++ ) {
         timer.start();
-        clQueues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
+        openCLRunTime.queues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local, 0, &event);
         event.wait();
         timer.stop();
       }
@@ -465,8 +460,8 @@ void initializeDeviceMemoryStepOne(cl::Context & clContext, cl::CommandQueue * c
   try {
     *shiftsStepOne_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, shiftsStepOne->size() * sizeof(float), 0, 0);
     *zappedChannels_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, zappedChannels.size() * sizeof(unsigned int), 0, 0);
-    *dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
     *subbandedData_d = cl::Buffer(clContext, CL_MEM_READ_WRITE, subbandedData_size * sizeof(outputDataType), 0, 0);
+    *dispersedData_d = cl::Buffer(clContext, CL_MEM_READ_ONLY, dispersedData_size * sizeof(inputDataType), 0, 0);
     clQueue->enqueueWriteBuffer(*shiftsStepOne_d, CL_FALSE, 0, shiftsStepOne->size() * sizeof(float), reinterpret_cast< void * >(shiftsStepOne->data()));
     clQueue->enqueueWriteBuffer(*zappedChannels_d, CL_FALSE, 0, zappedChannels.size() * sizeof(unsigned int), reinterpret_cast< void * >(zappedChannels.data()));
     clQueue->finish();
