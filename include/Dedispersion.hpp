@@ -19,6 +19,7 @@
 #include <fstream>
 #include <cstdint>
 
+#include <OpenCLTypes.hpp>
 #include <Kernel.hpp>
 #include <Observation.hpp>
 #include <utils.hpp>
