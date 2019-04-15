@@ -382,6 +382,7 @@ int main(int argc, char *argv[]) {
         kernel->setArg(2, beamMappingSingleStep_d);
         kernel->setArg(3, zappedChannels_d);
         kernel->setArg(4, shiftsSingleStep_d);
+        kernel->setArg(5, 0);
       }
     } else if ( stepOne ) {
       kernel->setArg(0, dispersedData_d);
@@ -393,6 +394,7 @@ int main(int argc, char *argv[]) {
       kernel->setArg(1, dedispersedData_d);
       kernel->setArg(2, beamMappingStepTwo_d);
       kernel->setArg(3, shiftsStepTwo_d);
+      kernel->setArg(4, 0);
     }
     openCLRunTime.queues->at(clDeviceID)[0].enqueueNDRangeKernel(*kernel, cl::NullRange, global, local);
     if ( singleStep ) {

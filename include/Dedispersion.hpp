@@ -225,11 +225,11 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   if ( conf.getLocalMem() ) {
     if ( conf.getSplitBatches() ) {
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const unsigned int * const restrict beamMapping, __constant const unsigned int * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const unsigned int * const restrict beamMapping, __constant const unsigned int * restrict const zappedChannels, __constant const float * restrict const shifts, const unsigned int firstSynthesizedBeam) {\n";
     }
     *code +=  "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
-      "unsigned int sBeam = get_group_id(2);\n"
+      "unsigned int sBeam = firstSynthesizedBeam + get_group_id(2);\n"
       "unsigned int inShMem = 0;\n"
       "unsigned int inGlMem = 0;\n"
       "<%DEFS%>"
@@ -903,8 +903,8 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
 
   // Begin kernel's template
   if ( conf.getLocalMem() ) {
-    *code = "__kernel void dedispersionStepTwo(__global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const unsigned int * const restrict beamMapping, __constant const float * restrict const shifts) {\n"
-      "unsigned int sBeam = get_group_id(2) / " + std::to_string(observation.getNrDMs(true)) + ";\n"
+    *code = "__kernel void dedispersionStepTwo(__global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const unsigned int * const restrict beamMapping, __constant const float * restrict const shifts, const unsigned int firstSynthesizedBeam) {\n"
+      "unsigned int sBeam = firstSynthesizedBeam + (get_group_id(2) / " + std::to_string(observation.getNrDMs(true)) + ");\n"
       "unsigned int firstStepDM = get_group_id(2) % " + std::to_string(observation.getNrDMs(true)) + ";\n"
       "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
