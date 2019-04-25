@@ -229,7 +229,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     }
     *code +=  "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
-      "unsigned int sBeam = firstSynthesizedBeam + get_group_id(2);\n"
+      "unsigned int sBeam = get_group_id(2);\n"
       "unsigned int inShMem = 0;\n"
       "unsigned int inGlMem = 0;\n"
       "<%DEFS%>"
@@ -264,7 +264,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     if ( (inputDataType == intermediateDataType) && (inputBits >= 8) ) {
       if ( conf.getSplitBatches() ) {
       } else {
-        unrolled_sTemplate += "buffer[inShMem] = input[(beamMapping[(sBeam * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + inGlMem];\n";
+        unrolled_sTemplate += "buffer[inShMem] = input[(beamMapping[((firstSynthesizedBeam + sBeam) * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + inGlMem];\n";
       }
     } else if ( inputBits < 8 ) {
       if ( conf.getSplitBatches() ) {
@@ -286,7 +286,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
     } else {
       if ( conf.getSplitBatches() ) {
       } else {
-        unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(input[(beamMapping[(sBeam * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + inGlMem]);\n";
+        unrolled_sTemplate += "buffer[inShMem] = convert_" + intermediateDataType + "(input[(beamMapping[((firstSynthesizedBeam + sBeam) * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + inGlMem]);\n";
       }
     }
     unrolled_sTemplate += "inShMem += " + nrTotalThreads_s + ";\n"
@@ -310,7 +310,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
   } else {
     if ( conf.getSplitBatches() ) {
     } else {
-      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const unsigned int * restrict const beamMapping,  __constant const unsigned int * restrict const zappedChannels, __constant const float * restrict const shifts) {\n";
+      *code = "__kernel void dedispersion(__global const " + inputDataType + " * restrict const input, __global " + outputDataType + " * restrict const output, __global const unsigned int * restrict const beamMapping,  __constant const unsigned int * restrict const zappedChannels, __constant const float * restrict const shifts, const unsigned int firstSynthesizedBeam) {\n";
     }
     *code += "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
@@ -341,7 +341,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
         if ( ((observation.getNrSamplesPerBatch() / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
           sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + " ) {\n";
         }
-        sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamMapping[(sBeam * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
+        sum_sTemplate = "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamMapping[((firstSynthesizedBeam + sBeam) * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
         if ( ((observation.getNrSamplesPerBatch() / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
           sum_sTemplate += "}\n";
         }
@@ -375,7 +375,7 @@ template< typename I, typename O > std::string * getDedispersionOpenCL(const Ded
         if ( ((observation.getNrSamplesPerBatch() / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
           sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch()) + " ) {\n";
         }
-        sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[(beamMapping[(sBeam * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)]);\n";
+        sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += convert_" + intermediateDataType + "(input[(beamMapping[((firstSynthesizedBeam + sBeam) * " + std::to_string(observation.getNrChannels(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrChannels() * isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerDispersedBatch(), padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)]);\n";
         if ( ((observation.getNrSamplesPerBatch() / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
           sum_sTemplate += "}\n";
         }
@@ -904,7 +904,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
   // Begin kernel's template
   if ( conf.getLocalMem() ) {
     *code = "__kernel void dedispersionStepTwo(__global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const unsigned int * const restrict beamMapping, __constant const float * restrict const shifts, const unsigned int firstSynthesizedBeam) {\n"
-      "unsigned int sBeam = firstSynthesizedBeam + (get_group_id(2) / " + std::to_string(observation.getNrDMs(true)) + ");\n"
+      "unsigned int sBeam = (get_group_id(2) / " + std::to_string(observation.getNrDMs(true)) + ");\n"
       "unsigned int firstStepDM = get_group_id(2) % " + std::to_string(observation.getNrDMs(true)) + ";\n"
       "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
       "unsigned int sample = (get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + get_local_id(0);\n"
@@ -929,7 +929,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       "inShMem = (get_local_id(1) * " + std::to_string(conf.getNrThreadsD0()) + ") + get_local_id(0);\n"
       "inGlMem = ((get_group_id(0) * " + nrTotalSamplesPerBlock_s + ") + inShMem) + minShift;\n"
       "while ( (inShMem < (" + nrTotalSamplesPerBlock_s + " + diffShift)) && (inGlMem < " + std::to_string(observation.getNrSamplesPerBatch(true) / observation.getDownsampling()) + ") ) {\n"
-      "buffer[inShMem] = input[(beamMapping[(sBeam * " + std::to_string(observation.getNrSubbands(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMs(true) * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + inGlMem];\n"
+      "buffer[inShMem] = input[(beamMapping[((firstSynthesizedBeam + sBeam) * " + std::to_string(observation.getNrSubbands(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMs(true) * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + inGlMem];\n"
       "inShMem += " + nrTotalThreads_s + ";\n"
       "inGlMem += " + nrTotalThreads_s + ";\n"
       "}\n"
@@ -941,7 +941,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
       unrolled_sTemplate += "barrier(CLK_LOCAL_MEM_FENCE);\n";
     }
   } else {
-    *code = "__kernel void dedispersionStepTwo(__global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const unsigned int * restrict const beamMapping, __constant const float * restrict const shifts) {\n"
+    *code = "__kernel void dedispersionStepTwo(__global const " + inputDataType + " * restrict const input, __global " + inputDataType + " * restrict const output, __constant const unsigned int * restrict const beamMapping, __constant const float * restrict const shifts, const unsigned int firstSynthesizedBeam) {\n"
       "unsigned int sBeam = get_group_id(2) / " + std::to_string(observation.getNrDMs(true)) + ";\n"
       "unsigned int firstStepDM = get_group_id(2) % " + std::to_string(observation.getNrDMs(true)) + ";\n"
       "unsigned int dm = (get_group_id(1) * " + nrTotalDMsPerBlock_s + ") + get_local_id(1);\n"
@@ -971,7 +971,7 @@ template< typename I > std::string * getSubbandDedispersionStepTwoOpenCL(const D
     if ( ((observation.getNrSamplesPerBatch() / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
       sum_sTemplate += "if ( (sample + <%OFFSET%>) < " + std::to_string(observation.getNrSamplesPerBatch() / observation.getDownsampling()) + " ) {\n";
     }
-    sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamMapping[(sBeam * " + std::to_string(observation.getNrSubbands(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMs(true) * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
+    sum_sTemplate += "dedispersedSample<%NUM%>DM<%DM_NUM%> += input[(beamMapping[((firstSynthesizedBeam + sBeam) * " + std::to_string(observation.getNrSubbands(padding / sizeof(unsigned int))) + ") + (channel + <%UNROLL%>)] * " + std::to_string(observation.getNrSubbands() * observation.getNrDMs(true) * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + (firstStepDM * " + std::to_string(observation.getNrSubbands() * isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + ((channel + <%UNROLL%>) * " + std::to_string(isa::utils::pad(observation.getNrSamplesPerBatch(true) / observation.getDownsampling(), padding / sizeof(I))) + ") + (sample + <%OFFSET%> + shiftDM<%DM_NUM%>)];\n";
     if ( ((observation.getNrSamplesPerBatch() / observation.getDownsampling()) % (conf.getNrThreadsD0() * conf.getNrItemsD0())) != 0 ) {
       sum_sTemplate += "}\n";
     }
